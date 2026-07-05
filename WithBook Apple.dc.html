@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar { display: none; }
+  @keyframes wbFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes wbPop { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+  @keyframes wbSlideUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes wbHeartBurst { 0% { transform: scale(0); opacity: 0; } 25% { transform: scale(1.18); opacity: 1; } 55% { transform: scale(0.98); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+  * { scroll-behavior: smooth; }
+  button { transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease; }
+  button:active { transform: scale(0.95); }
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;background:#f5f5f7;display:flex;align-items:center;justify-content:center;padding:56px 24px;font-family:system-ui,-apple-system,'Inter','Noto Sans KR',sans-serif;">
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+
+    <div style="display:flex;align-items:baseline;gap:10px;">
+      <span style="letter-spacing:-0.3px;font-weight:600;font-size:26px;color:#1d1d1f;letter-spacing:-0.5px;">위드북</span>
+      <span style="font-size:12px;color:rgba(29,29,31,0.55);letter-spacing:1.5px;text-transform:uppercase;">WithBook — interactive prototype</span>
+    </div>
+
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{390}}" height="{{844}}" hint-size="390,844" style="box-shadow:rgba(0,0,0,0.22) 3px 5px 30px 0px;">
+
+      <div style="height:100%;width:100%;display:flex;flex-direction:column;background:#ffffff;overflow:hidden;">
+
+        <!-- ONBOARDING SPLASH -->
+        <sc-if value="{{showSplash}}" hint-placeholder-val="{{true}}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:88px 32px 56px;background:#ffffff;text-align:center;">
+            <div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+              <div style="width:64px;height:64px;border-radius:18px;background:#1d1d1f;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4.5C4 4.5 7 3 12 4.5V19.5C7 18 4 19.5 4 19.5V4.5Z" fill="#ffffff"/><path d="M20 4.5C20 4.5 17 3 12 4.5V19.5C17 18 20 19.5 20 19.5V4.5Z" fill="#2997ff"/></svg>
+              </div>
+              <div style="letter-spacing:-0.3px;font-weight:600;font-size:44px;color:#1d1d1f;letter-spacing:-1px;">위드북</div>
+              <div style="letter-spacing:-0.3px;font-weight:600;font-size:19px;line-height:1.6;color:#6e6e73;">책을 기록하고, 나누는 곳.<br/>당신의 서재가 이야기가 되고,<br/>이야기가 인연이 됩니다</div>
+            </div>
+            <button onclick="{{ startOnboarding }}" style="width:100%;padding:18px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-family:system-ui,-apple-system,'Inter','Noto Sans KR',sans-serif;font-weight:600;font-size:16px;letter-spacing:-0.2px;">시작하기</button>
+          </div>
+        </sc-if>
+
+        <!-- LOGIN / SIGNUP -->
+        <sc-if value="{{showLogin}}" hint-placeholder-val="{{false}}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:88px 28px 48px;background:#ffffff;">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="letter-spacing:-0.5px;font-weight:600;font-size:28px;color:#1d1d1f;">반가워요</div>
+              <div style="font-size:14.5px;line-height:1.65;color:rgba(29,29,31,0.6);">계정을 만들면 나의 서재와 독서 기록이<br/>안전하게 저장됩니다</div>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <input value="{{loginEmail}}" onchange="{{ setLoginEmail }}" placeholder="이메일 주소" style="width:100%;padding:16px;border-radius:11px;border:1px solid #e0e0e0;background:#ffffff;font-size:14.5px;color:#1d1d1f;"/>
+              <button onclick="{{ loginContinue }}" style="width:100%;padding:16px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15px;">이메일로 계속하기</button>
+              <div style="display:flex;align-items:center;gap:12px;padding:6px 0;">
+                <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+                <span style="font-size:11.5px;color:rgba(29,29,31,0.4);">또는</span>
+                <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+              </div>
+              <button onclick="{{ loginContinue }}" style="width:100%;padding:16px 0;border:none;border-radius:100px;background:#1d1d1f;color:#ffffff;font-weight:600;font-size:15px;"> Apple로 계속하기</button>
+              <button onclick="{{ loginContinue }}" style="width:100%;padding:16px 0;border:none;border-radius:100px;background:#FEE500;color:#1d1d1f;font-weight:600;font-size:15px;">💬 카카오로 계속하기</button>
+              <div style="text-align:center;font-size:11px;line-height:1.6;color:rgba(29,29,31,0.4);margin-top:8px;">계속하면 이용약관 및 개인정보처리방침에 동의하게 됩니다</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ONBOARDING SLIDES -->
+        <sc-if value="{{showSlides}}" hint-placeholder-val="{{false}}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:70px 28px 40px;background:#ffffff;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;" key="{{slideIndex}}">
+              <div style="width:120px;height:120px;border-radius:18px;background:{{currentSlide.color}};display:flex;align-items:center;justify-content:center;animation:wbPop 0.35s ease;">
+                <span style="font-size:46px;">{{currentSlide.emoji}}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;animation:wbFade 0.4s ease;">
+                <div style="letter-spacing:-0.3px;font-weight:600;font-size:23px;color:#1d1d1f;">{{currentSlide.title}}</div>
+                <div style="font-size:14.5px;line-height:1.7;color:rgba(29,29,31,0.65);max-width:260px;">{{currentSlide.desc}}</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:7px;margin-bottom:26px;">
+              <sc-for list="{{slides}}" as="s" hint-placeholder-count="3">
+                <div style="width:{{s.dotWidth}}px;height:7px;border-radius:4px;background:{{s.dotColor}};transition:all 0.25s;"></div>
+              </sc-for>
+            </div>
+            <button onclick="{{ nextSlide }}" style="width:100%;padding:17px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15.5px;">{{slideButtonLabel}}</button>
+          </div>
+        </sc-if>
+
+        <!-- BOOK PROFILE SETUP -->
+        <sc-if value="{{showBookSetup}}" hint-placeholder-val="{{false}}">
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+            <div style="display:flex;align-items:center;gap:12px;padding:58px 20px 14px;background:#ffffff;">
+              <sc-if value="{{isEditingProfile}}" hint-placeholder-val="{{false}}">
+                <button onclick="{{ closeBookEdit }}" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(29,29,31,0.08);font-size:16px;color:#1d1d1f;">‹</button>
+              </sc-if>
+              <div style="letter-spacing:-0.3px;font-weight:600;font-size:20px;color:#1d1d1f;">책 프로필 만들기</div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:6px 20px 28px;display:flex;flex-direction:column;gap:26px;">
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-weight:600;font-size:14.5px;color:#1d1d1f;">나의 인생책 3권</div>
+                <div style="font-size:12.5px;color:rgba(29,29,31,0.55);margin-top:-6px;">표지를 눌러 책을 등록해보세요</div>
+                <div style="display:flex;gap:10px;">
+                  <sc-for list="{{mySlotsView}}" as="slot" hint-placeholder-count="3">
+                    <button onclick="{{ slot.onTap }}" style="flex:1;aspect-ratio:3/4.2;border-radius:8px;border:{{slot.border}};background:{{slot.bg}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;cursor:pointer;">
+                      <sc-if value="{{slot.filled}}" hint-placeholder-val="{{false}}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4.5C4 4.5 7 3 12 4.5V19.5C7 18 4 19.5 4 19.5V4.5Z" fill="rgba(255,255,255,0.9)"/><path d="M20 4.5C20 4.5 17 3 12 4.5V19.5C17 18 20 19.5 20 19.5V4.5Z" fill="rgba(255,255,255,0.6)"/></svg>
+                        <span style="font-size:11px;font-weight:600;color:#fff;text-align:center;line-height:1.3;">{{slot.title}}</span>
+                      </sc-if>
+                      <sc-if value="{{slot.empty}}" hint-placeholder-val="{{true}}">
+                        <span style="font-size:22px;color:rgba(29,29,31,0.3);">+</span>
+                        <span style="font-size:10.5px;color:rgba(29,29,31,0.4);">추가</span>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-weight:600;font-size:14.5px;color:#1d1d1f;">인상 깊은 문구</div>
+                <textarea value="{{quoteDraft}}" onchange="{{ setQuoteDraft }}" rows="3" style="width:100%;border-radius:11px;border:1px solid #e0e0e0;background:#ffffff;padding:14px;letter-spacing:-0.3px;font-size:14px;line-height:1.7;color:#1d1d1f;resize:none;"></textarea>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-weight:600;font-size:14.5px;color:#1d1d1f;">좋아하는 작가 <span style="font-weight:400;color:rgba(29,29,31,0.45);">(최대 5명)</span></div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{authorChips}}" as="chip" hint-placeholder-count="6">
+                    <button onclick="{{ chip.onTap }}" style="padding:9px 14px;border-radius:100px;border:1px solid {{chip.border}};background:{{chip.bg}};color:{{chip.color}};font-size:13px;font-weight:600;">{{chip.label}}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-weight:600;font-size:14.5px;color:#1d1d1f;">선호 장르</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{genreChips}}" as="chip" hint-placeholder-count="8">
+                    <button onclick="{{ chip.onTap }}" style="padding:9px 14px;border-radius:100px;border:1px solid {{chip.border}};background:{{chip.bg}};color:{{chip.color}};font-size:13px;font-weight:600;">{{chip.label}}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-weight:600;font-size:14.5px;color:#1d1d1f;">독서 성향 배지</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:100px;background:#1d1d1f;color:#ffffff;font-size:12.5px;font-weight:600;">🔖 밑줄 마니아</div>
+                  <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:100px;background:#1d1d1f;color:#ffffff;font-size:12.5px;font-weight:600;">📚 한 달에 2권</div>
+                </div>
+              </div>
+
+            </div>
+            <div style="padding:14px 20px 26px;background:#ffffff;">
+              <button onclick="{{ completeBookSetup }}" style="width:100%;padding:17px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15.5px;">{{bookSetupButtonLabel}}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- MAIN APP -->
+        <sc-if value="{{showMain}}" hint-placeholder-val="{{false}}">
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+
+            <!-- COMPOSE POST -->
+            <sc-if value="{{showCompose}}" hint-placeholder-val="{{false}}">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+                <div style="display:flex;align-items:center;gap:12px;padding:58px 20px 12px;background:#ffffff;">
+                  <button onclick="{{ closeCompose }}" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(29,29,31,0.08);font-size:16px;color:#1d1d1f;">‹</button>
+                  <div style="font-weight:600;font-size:16px;color:#1d1d1f;">새 독서 기록</div>
+                </div>
+                <div style="flex:1;overflow:auto;padding:8px 20px 24px;display:flex;flex-direction:column;gap:20px;">
+
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">책 선택</div>
+                    <input value="{{composeQuery}}" onchange="{{ setComposeQuery }}" placeholder="책 제목 검색" style="width:100%;padding:14px;border-radius:11px;border:1px solid #e0e0e0;background:#ffffff;font-size:14px;color:#1d1d1f;"/>
+                    <div style="font-size:10.5px;color:rgba(29,29,31,0.4);">알라딘·네이버 도서 API 검색 (프로토타입 시뮬레이션)</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                      <sc-for list="{{composeResults}}" as="b" hint-placeholder-count="4">
+                        <button onclick="{{ b.onTap }}" style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:11px;border:1.5px solid {{b.border}};background:#ffffff;text-align:left;cursor:pointer;">
+                          <div style="width:38px;height:52px;border-radius:6px;overflow:hidden;background:#f5f5f7;flex:none;border:1px solid #e0e0e0;"><img src="{{b.coverUrl}}" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
+                          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;">
+                            <div style="font-weight:600;font-size:13px;color:#1d1d1f;">{{b.title}}</div>
+                            <div style="font-size:11.5px;color:rgba(29,29,31,0.5);">{{b.author}}</div>
+                          </div>
+                          <sc-if value="{{b.selected}}" hint-placeholder-val="{{false}}"><span style="color:#0066cc;font-size:15px;">✓</span></sc-if>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">인상 깊은 문구</div>
+                    <textarea value="{{composeQuote}}" onchange="{{ setComposeQuote }}" rows="2" placeholder="기억에 남는 문장을 옮겨 적어보세요" style="width:100%;border-radius:11px;border:1px solid #e0e0e0;background:#ffffff;padding:14px;letter-spacing:-0.3px;font-size:14px;line-height:1.7;color:#1d1d1f;resize:none;"></textarea>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">한 줄 감상</div>
+                    <input value="{{composeComment}}" onchange="{{ setComposeComment }}" placeholder="이 책, 어땠나요?" style="width:100%;padding:14px;border-radius:11px;border:1px solid #e0e0e0;background:#ffffff;font-size:14px;color:#1d1d1f;"/>
+                  </div>
+
+                </div>
+                <div style="padding:14px 20px 26px;background:#ffffff;">
+                  <button onclick="{{ submitPost }}" style="width:100%;padding:17px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15.5px;">게시하기</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- MATCH DETAIL -->
+            <sc-if value="{{showMatchDetail}}" hint-placeholder-val="{{false}}">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+                <div style="display:flex;align-items:center;gap:12px;padding:58px 20px 12px;background:#ffffff;">
+                  <button onclick="{{ closeMatchDetail }}" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(29,29,31,0.08);font-size:16px;color:#1d1d1f;">‹</button>
+                  <div style="font-weight:600;font-size:16px;color:#1d1d1f;">매칭 프로필</div>
+                </div>
+                <div style="flex:1;overflow:auto;padding:6px 20px 24px;display:flex;flex-direction:column;gap:22px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 0 6px;">
+                    <div style="width:76px;height:76px;border-radius:50%;overflow:hidden;background:#f5f5f7;border:1px solid #e0e0e0;"><img src="{{selectedMatch.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                    <div style="letter-spacing:-0.3px;font-weight:600;font-size:20px;color:#1d1d1f;">{{selectedMatch.name}}, {{selectedMatch.age}}</div>
+                    <div style="font-size:13px;color:rgba(29,29,31,0.55);">{{selectedMatch.job}} · {{selectedMatch.distance}}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding:7px 14px;border-radius:100px;background:#1d1d1f;">
+                      <span style="font-size:12.5px;font-weight:600;color:#ffffff;">가치관 유사도 {{selectedMatch.matchPercent}}%</span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">인생책 3권</div>
+                    <div style="display:flex;gap:9px;">
+                      <sc-for list="{{selectedMatch.books}}" as="b" hint-placeholder-count="3">
+                        <div style="flex:1;aspect-ratio:3/4.2;border-radius:8px;background:{{b.color}};display:flex;align-items:flex-end;padding:8px;">
+                          <span style="font-size:10.5px;font-weight:600;color:#fff;line-height:1.3;">{{b.title}}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">인상 깊은 문구</div>
+                    <div style="letter-spacing:-0.3px;font-size:14.5px;line-height:1.75;color:#1d1d1f;">{{selectedMatch.quote}}</div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">최근 읽은 책</div>
+                    <div style="font-size:13.5px;color:rgba(29,29,31,0.7);">📖 {{selectedMatch.recentBook}}</div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">이런 점이 비슷해요</div>
+                    <div style="display:flex;flex-direction:column;gap:7px;">
+                      <sc-for list="{{selectedMatch.tags}}" as="t" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1d1d1f;"><span style="color:#0066cc;">✓</span>{{t}}</div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">AI 매칭 분석 · 책/장르/문구 기반</div>
+                    <sc-for list="{{selectedMatch.breakdown}}" as="bd" hint-placeholder-count="3">
+                      <div style="display:flex;flex-direction:column;gap:5px;">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;">
+                          <span style="color:#1d1d1f;font-weight:600;">{{bd.label}}</span>
+                          <span style="color:rgba(29,29,31,0.5);">{{bd.pct}}%</span>
+                        </div>
+                        <div style="height:6px;border-radius:100px;background:rgba(29,29,31,0.08);overflow:hidden;">
+                          <div style="height:100%;width:{{bd.width}};border-radius:100px;background:#0066cc;"></div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div style="background:#f5f5f7;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">AI 대화 시작 카드</div>
+                    <div style="font-size:13.5px;line-height:1.6;color:#1d1d1f;">{{selectedMatch.aiOpener}}</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;padding:14px 20px 26px;background:#ffffff;">
+                  <button onclick="{{ passMatchFromDetail }}" style="width:52px;height:52px;border-radius:50%;border:1px solid #e0e0e0;background:#ffffff;font-size:18px;color:rgba(29,29,31,0.5);">✕</button>
+                  <button onclick="{{ startChatFromMatch }}" style="flex:1;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15px;">대화 시작하기</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- CHAT DETAIL -->
+            <sc-if value="{{showChatDetail}}" hint-placeholder-val="{{false}}">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+                <div style="display:flex;align-items:center;gap:12px;padding:58px 20px 12px;background:#ffffff;">
+                  <button onclick="{{ closeChatDetail }}" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(29,29,31,0.08);font-size:16px;color:#1d1d1f;">‹</button>
+                  <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:#f5f5f7;border:1px solid #e0e0e0;flex:none;"><img src="{{activeChat.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                  <div style="font-weight:600;font-size:15px;color:#1d1d1f;">{{activeChat.name}}</div>
+                </div>
+                <div style="margin:0 20px 10px;background:#f5f5f7;border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:10.5px;font-weight:600;color:#0066cc;letter-spacing:0.4px;">📌 대화 시작 카드</div>
+                  <div style="font-size:12.5px;line-height:1.55;color:#1d1d1f;">{{activeChat.aiOpener}}</div>
+                </div>
+                <div style="flex:1;overflow:auto;padding:6px 20px 16px;display:flex;flex-direction:column;gap:10px;">
+                  <sc-for list="{{activeChat.messages}}" as="m" hint-placeholder-count="4">
+                    <div style="display:flex;justify-content:{{m.align}};">
+                      <div style="max-width:74%;padding:11px 14px;border-radius:18px;background:{{m.bg}};color:{{m.color}};font-size:13.5px;line-height:1.55;">{{m.text}}</div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{typingActive}}" hint-placeholder-val="{{false}}">
+                    <div style="display:flex;justify-content:flex-start;">
+                      <div style="padding:12px 16px;border-radius:18px;background:#ffffff;border:1px solid #e0e0e0;display:flex;gap:4px;align-items:center;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:rgba(29,29,31,0.35);animation:wbFade 0.9s ease infinite;"></span>
+                        <span style="width:6px;height:6px;border-radius:50%;background:rgba(29,29,31,0.35);animation:wbFade 0.9s ease 0.2s infinite;"></span>
+                        <span style="width:6px;height:6px;border-radius:50%;background:rgba(29,29,31,0.35);animation:wbFade 0.9s ease 0.4s infinite;"></span>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;padding:10px 16px 26px;background:#ffffff;">
+                  <button onclick="{{ openOffline }}" style="flex:none;padding:11px 14px;border:1px solid #e0e0e0;border-radius:100px;background:#ffffff;font-size:12px;font-weight:600;color:#1d1d1f;white-space:nowrap;">💛 오프라인 제안</button>
+                  <input value="{{chatDraft}}" onchange="{{ setChatDraft }}" placeholder="메시지를 입력하세요" style="flex:1;padding:12px 14px;border-radius:100px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;color:#1d1d1f;"/>
+                  <button onclick="{{ sendMessage }}" style="width:40px;height:40px;flex:none;border-radius:50%;border:none;background:#0066cc;color:#ffffff;font-size:15px;">↑</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- OFFLINE CONVERSION -->
+            <sc-if value="{{showOffline}}" hint-placeholder-val="{{false}}">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+                <div style="display:flex;align-items:center;gap:12px;padding:58px 20px 12px;background:#ffffff;">
+                  <button onclick="{{ closeOffline }}" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(29,29,31,0.08);font-size:16px;color:#1d1d1f;">‹</button>
+                  <div style="font-weight:600;font-size:16px;color:#1d1d1f;">오프라인 만남 제안</div>
+                </div>
+                <div style="flex:1;overflow:auto;padding:12px 20px 24px;display:flex;flex-direction:column;gap:20px;">
+                  <div style="background:#f5f5f7;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-size:26px;">💛</div>
+                    <div style="letter-spacing:-0.3px;font-weight:600;font-size:17px;color:#1d1d1f;line-height:1.5;">{{offlineHeading}}</div>
+                    <div style="font-size:12.5px;line-height:1.6;color:rgba(29,29,31,0.65);">하트페이지 독서 모임 이벤트를 통해<br/>안전하게 첫 만남을 가져보세요.</div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div style="font-weight:600;font-size:14px;color:#1d1d1f;">지역 선택</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                      <sc-for list="{{regionChips}}" as="r" hint-placeholder-count="4">
+                        <button onclick="{{ r.onTap }}" style="padding:11px 18px;border-radius:100px;border:1px solid {{r.border}};background:{{r.bg}};color:{{r.color}};font-size:13.5px;font-weight:600;">{{r.label}}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:11px;padding:16px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="font-size:12.5px;font-weight:600;color:#1d1d1f;">📖 이달의 하트페이지 모임</div>
+                    <div style="font-size:12.5px;color:rgba(29,29,31,0.6);line-height:1.6;">{{offlineRegion}} · 7월 넷째 주 토요일 오후 2시<br/>동네서점에서 진행되는 소규모 독서 모임</div>
+                  </div>
+                </div>
+                <div style="padding:14px 20px 26px;background:#ffffff;">
+                  <sc-if value="{{offlineSubmitted}}" hint-placeholder-val="{{false}}">
+                    <div style="width:100%;padding:17px 0;border-radius:100px;background:rgba(29,29,31,0.08);color:#1d1d1f;font-weight:600;font-size:15px;text-align:center;">✓ 신청 완료 · 확인 연락을 기다려주세요</div>
+                  </sc-if>
+                  <sc-if value="{{offlineNotSubmitted}}" hint-placeholder-val="{{true}}">
+                    <button onclick="{{ submitOffline }}" style="width:100%;padding:17px 0;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-weight:600;font-size:15.5px;">{{offlineRegion}} 모임 신청하기</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- TABBED SCREENS -->
+            <sc-if value="{{showTabbed}}" hint-placeholder-val="{{true}}">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;animation:wbSlideUp 0.38s cubic-bezier(0.32,0.72,0,1);">
+
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:58px 20px 10px;background:#ffffff;">
+                  <span style="letter-spacing:-0.3px;font-weight:600;font-size:20px;color:#1d1d1f;">{{tabTitle}}</span>
+                  <sc-if value="{{isTabFeed}}" hint-placeholder-val="{{false}}">
+                    <button onclick="{{ openCompose }}" style="padding:9px 15px;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-size:12.5px;font-weight:600;">＋ 기록</button>
+                  </sc-if>
+                  <sc-if value="{{isTabHome}}" hint-placeholder-val="{{true}}">
+                    <div style="display:flex;gap:4px;background:rgba(29,29,31,0.07);border-radius:100px;padding:3px;">
+                      <sc-for list="{{layoutOptions}}" as="lo" hint-placeholder-count="3">
+                        <button onclick="{{ lo.onTap }}" style="padding:6px 11px;border-radius:100px;border:none;background:{{lo.bg}};color:{{lo.color}};font-size:11px;font-weight:600;">{{lo.label}}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="flex:1;overflow:auto;">
+
+                  <!-- HOME / AI MATCHING FEED -->
+                  <sc-if value="{{isTabHome}}" hint-placeholder-val="{{true}}">
+                    <div style="padding:8px 20px 26px;display:flex;flex-direction:column;gap:16px;animation:wbFade 0.32s ease;">
+
+                      <sc-if value="{{layoutIsStack}}" hint-placeholder-val="{{true}}">
+                        <sc-if value="{{hasCurrentCard}}" hint-placeholder-val="{{true}}">
+                          <div style="display:flex;flex-direction:column;gap:14px;">
+                            <div style="border-radius:18px;overflow:hidden;background:#ffffff;border:1px solid #e0e0e0;display:flex;flex-direction:column;aspect-ratio:3/3.9;">
+                              <div style="flex:1;background:#f5f5f7;position:relative;overflow:hidden;">
+                                <img src="{{currentCard.avatarUrl}}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center top;" />
+                                <div style="position:absolute;top:16px;left:16px;padding:6px 12px;border-radius:100px;background:rgba(255,255,255,0.85);font-size:11.5px;font-weight:600;color:#1d1d1f;">유사도 {{currentCard.matchPercent}}%</div>
+                              </div>
+                              <div style="padding:14px 16px 16px;display:flex;flex-direction:column;gap:2px;">
+                                <div style="letter-spacing:-0.3px;font-weight:600;font-size:21px;color:#1d1d1f;">{{currentCard.name}}, {{currentCard.age}}</div>
+                                <div style="font-size:12.5px;color:rgba(29,29,31,0.55);">{{currentCard.job}} · {{currentCard.distance}}</div>
+                              </div>
+                            </div>
+                            <div onclick="{{ openMatchDetailFromCard }}" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:14px 16px;">
+                              <div style="font-size:11px;font-weight:600;color:#0066cc;margin-bottom:4px;">이런 점이 비슷해요</div>
+                              <div style="font-size:13px;color:#1d1d1f;line-height:1.5;">{{currentCard.reasonSummary}}</div>
+                            </div>
+                            <div style="display:flex;gap:14px;justify-content:center;padding-top:2px;">
+                              <button onclick="{{ passCurrentCard }}" style="width:58px;height:58px;border-radius:50%;border:1px solid #e0e0e0;background:#ffffff;font-size:20px;color:rgba(29,29,31,0.5);">✕</button>
+                              <button onclick="{{ likeCurrentCard }}" style="width:58px;height:58px;border-radius:50%;border:none;background:#0066cc;font-size:22px;color:#fff;">♥</button>
+                            </div>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{noCurrentCard}}" hint-placeholder-val="{{false}}">
+                          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:80px 20px;text-align:center;">
+                            <div style="font-size:32px;">📚</div>
+                            <div style="font-weight:600;font-size:15px;color:#1d1d1f;">오늘의 추천을 모두 확인했어요</div>
+                            <div style="font-size:12.5px;color:rgba(29,29,31,0.55);">내일 새로운 인연을 소개해드릴게요</div>
+                          </div>
+                        </sc-if>
+                      </sc-if>
+
+                      <sc-if value="{{layoutIsList}}" hint-placeholder-val="{{false}}">
+                        <sc-for list="{{matchesFeed}}" as="mm" hint-placeholder-count="4">
+                          <div onclick="{{ mm.onTap }}" style="display:flex;gap:12px;padding:14px;background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;">
+                            <div style="width:56px;height:56px;border-radius:11px;overflow:hidden;background:#f5f5f7;flex:none;border:1px solid #e0e0e0;"><img src="{{mm.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;">
+                              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                                <span style="font-weight:600;font-size:14.5px;color:#1d1d1f;white-space:nowrap;">{{mm.name}}, {{mm.age}}</span>
+                                <span style="font-size:11px;font-weight:600;color:#0066cc;">{{mm.matchPercent}}%</span>
+                              </div>
+                              <div style="font-size:12px;color:rgba(29,29,31,0.55);">{{mm.job}} · {{mm.distance}}</div>
+                              <div style="font-size:12px;color:rgba(29,29,31,0.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📖 {{mm.recentBook}}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </sc-if>
+
+                      <sc-if value="{{layoutIsMagazine}}" hint-placeholder-val="{{false}}">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                          <sc-for list="{{matchesFeed}}" as="mm" hint-placeholder-count="4">
+                            <div onclick="{{ mm.onTap }}" style="border-radius:18px;overflow:hidden;background:#ffffff;border:1px solid #e0e0e0;aspect-ratio:3/4;display:flex;flex-direction:column;">
+                              <div style="flex:1;background:#f5f5f7;position:relative;overflow:hidden;">
+                                <img src="{{mm.avatarUrl}}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center top;" />
+                                <div style="position:absolute;top:10px;left:10px;padding:5px 10px;border-radius:100px;background:rgba(255,255,255,0.85);font-size:10px;font-weight:600;color:#1d1d1f;">{{mm.matchPercent}}%</div>
+                              </div>
+                              <div style="padding:10px 12px;">
+                                <div style="letter-spacing:-0.3px;font-weight:600;font-size:15px;color:#1d1d1f;">{{mm.name}}</div>
+                                <div style="font-size:10.5px;color:rgba(29,29,31,0.55);">{{mm.job}}</div>
+                              </div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+
+                    </div>
+                  </sc-if>
+
+                  <!-- FEED / COMMUNITY -->
+                  <sc-if value="{{isTabFeed}}" hint-placeholder-val="{{false}}">
+                    <div style="padding:8px 20px 26px;display:flex;flex-direction:column;gap:16px;animation:wbFade 0.32s ease;">
+                      <div style="display:flex;gap:14px;overflow:auto;padding:2px 2px 4px;">
+                        <sc-for list="{{stories}}" as="st" hint-placeholder-count="5">
+                          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;width:62px;">
+                            <div style="width:60px;height:60px;border-radius:50%;padding:2px;background:{{st.ring}};">
+                              <div style="width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid #ffffff;background:#f5f5f7;box-sizing:border-box;">
+                                <img src="{{st.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" />
+                              </div>
+                            </div>
+                            <div style="font-size:10px;color:rgba(29,29,31,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px;">{{st.name}}</div>
+                          </div>
+                        </sc-for>
+                      </div>
+
+                      <div style="background:#272729;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:4px;">
+                        <div style="font-size:11px;font-weight:600;color:#2997ff;letter-spacing:0.4px;">이달의 공동 독서 챌린지</div>
+                        <div style="letter-spacing:-0.3px;font-weight:600;font-size:15.5px;color:#ffffff;">《싯다르타》 함께 읽기 · D-12</div>
+                      </div>
+                      <div style="display:flex;gap:8px;overflow:auto;">
+                        <sc-for list="{{sameBookGroups}}" as="g" hint-placeholder-count="3">
+                          <div style="flex:none;width:118px;padding:12px;border-radius:11px;background:#ffffff;border:1px solid #e0e0e0;display:flex;flex-direction:column;gap:6px;">
+                            <div style="width:100%;aspect-ratio:3/2;border-radius:8px;overflow:hidden;background:#f5f5f7;border:1px solid #e0e0e0;"><img src="{{g.coverUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                            <div style="font-size:11.5px;font-weight:600;color:#1d1d1f;line-height:1.3;">{{g.title}}</div>
+                            <div style="font-size:10.5px;color:rgba(29,29,31,0.5);">{{g.count}}명 읽는 중</div>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:12px;">
+                        <sc-for list="{{feedPosts}}" as="p" hint-placeholder-count="5">
+                          <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;overflow:hidden;animation:wbFade 0.35s ease;">
+                            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;">
+                              <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;background:#f5f5f7;border:1px solid #e0e0e0;flex:none;"><img src="{{p.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                              <div style="flex:1;min-width:0;display:flex;flex-direction:column;">
+                                <div style="font-size:13px;font-weight:600;color:#1d1d1f;">{{p.user}}</div>
+                                <div style="font-size:10.5px;color:rgba(29,29,31,0.45);">《{{p.book}}》 · {{p.time}}</div>
+                              </div>
+                              <div style="font-size:16px;color:rgba(29,29,31,0.45);padding:0 2px;">⋯</div>
+                            </div>
+                            <div onDoubleClick="{{ p.onDouble }}" style="position:relative;background:#f5f5f7;padding:20px 18px;display:flex;gap:16px;align-items:center;cursor:pointer;">
+                              <div style="width:64px;height:88px;border-radius:8px;overflow:hidden;background:#ffffff;flex:none;border:1px solid #e0e0e0;"><img src="{{p.coverUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" /></div>
+                              <div style="flex:1;letter-spacing:-0.3px;font-size:14px;line-height:1.65;color:#1d1d1f;">“{{p.quote}}”</div>
+                              <sc-if value="{{p.showHeart}}" hint-placeholder-val="{{false}}">
+                                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                                  <span style="font-size:68px;color:#ffffff;text-shadow:0 2px 18px rgba(0,0,0,0.25);animation:wbHeartBurst 0.8s ease forwards;">♥</span>
+                                </div>
+                              </sc-if>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:18px;padding:10px 16px 2px;">
+                              <button onclick="{{ p.onLike }}" style="border:none;background:none;padding:0;font-size:21px;line-height:1;color:{{p.heartColor}};cursor:pointer;">{{p.heartGlyph}}</button>
+                              <button style="border:none;background:none;padding:0;font-size:18px;line-height:1;color:#1d1d1f;cursor:pointer;">💬</button>
+                              <button style="border:none;background:none;padding:0;font-size:18px;line-height:1;color:#1d1d1f;cursor:pointer;">↗</button>
+                              <div style="flex:1;"></div>
+                              <button style="border:none;background:none;padding:0;font-size:17px;line-height:1;color:#1d1d1f;cursor:pointer;">🔖</button>
+                            </div>
+                            <div style="padding:6px 16px 14px;display:flex;flex-direction:column;gap:3px;">
+                              <div style="font-size:12.5px;font-weight:600;color:#1d1d1f;">좋아요 {{p.likeCount}}개</div>
+                              <div style="font-size:12.5px;line-height:1.5;color:#1d1d1f;"><b>{{p.user}}</b> {{p.comment}}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+
+                      <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">위드북 만남</div>
+                        <div style="letter-spacing:-0.3px;font-weight:600;font-size:15px;color:#1d1d1f;line-height:1.5;">나와 책 취향이 닿는 사람이<br/>오늘 3명 있어요</div>
+                        <div style="font-size:12.5px;line-height:1.6;color:rgba(29,29,31,0.6);">피드에서 쌓인 독서 기록과 가치관을 바탕으로, 대화가 통하는 사람을 이어드립니다.</div>
+                        <button onclick="{{ goToMatch }}" style="align-self:flex-start;margin-top:2px;padding:10px 16px;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-size:12.5px;font-weight:600;">만남 탭에서 확인하기</button>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <!-- OFFLINE EVENTS / 참가 -->
+                  <sc-if value="{{isTabEvents}}" hint-placeholder-val="{{false}}">
+                    <div style="padding:8px 20px 26px;display:flex;flex-direction:column;gap:16px;animation:wbFade 0.32s ease;">
+
+                      <div style="background:#f5f5f7;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px;">
+                        <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">하트페이지 연동</div>
+                        <div style="letter-spacing:-0.3px;font-weight:600;font-size:17px;color:#1d1d1f;line-height:1.5;">오프라인 책소개팅</div>
+                        <div style="font-size:12.5px;line-height:1.6;color:rgba(29,29,31,0.65);">동네서점에서 열리는 소규모 독서 소개팅.<br/>이번 달 일정을 확인하고 신청해보세요.</div>
+                      </div>
+
+                      <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:600;font-size:14px;color:#1d1d1f;">2026년 7월</div>
+                        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+                          <sc-for list="{{calendarDows}}" as="d" hint-placeholder-count="7">
+                            <div style="text-align:center;font-size:10.5px;font-weight:600;color:rgba(29,29,31,0.4);padding:2px 0;">{{d}}</div>
+                          </sc-for>
+                          <sc-for list="{{calendarCells}}" as="c" hint-placeholder-count="35">
+                            <div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;background:{{c.bg}};color:{{c.color}};font-size:11.5px;font-weight:{{c.weight}};">{{c.label}}</div>
+                          </sc-for>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(29,29,31,0.5);"><span style="width:8px;height:8px;border-radius:50%;background:#0066cc;display:inline-block;"></span>행사가 열리는 날</div>
+                      </div>
+
+                      <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:600;font-size:14px;color:#1d1d1f;">이번 달 행사 현황</div>
+                        <sc-for list="{{hpEvents}}" as="ev" hint-placeholder-count="4">
+                          <div style="display:flex;gap:12px;padding:14px;background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;align-items:center;">
+                            <div style="width:50px;height:56px;border-radius:8px;background:#1d1d1f;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                              <span style="font-size:10px;font-weight:600;color:#2997ff;">7월</span>
+                              <span style="font-size:18px;font-weight:600;color:#ffffff;">{{ev.day}}</span>
+                            </div>
+                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                              <div style="font-weight:600;font-size:13.5px;color:#1d1d1f;">{{ev.region}} · {{ev.place}}</div>
+                              <div style="font-size:12px;color:rgba(29,29,31,0.6);">{{ev.date}} {{ev.time}}</div>
+                              <div style="font-size:11px;color:#0066cc;font-weight:600;">신청 {{ev.seats}}명</div>
+                            </div>
+                            <button onclick="{{ ev.onApply }}" style="flex:none;padding:10px 14px;border:none;border-radius:100px;background:#0066cc;color:#ffffff;font-size:12px;font-weight:600;">신청 폼</button>
+                          </div>
+                        </sc-for>
+                      </div>
+
+                    </div>
+                  </sc-if>
+
+                  <!-- CHAT LIST -->
+                  <sc-if value="{{isTabChat}}" hint-placeholder-val="{{false}}">
+                    <div style="padding:8px 20px 26px;display:flex;flex-direction:column;gap:2px;animation:wbFade 0.32s ease;">
+                      <sc-for list="{{chatThreads}}" as="c" hint-placeholder-count="2">
+                        <div onclick="{{ c.onTap }}" style="display:flex;gap:12px;padding:14px 4px;border-bottom:1px solid #e0e0e0;align-items:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;overflow:hidden;background:#f5f5f7;flex:none;border:1px solid #e0e0e0;"><img src="{{c.avatarUrl}}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                            <div style="display:flex;justify-content:space-between;">
+                              <span style="font-weight:600;font-size:14.5px;color:#1d1d1f;">{{c.name}}</span>
+                              <span style="font-size:11px;color:rgba(29,29,31,0.4);">{{c.time}}</span>
+                            </div>
+                            <div style="font-size:12.5px;color:rgba(29,29,31,0.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{c.lastMsg}}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+
+                  <!-- MY PROFILE HOME -->
+                  <sc-if value="{{isTabMy}}" hint-placeholder-val="{{false}}">
+                    <div style="padding:8px 20px 26px;display:flex;flex-direction:column;gap:20px;animation:wbFade 0.32s ease;">
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0 4px;">
+                        <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:#f5f5f7;border:1px solid #e0e0e0;"><img src="assets/avatar-me.png" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
+                        <div style="letter-spacing:-0.3px;font-weight:600;font-size:18px;color:#1d1d1f;">나의 서재</div>
+                        <button onclick="{{ openBookEdit }}" style="margin-top:2px;padding:8px 16px;border-radius:100px;border:1px solid #e0e0e0;background:#ffffff;font-size:12px;font-weight:600;color:#1d1d1f;">책 프로필 수정</button>
+                      </div>
+
+                      <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:600;font-size:14px;color:#1d1d1f;">나의 인생책 3권</div>
+                        <div style="display:flex;gap:9px;">
+                          <sc-for list="{{myBooksDisplay}}" as="b" hint-placeholder-count="3">
+                            <div style="flex:1;aspect-ratio:3/4.2;border-radius:8px;background:{{b.color}};display:flex;align-items:flex-end;padding:8px;">
+                              <span style="font-size:10.5px;font-weight:600;color:#fff;line-height:1.3;">{{b.title}}</span>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </div>
+
+                      <div style="background:#ffffff;border:1px solid #e0e0e0;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="font-size:11px;font-weight:600;color:#0066cc;letter-spacing:0.5px;">인상 깊은 문구</div>
+                        <div style="letter-spacing:-0.3px;font-size:14.5px;line-height:1.75;color:#1d1d1f;">{{quoteDraft}}</div>
+                      </div>
+
+                      <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:600;font-size:14px;color:#1d1d1f;">독서 기록</div>
+                        <div style="display:flex;flex-direction:column;gap:0px;">
+                          <sc-for list="{{timeline}}" as="t" hint-placeholder-count="4">
+                            <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(29,29,31,0.07);">
+                              <div style="font-size:11.5px;color:rgba(29,29,31,0.4);width:44px;flex:none;">{{t.date}}</div>
+                              <div style="font-size:12.5px;color:#1d1d1f;">{{t.action}}</div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                </div>
+
+                <div style="display:flex;padding:10px 12px 26px;background:#ffffff;border-top:1px solid #e0e0e0;">
+                  <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="4">
+                    <button onclick="{{ tb.onTap }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;padding:4px 0;">
+                      <span style="font-size:19px;opacity:{{tb.opacity}};">{{tb.icon}}</span>
+                      <span style="font-size:10px;font-weight:600;color:{{tb.color}};">{{tb.label}}</span>
+                    </button>
+                  </sc-for>
+                </div>
+
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-if>
+
+      </div>
+
+    </x-import>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+
+  state = {
+    route: 'splash',
+    slideIndex: 0,
+    tab: 'home',
+    subview: null,
+    matchFeedLayout: 'stack',
+    selectedMatchId: null,
+    activeChatId: null,
+    likedMatchIds: [],
+    passedMatchIds: [],
+    cardPointer: 0,
+    mySlots: [
+      { title: '여름의 그늘', color: '#4F6D5A' },
+      null,
+      null,
+    ],
+    selectedGenres: ['에세이'],
+    selectedAuthors: ['무라카미 하루키'],
+    quoteDraft: '우리는 결국 각자의 페이지를 넘기며 살아간다.',
+    offlineRegion: '천안',
+    offlineSubmitted: false,
+    chatDraft: '',
+    loginEmail: '',
+    composeQuery: '',
+    composeQuote: '',
+    composeComment: '',
+    composeBookId: null,
+    userPosts: [],
+    typing: false,
+    replyIdx: 0,
+    likedPosts: [],
+    burstKey: null,
+  };
+
+  bookApiPool = [
+    { id: 'b1', title: '싯다르타', author: '헤르만 헤세', coverUrl: 'assets/cover-siddhartha.png' },
+    { id: 'b2', title: '프로젝트 헤일메리', author: '앤디 위어', coverUrl: 'assets/cover-hailmary.png' },
+    { id: 'b3', title: '모순', author: '양귀자', coverUrl: 'assets/cover-mosoon.png' },
+    { id: 'b4', title: '이기적 유전자', author: '리처드 도킨스', coverUrl: 'assets/cover-selfishgene.png' },
+  ];
+
+  autoReplies = [
+    '방금 그 문장, 저도 밑줄 그었던 부분이에요 📖',
+    '오, 그 부분 이야기 더 듣고 싶어요. 어떤 점이 와닿았나요?',
+    '주말에 그 책 들고 카페 가려고요. 같이 이야기 나눠요 ☕',
+  ];
+
+  slides = [
+    { title: '나의 서재를 기록하기', desc: '인생책과 좋아하는 문구로\n나만의 책 프로필을 만들어보세요', emoji: '📖', color: '#f5f5f7' },
+    { title: '독서 피드에서 나누기', desc: '오늘 읽은 문장과 감상을 올리고\n같은 책을 읽는 사람들과 이야기해요', emoji: '📚', color: '#f5f5f7' },
+    { title: '취향이 닿으면, 만남으로', desc: '책 취향과 가치관이 통하는 사람을\n만남 탭에서 이어드려요', emoji: '✨', color: '#f5f5f7' },
+  ];
+
+  genreOptions = ['소설', '인문', '에세이', '과학', '비즈니스', '시', '철학', '역사'];
+  authorOptions = ['무라카미 하루키', '김영하', '오사다 히로', '메리 올리버', '알랭 드 보통', '정세랑'];
+  slotPool = [
+    { title: '말과 침묵 사이', color: '#C96A22' },
+    { title: '느슨한 계절', color: '#8A6D46' },
+    { title: '아무튼, 산책', color: '#B0522F' },
+    { title: '여름의 그늘', color: '#4F6D5A' },
+    { title: '고요한 일기', color: '#6E5849' },
+  ];
+
+  matches = [
+    { id: 'm1', name: '이서연', age: 29, job: '편집자', distance: '2km', matchPercent: 92, avatarColor: '#C96A22', initial: '이', avatarUrl: 'assets/avatar-seoyeon.png',
+      books: [{ title: '말과 침묵 사이', color: '#C96A22' }, { title: '여름의 그늘', color: '#4F6D5A' }, { title: '느슨한 계절', color: '#8A6D46' }],
+      quote: '"우리는 결국 각자의 페이지를 넘기며 살아간다"',
+      recentBook: '아무튼, 산책',
+      tags: ['무라카미 하루키를 인생작가로 꼽음', '한 달에 2권 이상 독서', '혼자만의 시간을 중요하게 생각함'],
+      reasonSummary: '두 분 다 무라카미 하루키를 인생작가로 꼽으셨고, 에세이 장르를 즐겨 읽어요.',
+      aiOpener: '두 분 다 무라카미 하루키를 인생작가로 꼽으셨어요. "여름의 그늘"에서 가장 좋아하는 문장부터 물어보는 건 어떨까요?' },
+    { id: 'm2', name: '박도윤', age: 31, job: '건축사무소 근무', distance: '3.4km', matchPercent: 87, avatarColor: '#4F6D5A', initial: '박', avatarUrl: 'assets/avatar-doyoon.png',
+      books: [{ title: '고요한 일기', color: '#6E5849' }, { title: '설계된 우연', color: '#B0522F' }, { title: '아침의 서재', color: '#D9C08A' }],
+      quote: '"모든 좋은 건축은 결국 사람을 향한다"',
+      recentBook: '공간의 발견',
+      tags: ['인문/철학 장르 선호', '밑줄 마니아', '주말마다 서점 방문'],
+      reasonSummary: '인문/철학 분야를 즐겨 읽고, 밑줄 마니아라는 점이 비슷해요.',
+      aiOpener: '두 분 다 "공간의 발견"을 인상 깊게 읽으셨네요. 가장 기억에 남는 구절을 물어보세요.' },
+    { id: 'm3', name: '한소율', age: 27, job: '일러스트레이터', distance: '1.1km', matchPercent: 81, avatarColor: '#B0522F', initial: '한', avatarUrl: 'assets/avatar-soyul.png',
+      books: [{ title: '색채의 기억', color: '#C96A22' }, { title: '작은 세계', color: '#8A6D46' }, { title: '느린 산책', color: '#6E5849' }],
+      quote: '"그림은 결국 못다 한 말이다"',
+      recentBook: '작은 세계',
+      tags: ['시/에세이 선호', '한 달에 1권'],
+      reasonSummary: '시와 에세이를 즐겨 읽고, 감성적인 문장을 좋아하는 취향이 닮았어요.',
+      aiOpener: '"작은 세계"를 두 분 다 최근에 읽으셨어요. 가장 좋아하는 장면부터 이야기해보세요.' },
+    { id: 'm4', name: '오지환', age: 30, job: '공무원', distance: '4.2km', matchPercent: 76, avatarColor: '#8A6D46', initial: '오', avatarUrl: 'assets/avatar-jihwan.png',
+      books: [{ title: '평범한 나날들', color: '#B0522F' }, { title: '느린 저녁', color: '#4F6D5A' }, { title: '도시의 틈', color: '#D9C08A' }],
+      quote: '"평범함 속에 진짜 이야기가 있다"',
+      recentBook: '평범한 나날들',
+      tags: ['역사/인문 선호', '주 3회 독서'],
+      reasonSummary: '역사와 인문 분야 취향이 겹치고, 꾸준한 독서 습관이 닮았어요.',
+      aiOpener: '"평범한 나날들"의 어떤 부분이 가장 인상 깊으셨는지 물어보세요.' },
+  ];
+
+  feedPosts = [
+    { user: '이서연', book: '싯다르타', coverUrl: 'assets/cover-siddhartha.png', quote: '배움은 결국 스스로 강을 건너며 얻는 것.', comment: '천천히, 두 번 읽고 싶은 책', likes: 128 },
+    { user: '박도윤', book: '프로젝트 헤일메리', coverUrl: 'assets/cover-hailmary.png', quote: '우주 한가운데서도 우정은 자란다.', comment: '밤새 읽었어요. 과학과 감동 둘 다', likes: 156 },
+    { user: '한소율', book: '모순', coverUrl: 'assets/cover-mosoon.png', quote: '삶은 언제나 두 개의 진심 사이에서 흔들린다.', comment: '양귀자의 문장은 오래 남는다', likes: 94 },
+    { user: '오지환', book: '이기적 유전자', coverUrl: 'assets/cover-selfishgene.png', quote: '유전자의 눈으로 보면 세상이 다르게 보인다.', comment: '관점을 뒤집어준 과학 고전', likes: 72 },
+  ];
+
+  sameBookGroups = [
+    { title: '싯다르타', coverUrl: 'assets/cover-siddhartha.png', count: 214 },
+    { title: '프로젝트 헤일메리', coverUrl: 'assets/cover-hailmary.png', count: 168 },
+    { title: '모순', coverUrl: 'assets/cover-mosoon.png', count: 132 },
+    { title: '이기적 유전자', coverUrl: 'assets/cover-selfishgene.png', count: 89 },
+  ];
+
+  timeline = [
+    { date: '7.02', action: '"느슨한 계절" 완독' },
+    { date: '6.24', action: '인생책 문구 업데이트' },
+    { date: '6.11', action: '"아무튼, 산책" 리뷰 작성' },
+    { date: '5.30', action: '독서 챌린지 참여 시작' },
+  ];
+
+  regions = ['천안', '대전', '세종', '청주'];
+  hpEvents = [
+    { region: '천안', place: '터무니책방', date: '7.11 (토)', time: '오후 2시', day: 11, seats: '4/8' },
+    { region: '대전', place: '다다르다 서점', date: '7.18 (토)', time: '오후 3시', day: 18, seats: '6/8' },
+    { region: '세종', place: '북살롱 온', date: '7.25 (토)', time: '오후 2시', day: 25, seats: '2/8' },
+    { region: '청주', place: '앨리스 책방', date: '7.26 (일)', time: '오전 11시', day: 26, seats: '5/8' },
+  ];
+  tabDefs = [
+    { key: 'home', label: '홈', icon: '📚' },
+    { key: 'match', label: '만남', icon: '✨' },
+    { key: 'events', label: '참가', icon: '🗓️' },
+    { key: 'chat', label: '채팅', icon: '💬' },
+    { key: 'my', label: '마이', icon: '📕' },
+  ];
+
+  chatSeed = {
+    m1: { messages: [
+      { from: 'them', text: '안녕하세요! 인생책이 겹쳐서 신기했어요 :)' },
+      { from: 'me', text: '저도요! "여름의 그늘" 좋아하시는구나' },
+      { from: 'them', text: '네 맞아요, 마지막 장 읽고 한참 멍했어요' },
+    ] },
+    m2: { messages: [
+      { from: 'them', text: '"공간의 발견" 진짜 좋았죠?' },
+      { from: 'me', text: '네 저도 밑줄 엄청 그었어요' },
+    ] },
+  };
+
+  toggleInArray(arr, val, max) {
+    if (arr.includes(val)) return arr.filter(v => v !== val);
+    if (max && arr.length >= max) return arr;
+    return [...arr, val];
+  }
+
+  renderVals() {
+    const s = this.state;
+    const { feedPosts, sameBookGroups, timeline } = this;
+
+    const showSplash = s.route === 'splash';
+    const showLogin = s.route === 'login';
+    const showSlides = s.route === 'slides';
+    const showBookSetup = s.route === 'booksetup' || s.subview === 'bookEdit';
+    const showMain = s.route === 'main';
+    const isEditingProfile = s.subview === 'bookEdit';
+
+    const currentSlide = this.slides[s.slideIndex];
+    const slides = this.slides.map((sl, i) => ({
+      dotWidth: i === s.slideIndex ? 22 : 7,
+      dotColor: i === s.slideIndex ? '#0066cc' : 'rgba(29,29,31,0.18)',
+    }));
+    const slideButtonLabel = s.slideIndex < this.slides.length - 1 ? '다음' : '책 프로필 만들기';
+
+    const mySlotsView = s.mySlots.map((slot, i) => ({
+      filled: !!slot,
+      empty: !slot,
+      title: slot ? slot.title : '',
+      bg: slot ? slot.color : '#ffffff',
+      border: slot ? 'none' : '1.5px dashed rgba(29,29,31,0.2)',
+      onTap: () => this.setState(st => {
+        const next = [...st.mySlots];
+        if (next[i]) { next[i] = null; }
+        else { next[i] = this.slotPool[i % this.slotPool.length]; }
+        return { mySlots: next };
+      }),
+    }));
+
+    const genreChips = this.genreOptions.map(g => ({
+      label: g,
+      bg: s.selectedGenres.includes(g) ? '#1d1d1f' : '#ffffff',
+      color: s.selectedGenres.includes(g) ? '#ffffff' : '#1d1d1f',
+      border: s.selectedGenres.includes(g) ? '#1d1d1f' : '#d2d2d7',
+      onTap: () => this.setState(st => ({ selectedGenres: this.toggleInArray(st.selectedGenres, g) })),
+    }));
+    const authorChips = this.authorOptions.map(a => ({
+      label: a,
+      bg: s.selectedAuthors.includes(a) ? '#0066cc' : '#ffffff',
+      color: s.selectedAuthors.includes(a) ? '#ffffff' : '#1d1d1f',
+      border: s.selectedAuthors.includes(a) ? '#0066cc' : '#d2d2d7',
+      onTap: () => this.setState(st => ({ selectedAuthors: this.toggleInArray(st.selectedAuthors, a, 5) })),
+    }));
+
+    const bookSetupButtonLabel = isEditingProfile ? '저장하기' : '완료';
+
+    // main app
+    const tab = s.tab;
+    const subview = s.subview;
+    const showMatchDetail = subview === 'matchDetail';
+    const showCompose = subview === 'compose';
+    const showChatDetail = subview === 'chatDetail';
+    const showOffline = subview === 'offline';
+    const showTabbed = !subview;
+
+    const isTabHome = tab === 'match';
+    const isTabFeed = tab === 'home';
+    const isTabChat = tab === 'chat';
+    const isTabMy = tab === 'my';
+    const isTabEvents = tab === 'events';
+    const tabTitleMap = { home: '위드북', match: '만남', events: '오프라인 참가', chat: '채팅', my: '마이 서재' };
+
+    const eventDays = this.hpEvents.map(e => e.day);
+    const calendarDows = ['일', '월', '화', '수', '목', '금', '토'];
+    const calendarCells = [];
+    for (let i = 0; i < 3; i++) calendarCells.push({ label: '', bg: 'transparent', color: 'transparent', weight: 400 });
+    for (let d = 1; d <= 31; d++) {
+      const isEvent = eventDays.includes(d);
+      calendarCells.push({
+        label: String(d),
+        bg: isEvent ? '#0066cc' : 'transparent',
+        color: isEvent ? '#ffffff' : 'rgba(29,29,31,0.65)',
+        weight: isEvent ? 600 : 400,
+      });
+    }
+    const hpEvents = this.hpEvents.map(ev => ({
+      ...ev,
+      onApply: () => this.setState({ subview: 'offline', offlineRegion: ev.region, offlineSubmitted: false, offlineFromChat: false }),
+    }));
+    const tabTitle = tabTitleMap[tab];
+
+    const tabs = this.tabDefs.map(t => ({
+      icon: t.icon, label: t.label,
+      opacity: t.key === tab ? 1 : 0.4,
+      color: t.key === tab ? '#0066cc' : 'rgba(29,29,31,0.4)',
+      onTap: () => this.setState({ tab: t.key }),
+    }));
+
+    const remaining = this.matches.filter(m => !s.likedMatchIds.includes(m.id) && !s.passedMatchIds.includes(m.id));
+    const currentCard = remaining[0];
+    const hasCurrentCard = !!currentCard;
+    const noCurrentCard = !currentCard;
+
+    const layoutOptions = ['stack', 'list', 'magazine'].map(k => ({
+      label: k === 'stack' ? '카드' : k === 'list' ? '리스트' : '매거진',
+      bg: s.matchFeedLayout === k ? '#1d1d1f' : 'transparent',
+      color: s.matchFeedLayout === k ? '#ffffff' : 'rgba(29,29,31,0.55)',
+      onTap: () => this.setState({ matchFeedLayout: k }),
+    }));
+
+    const matchesFeed = this.matches.map(m => ({
+      ...m,
+      onTap: () => this.setState({ subview: 'matchDetail', selectedMatchId: m.id }),
+    }));
+
+    const selectedMatchRaw = this.matches.find(m => m.id === s.selectedMatchId) || this.matches[0];
+    const p = selectedMatchRaw.matchPercent;
+    const selectedMatch = {
+      ...selectedMatchRaw,
+      breakdown: [
+        { label: '겹치는 장르', pct: Math.min(99, p + 5) },
+        { label: '좋아하는 작가', pct: Math.max(55, p - 8) },
+        { label: '문구 감성 유사도', pct: p - 2 },
+      ].map(b => ({ ...b, width: b.pct + '%' })),
+    };
+
+    const cq = (s.composeQuery || '').trim();
+    const composeResults = this.bookApiPool
+      .filter(b => !cq || b.title.includes(cq) || b.author.includes(cq))
+      .map(b => ({
+        ...b,
+        selected: s.composeBookId === b.id,
+        border: s.composeBookId === b.id ? '#0066cc' : '#e0e0e0',
+        onTap: () => this.setState({ composeBookId: b.id }),
+      }));
+
+    const avatarByUser = {
+      '이서연': 'assets/avatar-seoyeon.png',
+      '박도윤': 'assets/avatar-doyoon.png',
+      '한소율': 'assets/avatar-soyul.png',
+      '오지환': 'assets/avatar-jihwan.png',
+      '나': 'assets/avatar-me.png',
+    };
+    const feedTimes = ['방금 전', '1시간 전', '3시간 전', '어제', '2일 전'];
+    const likedSet = s.likedPosts || [];
+    const mergedFeedPosts = (s.userPosts || []).concat(this.feedPosts).map((p, i) => {
+      const key = p.user + '|' + p.book;
+      const liked = likedSet.includes(key);
+      return {
+        ...p,
+        avatarUrl: avatarByUser[p.user] || 'assets/avatar-me.png',
+        time: feedTimes[i % feedTimes.length],
+        heartGlyph: liked ? '♥' : '♡',
+        heartColor: liked ? '#0066cc' : '#1d1d1f',
+        likeCount: (p.likes || 0) + (liked ? 1 : 0),
+        showHeart: s.burstKey === key,
+        onLike: () => this.setState(st => {
+          const cur = st.likedPosts || [];
+          return { likedPosts: cur.includes(key) ? cur.filter(k => k !== key) : cur.concat([key]) };
+        }),
+        onDouble: () => {
+          this.setState(st => {
+            const cur = st.likedPosts || [];
+            return { likedPosts: cur.includes(key) ? cur : cur.concat([key]), burstKey: key };
+          });
+          clearTimeout(this._burstTimer);
+          this._burstTimer = setTimeout(() => this.setState({ burstKey: null }), 800);
+        },
+      };
+    });
+
+    const stories = [
+      { name: '내 서재', avatarUrl: 'assets/avatar-me.png', ring: '#e0e0e0' },
+      { name: '이서연', avatarUrl: 'assets/avatar-seoyeon.png', ring: '#0066cc' },
+      { name: '박도윤', avatarUrl: 'assets/avatar-doyoon.png', ring: '#0066cc' },
+      { name: '한소율', avatarUrl: 'assets/avatar-soyul.png', ring: '#0066cc' },
+      { name: '오지환', avatarUrl: 'assets/avatar-jihwan.png', ring: '#e0e0e0' },
+    ];
+
+    const chatThreads = Object.keys(this.chatSeed).map(id => {
+      const m = this.matches.find(mm => mm.id === id);
+      const seed = this.chatSeed[id];
+      const last = seed.messages[seed.messages.length - 1];
+      return {
+        id, name: m.name, avatarColor: m.avatarColor, initial: m.initial, avatarUrl: m.avatarUrl,
+        lastMsg: last.text, time: id === 'm1' ? '5분 전' : '어제',
+        onTap: () => this.setState({ subview: 'chatDetail', activeChatId: id }),
+      };
+    });
+
+    const activeId = s.activeChatId || 'm1';
+    const activeMatch = this.matches.find(m => m.id === activeId);
+    const seed = this.chatSeed[activeId] || { messages: [] };
+    const activeChat = {
+      name: activeMatch.name, initial: activeMatch.initial, avatarColor: activeMatch.avatarColor, avatarUrl: activeMatch.avatarUrl,
+      aiOpener: activeMatch.aiOpener,
+      messages: seed.messages.concat(s.chatDraftSent && s.chatDraftSent[activeId] ? s.chatDraftSent[activeId] : []).map(m => ({
+        text: m.text,
+        align: m.from === 'me' ? 'flex-end' : 'flex-start',
+        bg: m.from === 'me' ? '#0066cc' : '#ffffff',
+        color: m.from === 'me' ? '#ffffff' : '#1d1d1f',
+      })),
+    };
+
+    const regionChips = this.regions.map(r => ({
+      label: r,
+      bg: s.offlineRegion === r ? '#0066cc' : '#ffffff',
+      color: s.offlineRegion === r ? '#ffffff' : '#1d1d1f',
+      border: s.offlineRegion === r ? '#0066cc' : '#d2d2d7',
+      onTap: () => this.setState({ offlineRegion: r }),
+    }));
+
+    const myBooksDisplay = s.mySlots.map((slot, i) => slot || this.slotPool[i % this.slotPool.length]);
+
+    return {
+      showSplash, showLogin, showSlides, showBookSetup, showMain, isEditingProfile,
+      startOnboarding: () => this.setState({ route: 'login' }),
+      loginEmail: s.loginEmail || '',
+      setLoginEmail: (e) => this.setState({ loginEmail: e.target.value }),
+      loginContinue: () => this.setState({ route: 'slides' }),
+      currentSlide, slides, slideButtonLabel,
+      nextSlide: () => this.setState(st => {
+        if (st.slideIndex < this.slides.length - 1) return { slideIndex: st.slideIndex + 1 };
+        return { route: 'booksetup' };
+      }),
+      mySlotsView, genreChips, authorChips, bookSetupButtonLabel,
+      quoteDraft: s.quoteDraft,
+      setQuoteDraft: (e) => this.setState({ quoteDraft: e.target.value }),
+      completeBookSetup: () => {
+        if (isEditingProfile) this.setState({ subview: null });
+        else this.setState({ route: 'main' });
+      },
+      closeBookEdit: () => this.setState({ subview: null }),
+
+      showMatchDetail, showChatDetail, showOffline, showTabbed, showCompose,
+      openCompose: () => this.setState({ subview: 'compose' }),
+      closeCompose: () => this.setState({ subview: null }),
+      composeQuery: s.composeQuery || '',
+      setComposeQuery: (e) => this.setState({ composeQuery: e.target.value }),
+      composeQuote: s.composeQuote || '',
+      setComposeQuote: (e) => this.setState({ composeQuote: e.target.value }),
+      composeComment: s.composeComment || '',
+      setComposeComment: (e) => this.setState({ composeComment: e.target.value }),
+      composeResults,
+      submitPost: () => this.setState(st => {
+        const book = this.bookApiPool.find(b => b.id === st.composeBookId) || this.bookApiPool[0];
+        const post = {
+          user: '나', book: book.title, coverUrl: book.coverUrl,
+          quote: (st.composeQuote || '').trim() || '아직 문구를 고르는 중이에요.',
+          comment: (st.composeComment || '').trim() || '방금 기록을 남겼어요',
+          likes: 0,
+        };
+        return { userPosts: [post, ...(st.userPosts || [])], subview: null, tab: 'home', composeQuery: '', composeQuote: '', composeComment: '', composeBookId: null };
+      }),
+      typingActive: !!s.typing,
+      isTabHome, isTabFeed, isTabChat, isTabMy, isTabEvents, tabTitle, tabs,
+      calendarDows, calendarCells, hpEvents,
+
+      layoutIsStack: s.matchFeedLayout === 'stack',
+      layoutIsList: s.matchFeedLayout === 'list',
+      layoutIsMagazine: s.matchFeedLayout === 'magazine',
+      layoutOptions,
+      hasCurrentCard, noCurrentCard, currentCard,
+      openMatchDetailFromCard: () => currentCard && this.setState({ subview: 'matchDetail', selectedMatchId: currentCard.id }),
+      passCurrentCard: () => currentCard && this.setState(st => ({ passedMatchIds: [...st.passedMatchIds, currentCard.id] })),
+      likeCurrentCard: () => currentCard && this.setState(st => ({ likedMatchIds: [...st.likedMatchIds, currentCard.id] })),
+      matchesFeed,
+
+      selectedMatch,
+      closeMatchDetail: () => this.setState({ subview: null }),
+      passMatchFromDetail: () => this.setState(st => ({ subview: null, passedMatchIds: [...st.passedMatchIds, st.selectedMatchId] })),
+      startChatFromMatch: () => this.setState(st => ({ subview: 'chatDetail', activeChatId: st.selectedMatchId, likedMatchIds: [...st.likedMatchIds, st.selectedMatchId] })),
+
+      activeChat,
+      closeChatDetail: () => this.setState({ subview: null }),
+      chatDraft: s.chatDraft,
+      setChatDraft: (e) => this.setState({ chatDraft: e.target.value }),
+      sendMessage: () => {
+        if (!(s.chatDraft || '').trim()) return;
+        const id = s.activeChatId || 'm1';
+        this.setState(st => {
+          const sent = { ...(st.chatDraftSent || {}) };
+          sent[id] = (sent[id] || []).concat([{ from: 'me', text: st.chatDraft }]);
+          return { chatDraftSent: sent, chatDraft: '', typing: true };
+        });
+        clearTimeout(this._replyTimer);
+        this._replyTimer = setTimeout(() => {
+          this.setState(st => {
+            const sent = { ...(st.chatDraftSent || {}) };
+            const reply = this.autoReplies[(st.replyIdx || 0) % this.autoReplies.length];
+            sent[id] = (sent[id] || []).concat([{ from: 'them', text: reply }]);
+            return { chatDraftSent: sent, typing: false, replyIdx: (st.replyIdx || 0) + 1 };
+          });
+        }, 1500);
+      },
+      openOffline: () => this.setState({ subview: 'offline', offlineFromChat: true }),
+      offlineHeading: s.offlineFromChat
+        ? activeMatch.name + '님과 오프라인에서 만나보시겠어요?'
+        : '오프라인 책소개팅에 참가해보시겠어요?',
+
+      offlineRegion: s.offlineRegion, regionChips,
+      offlineSubmitted: s.offlineSubmitted,
+      offlineNotSubmitted: !s.offlineSubmitted,
+      submitOffline: () => this.setState({ offlineSubmitted: true }),
+      closeOffline: () => this.setState(st => ({ subview: st.offlineFromChat ? 'chatDetail' : null, offlineSubmitted: false })),
+
+      goToMatch: () => this.setState({ tab: 'match' }),
+      feedPosts: mergedFeedPosts, stories, sameBookGroups, chatThreads,
+      myBooksDisplay, timeline,
+      openBookEdit: () => this.setState({ subview: 'bookEdit' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
