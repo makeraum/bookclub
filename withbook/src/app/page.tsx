@@ -1,0 +1,78 @@
+'use client';
+
+import { AppProvider, useApp } from '../context/AppContext';
+import Splash from '../components/Splash';
+import Login from '../components/Login';
+import OnboardingSlides from '../components/OnboardingSlides';
+import BookProfileSetup from '../components/BookProfileSetup';
+import HomeFeed from '../components/HomeFeed';
+import ComposePost from '../components/ComposePost';
+import SeojaeDashboard from '../components/SeojaeDashboard';
+import SeojaeDetail from '../components/SeojaeDetail';
+import HighlightPairView from '../components/HighlightPairView';
+import OfflineEvents from '../components/OfflineEvents';
+import MyLibrary from '../components/MyLibrary';
+import GroupChat from '../components/GroupChat';
+import GateCelebration from '../components/GateCelebration';
+import BottomNav from '../components/BottomNav';
+
+function AppShell() {
+  const { route, tab, subView, authLoading } = useApp();
+
+  // 세션 확인 중 로딩 표시
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-dvh bg-surface">
+        <div className="flex flex-col items-center gap-3 animate-fade">
+          <div className="w-12 h-12 rounded-[14px] bg-ink flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+              <path d="M6 6h8v20H6V6zm12 0h8v20h-8V6z" fill="white" opacity="0.9" />
+              <path d="M14 8v16" stroke="#0066cc" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span className="text-[14px] text-sub">불러오는 중...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Pre-main routes
+  if (route === 'splash') return <Splash />;
+  if (route === 'login') return <Login />;
+  if (route === 'onboarding') return <OnboardingSlides />;
+  if (route === 'booksetup') return <BookProfileSetup />;
+
+  // Main app with tabs
+  return (
+    <div className="relative min-h-dvh bg-canvas">
+      {/* Tab content */}
+      <div className="animate-fade" key={tab}>
+        {tab === 'home' && <HomeFeed />}
+        {tab === 'seojae' && <SeojaeDashboard />}
+        {tab === 'participate' && <OfflineEvents />}
+        {tab === 'chat' && <GroupChat />}
+        {tab === 'my' && <MyLibrary />}
+      </div>
+
+      {/* Sub views (overlays) */}
+      {subView === 'compose' && <ComposePost />}
+      {subView === 'bookEdit' && <BookProfileSetup />}
+      {subView === 'gate1Celebration' && <GateCelebration />}
+      {subView === 'seojaeDetail' && <SeojaeDetail />}
+      {subView === 'highlightPairView' && <HighlightPairView />}
+
+      {/* Bottom navigation */}
+      <BottomNav />
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <AppProvider>
+      <div className="max-w-[430px] mx-auto w-full min-h-dvh bg-canvas">
+        <AppShell />
+      </div>
+    </AppProvider>
+  );
+}

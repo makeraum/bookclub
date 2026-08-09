@@ -1,0 +1,235 @@
+export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
+export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | null;
+
+export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
+
+export interface Book {
+  isbn: string;
+  title: string;
+  author: string;
+  coverUrl: string;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  favoriteBooks: (Book | null)[];
+  quote: string;
+  favoriteAuthors: string[];
+  genres: string[];
+  readingBadges: string[];
+}
+
+export interface Post {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  book: Book;
+  quote: string;
+  comment: string;
+  likes: number;
+  liked: boolean;
+  createdAt: string;
+}
+
+export interface StoryUser {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  hasNew: boolean;
+}
+
+export interface SameBookGroup {
+  book: Book;
+  readerCount: number;
+}
+
+export interface StoryCard {
+  book: Book;
+  quote: string;
+}
+
+export interface UserStory {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  cards: StoryCard[];
+}
+
+export interface ClubMember {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+export interface BookClub {
+  id: string;
+  name: string;
+  description: string;
+  book: Book;
+  memberCount: number;
+  maxMembers: number;
+  nextMeetingDate: string;
+  nextMeetingTime: string;
+  members: ClubMember[];
+}
+
+export type EventType = 'rotation' | 'bookclub' | 'gathering' | 'quarterly';
+export type Region = '천안' | '대전' | '세종' | '청주';
+
+export interface OfflineEvent {
+  id: string;
+  type: EventType;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  region: Region;
+  venue: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  fee: number;
+  book?: Book;
+  host: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  type: 'message' | 'system';
+  text: string;
+  createdAt: string;
+  isMe?: boolean;
+}
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  type: 'club' | 'event' | 'seojae' | 'highlight_pair';
+  createdAt: string;
+}
+
+export interface ChatMember {
+  roomId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  joinedAt: string;
+}
+
+export interface BookTopic {
+  question: string;
+  bookTitle: string;
+  bookAuthor: string;
+}
+
+// ── 게이트 시스템 ──
+
+export type GateLevel = 'reader' | 'recorder' | 'librarian'; // 독자 / 기록자 / 서재지기
+
+export interface UserGates {
+  gate0At: string | null; // 가입 게이트 통과 일시
+  gate1At: string | null; // 기록자 게이트 통과 일시
+  gate2At: string | null; // 라운지 게이트 통과 일시
+}
+
+export interface HighlightStats {
+  totalCount: number; // 내 밑줄 총 개수
+  bookCount: number;  // 밑줄을 남긴 책 수
+}
+
+// ── 밑줄 시스템 ──
+
+export type HighlightReactionType = 'felt_same' | 'want_to_read' | 'stays_long';
+
+export interface ReactionCounts {
+  felt_same: number;
+  want_to_read: number;
+  stays_long: number;
+  myReactions: Set<HighlightReactionType>;
+}
+
+export interface Highlight {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  book: Book;
+  sentence: string;
+  reason: string;
+  context: string;
+  reactions: ReactionCounts;
+  createdAt: string;
+}
+
+// ── 던바 구조 (L1~L4) ──
+
+export interface CityCommunity {
+  id: string;
+  region: Region;
+  name: string;
+  description: string;
+  maxMembers: number;
+  memberCount: number;
+}
+
+export interface CityCohort {
+  id: string;
+  communityId: string;
+  label: string;
+  startDate: string;
+}
+
+export interface SeojaeMember {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  role: 'member' | 'owner';
+  joinedAt: string;
+}
+
+export interface Seojae {
+  id: string;
+  communityId: string;
+  name: string;
+  description: string;
+  ownerId: string;
+  ownerName: string;
+  ownerAvatar: string;
+  chatRoomId: string | null;
+  maxMembers: number;
+  memberCount: number;
+  members: SeojaeMember[];
+  monthlyOfflineDay: string;
+  isActive: boolean;
+}
+
+export interface Chaekbang {
+  id: string;
+  communityId: string;
+  name: string;
+  description: string;
+  quarterlyMeetingInfo: string;
+  seojaeIds: string[];
+  seojaeCount: number;
+}
+
+export interface HighlightPair {
+  id: string;
+  seojaeId: string;
+  partnerUserId: string;
+  partnerName: string;
+  partnerAvatar: string;
+  book: Book;
+  chatRoomId: string | null;
+  streakCount: number;
+  lastInteractionDate: string | null;
+  periodStart: string;
+  isActive: boolean;
+}

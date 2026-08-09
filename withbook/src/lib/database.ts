@@ -1,0 +1,760 @@
+import { supabase } from './supabase';
+import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity } from './types';
+
+// ── Auth ──
+
+export async function signUp(email: string, password: string, name: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { name } },
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session;
+}
+
+// ── Profile ──
+
+export async function fetchProfile(userId: string): Promise<UserProfile | null> {
+  const { data: user } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (!user) return null;
+
+  const { data: books } = await supabase
+    .from('user_books')
+    .select('*')
+    .eq('user_id', userId)
+    .order('slot_order');
+
+  const favoriteBooks: (Book | null)[] = [null, null, null];
+  (books || []).forEach((b: { isbn: string; title: string; author: string; cover_url: string; slot_order: number }) => {
+    if (b.slot_order >= 0 && b.slot_order <= 2) {
+      favoriteBooks[b.slot_order] = {
+        isbn: b.isbn,
+        title: b.title,
+        author: b.author,
+        coverUrl: b.cover_url,
+      };
+    }
+  });
+
+  return {
+    id: user.id,
+    name: user.name || '',
+    avatarUrl: user.avatar_url || '/assets/avatar-me.png',
+    quote: user.quote || '',
+    favoriteAuthors: user.favorite_authors || [],
+    genres: user.genres || [],
+    readingBadges: user.reading_badges || [],
+    favoriteBooks,
+  };
+}
+
+export async function saveProfile(userId: string, profile: Partial<UserProfile>) {
+  // Update users table
+  const { error: userErr } = await supabase
+    .from('users')
+    .update({
+      name: profile.name,
+      quote: profile.quote,
+      favorite_authors: profile.favoriteAuthors,
+      genres: profile.genres,
+      reading_badges: profile.readingBadges,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (userErr) throw userErr;
+
+  // Update user_books — delete then re-insert
+  if (profile.favoriteBooks) {
+    await supabase.from('user_books').delete().eq('user_id', userId);
+
+    const booksToInsert = profile.favoriteBooks
+      .map((book, i) => book ? {
+        user_id: userId,
+        isbn: book.isbn,
+        title: book.title,
+        author: book.author,
+        cover_url: book.coverUrl,
+        slot_order: i,
+      } : null)
+      .filter((b): b is NonNullable<typeof b> => b !== null);
+
+    if (booksToInsert.length > 0) {
+      const { error: bookErr } = await supabase.from('user_books').insert(booksToInsert);
+      if (bookErr) throw bookErr;
+    }
+  }
+}
+
+// ── Posts ──
+
+export async function fetchPosts(): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      *,
+      users:user_id ( name, avatar_url ),
+      like_count:likes ( count )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw error;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const myId = session?.user?.id;
+
+  let myLikedPostIds = new Set<string>();
+  if (myId) {
+    const { data: myLikes } = await supabase
+      .from('likes')
+      .select('post_id')
+      .eq('user_id', myId);
+    myLikedPostIds = new Set((myLikes || []).map((l: { post_id: string }) => l.post_id));
+  }
+
+  return (data || []).map((p: Record<string, unknown>) => {
+    const users = p.users as { name: string; avatar_url: string } | null;
+    const likeArr = p.like_count as { count: number }[] | null;
+    return {
+      id: p.id as string,
+      userId: p.user_id as string,
+      userName: users?.name || '익명',
+      userAvatar: users?.avatar_url || '/assets/avatar-me.png',
+      book: {
+        isbn: p.book_isbn as string,
+        title: p.book_title as string,
+        author: p.book_author as string,
+        coverUrl: (p.book_cover_url as string) || '',
+      },
+      quote: p.quote as string,
+      comment: (p.comment as string) || '',
+      likes: likeArr?.[0]?.count ?? 0,
+      liked: myLikedPostIds.has(p.id as string),
+      createdAt: formatTimeAgo(p.created_at as string),
+      isReal: true,
+    };
+  });
+}
+
+export async function createPost(userId: string, book: Book, quote: string, comment: string) {
+  const { data, error } = await supabase
+    .from('posts')
+    .insert({
+      user_id: userId,
+      book_isbn: book.isbn,
+      book_title: book.title,
+      book_author: book.author,
+      book_cover_url: book.coverUrl,
+      quote,
+      comment,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// ── Likes ──
+
+export async function addLike(userId: string, postId: string) {
+  await supabase.from('likes').upsert({ user_id: userId, post_id: postId });
+}
+
+export async function removeLike(userId: string, postId: string) {
+  await supabase.from('likes').delete().eq('user_id', userId).eq('post_id', postId);
+}
+
+// ── Match Waitlist ──
+
+export async function checkWaitlist(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('match_waitlist')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return !!data;
+}
+
+export async function joinWaitlist(userId: string) {
+  const { error } = await supabase
+    .from('match_waitlist')
+    .upsert({ user_id: userId });
+  if (error) throw error;
+}
+
+export async function getWaitlistCount(): Promise<number> {
+  const { count } = await supabase
+    .from('match_waitlist')
+    .select('*', { count: 'exact', head: true });
+  return count || 0;
+}
+
+// ── Chat Rooms ──
+
+export async function ensureChatRoom(roomId: string, name: string, type: 'club' | 'event' | 'seojae' | 'highlight_pair') {
+  const { error } = await supabase
+    .from('chat_rooms')
+    .upsert({ id: roomId, name, type }, { onConflict: 'id' });
+  if (error) throw error;
+}
+
+export async function joinChatRoom(roomId: string, userId: string, userName: string) {
+  const { error } = await supabase
+    .from('chat_members')
+    .upsert({ room_id: roomId, user_id: userId }, { onConflict: 'room_id,user_id' });
+  if (error) throw error;
+
+  // 시스템 메시지: 입장
+  await supabase.from('chat_messages').insert({
+    room_id: roomId,
+    sender_id: userId,
+    type: 'system',
+    text: `${userName}님이 입장했습니다.`,
+  });
+}
+
+export async function leaveChatRoom(roomId: string, userId: string, userName: string) {
+  // 시스템 메시지: 퇴장 (멤버 삭제 전에 전송 — RLS 통과)
+  await supabase.from('chat_messages').insert({
+    room_id: roomId,
+    sender_id: userId,
+    type: 'system',
+    text: `${userName}님이 퇴장했습니다.`,
+  });
+
+  const { error } = await supabase
+    .from('chat_members')
+    .delete()
+    .eq('room_id', roomId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function fetchMyChatRooms(userId: string) {
+  const { data, error } = await supabase
+    .from('chat_members')
+    .select('room_id, chat_rooms!inner(id, name, type)')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  return (data || []).map((row: Record<string, unknown>) => {
+    const room = row.chat_rooms as { id: string; name: string; type: string };
+    return {
+      id: room.id,
+      name: room.name,
+      type: room.type as 'club' | 'event',
+    };
+  });
+}
+
+export async function fetchChatMessages(roomId: string, limit = 100): Promise<ChatMessage[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('id, room_id, sender_id, type, text, created_at, users:sender_id(name, avatar_url)')
+    .eq('room_id', roomId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const myId = session?.user?.id;
+
+  return (data || []).map((m: Record<string, unknown>) => {
+    const user = m.users as { name: string; avatar_url: string } | null;
+    return {
+      id: m.id as string,
+      roomId: m.room_id as string,
+      senderId: (m.sender_id as string) || '',
+      senderName: user?.name || '알 수 없음',
+      senderAvatar: user?.avatar_url || '/assets/avatar-me.png',
+      type: m.type as 'message' | 'system',
+      text: m.text as string,
+      createdAt: formatChatTime(m.created_at as string),
+      isMe: m.sender_id === myId && m.type === 'message',
+    };
+  });
+}
+
+export async function sendChatMessage(roomId: string, senderId: string, text: string) {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert({
+      room_id: roomId,
+      sender_id: senderId,
+      type: 'message',
+      text,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchChatMembers(roomId: string): Promise<ChatMember[]> {
+  const { data, error } = await supabase
+    .from('chat_members')
+    .select('room_id, user_id, joined_at, users:user_id(name, avatar_url)')
+    .eq('room_id', roomId)
+    .order('joined_at', { ascending: true });
+
+  if (error) throw error;
+
+  return (data || []).map((row: Record<string, unknown>) => {
+    const user = row.users as { name: string; avatar_url: string } | null;
+    return {
+      roomId: row.room_id as string,
+      userId: row.user_id as string,
+      userName: user?.name || '알 수 없음',
+      userAvatar: user?.avatar_url || '/assets/avatar-me.png',
+      joinedAt: row.joined_at as string,
+    };
+  });
+}
+
+export async function fetchRoomMemberCount(roomId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('chat_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('room_id', roomId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+export function formatChatTime(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const time = date.toLocaleTimeString('ko-KR', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  if (isToday) return time;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return `어제 ${time}`;
+
+  return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ` ${time}`;
+}
+
+// ── Highlights (밑줄) ──
+
+export async function createHighlight(
+  userId: string,
+  book: Book,
+  sentence: string,
+  reason: string,
+  context: string,
+) {
+  const { data, error } = await supabase
+    .from('highlights')
+    .insert({
+      user_id: userId,
+      book_isbn: book.isbn,
+      book_title: book.title,
+      book_author: book.author,
+      book_cover_url: book.coverUrl,
+      sentence,
+      reason,
+      context,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchHighlights(): Promise<Highlight[]> {
+  const { data, error } = await supabase
+    .from('highlights')
+    .select(`
+      *,
+      users:user_id ( name, avatar_url )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw error;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const myId = session?.user?.id;
+
+  // 모든 반응을 한 번에 가져오기
+  const highlightIds = (data || []).map((h: Record<string, unknown>) => h.id as string);
+  const { data: allReactions } = await supabase
+    .from('highlight_reactions')
+    .select('highlight_id, reaction_type, user_id')
+    .in('highlight_id', highlightIds);
+
+  // highlight_id별로 반응 집계
+  const reactionMap = new Map<string, { felt_same: number; want_to_read: number; stays_long: number; myReactions: Set<HighlightReactionType> }>();
+  for (const r of (allReactions || [])) {
+    const hId = r.highlight_id as string;
+    if (!reactionMap.has(hId)) {
+      reactionMap.set(hId, { felt_same: 0, want_to_read: 0, stays_long: 0, myReactions: new Set() });
+    }
+    const entry = reactionMap.get(hId)!;
+    const rType = r.reaction_type as HighlightReactionType;
+    entry[rType]++;
+    if (r.user_id === myId) {
+      entry.myReactions.add(rType);
+    }
+  }
+
+  return (data || []).map((h: Record<string, unknown>) => {
+    const users = h.users as { name: string; avatar_url: string } | null;
+    const hId = h.id as string;
+    const reactions = reactionMap.get(hId) || { felt_same: 0, want_to_read: 0, stays_long: 0, myReactions: new Set<HighlightReactionType>() };
+    return {
+      id: hId,
+      userId: h.user_id as string,
+      userName: users?.name || '익명',
+      userAvatar: users?.avatar_url || '/assets/avatar-me.png',
+      book: {
+        isbn: h.book_isbn as string,
+        title: h.book_title as string,
+        author: h.book_author as string,
+        coverUrl: (h.book_cover_url as string) || '',
+      },
+      sentence: h.sentence as string,
+      reason: (h.reason as string) || '',
+      context: (h.context as string) || '',
+      reactions,
+      createdAt: formatTimeAgo(h.created_at as string),
+    };
+  });
+}
+
+export async function addHighlightReaction(userId: string, highlightId: string, reactionType: HighlightReactionType) {
+  await supabase.from('highlight_reactions').upsert({
+    user_id: userId,
+    highlight_id: highlightId,
+    reaction_type: reactionType,
+  });
+}
+
+export async function removeHighlightReaction(userId: string, highlightId: string, reactionType: HighlightReactionType) {
+  await supabase
+    .from('highlight_reactions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('highlight_id', highlightId)
+    .eq('reaction_type', reactionType);
+}
+
+// ── Gates (게이트) ──
+
+export async function fetchUserGates(userId: string): Promise<UserGates> {
+  const { data } = await supabase
+    .from('user_gates')
+    .select('gate_0_at, gate_1_at, gate_2_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  return {
+    gate0At: data?.gate_0_at || null,
+    gate1At: data?.gate_1_at || null,
+    gate2At: data?.gate_2_at || null,
+  };
+}
+
+export async function passGate(userId: string, gate: 'gate_0' | 'gate_1' | 'gate_2') {
+  const column = `${gate}_at`;
+  // upsert: 없으면 삽입, 있으면 업데이트
+  const { error } = await supabase
+    .from('user_gates')
+    .upsert(
+      { user_id: userId, [column]: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+  if (error) throw error;
+}
+
+export async function fetchHighlightStats(userId: string): Promise<HighlightStats> {
+  const { data, error } = await supabase
+    .from('user_highlight_stats')
+    .select('total_count, book_count')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    // 뷰가 없거나 데이터 없을 경우 로컬 폴백
+    return { totalCount: 0, bookCount: 0 };
+  }
+
+  return {
+    totalCount: data?.total_count || 0,
+    bookCount: data?.book_count || 0,
+  };
+}
+
+// ── 던바 구조 (서재 / 밑줄 짝 / 도시 커뮤니티) ──
+
+export async function fetchAllSeojae(communityId: string): Promise<Seojae[]> {
+  const { data, error } = await supabase
+    .from('seojae')
+    .select(`
+      *,
+      owner:owner_id ( name, avatar_url ),
+      seojae_members ( user_id, role, joined_at, users:user_id ( name, avatar_url ) )
+    `)
+    .eq('community_id', communityId)
+    .eq('is_active', true);
+
+  if (error) throw error;
+
+  return (data || []).map((s: Record<string, unknown>) => {
+    const owner = s.owner as { name: string; avatar_url: string } | null;
+    const members = (s.seojae_members as Record<string, unknown>[]) || [];
+    return {
+      id: s.id as string,
+      communityId: s.community_id as string,
+      name: s.name as string,
+      description: (s.description as string) || '',
+      ownerId: s.owner_id as string,
+      ownerName: owner?.name || '',
+      ownerAvatar: owner?.avatar_url || '/assets/avatar-me.png',
+      chatRoomId: (s.chat_room_id as string) || null,
+      maxMembers: (s.max_members as number) || 15,
+      memberCount: members.length,
+      members: members.map((m: Record<string, unknown>) => {
+        const u = m.users as { name: string; avatar_url: string } | null;
+        return {
+          userId: m.user_id as string,
+          userName: u?.name || '',
+          userAvatar: u?.avatar_url || '/assets/avatar-me.png',
+          role: m.role as 'member' | 'owner',
+          joinedAt: m.joined_at as string,
+        };
+      }),
+      monthlyOfflineDay: (s.monthly_offline_day as string) || '',
+      isActive: s.is_active as boolean,
+    };
+  });
+}
+
+export async function fetchMySeojae(userId: string): Promise<Seojae[]> {
+  const { data, error } = await supabase
+    .from('seojae_members')
+    .select('seojae_id')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  const seojaeIds = data.map((r: { seojae_id: string }) => r.seojae_id);
+  const { data: seojaeData, error: sErr } = await supabase
+    .from('seojae')
+    .select(`
+      *,
+      owner:owner_id ( name, avatar_url ),
+      seojae_members ( user_id, role, joined_at, users:user_id ( name, avatar_url ) )
+    `)
+    .in('id', seojaeIds)
+    .eq('is_active', true);
+
+  if (sErr) throw sErr;
+
+  return (seojaeData || []).map((s: Record<string, unknown>) => {
+    const owner = s.owner as { name: string; avatar_url: string } | null;
+    const members = (s.seojae_members as Record<string, unknown>[]) || [];
+    return {
+      id: s.id as string,
+      communityId: s.community_id as string,
+      name: s.name as string,
+      description: (s.description as string) || '',
+      ownerId: s.owner_id as string,
+      ownerName: owner?.name || '',
+      ownerAvatar: owner?.avatar_url || '/assets/avatar-me.png',
+      chatRoomId: (s.chat_room_id as string) || null,
+      maxMembers: (s.max_members as number) || 15,
+      memberCount: members.length,
+      members: members.map((m: Record<string, unknown>) => {
+        const u = m.users as { name: string; avatar_url: string } | null;
+        return {
+          userId: m.user_id as string,
+          userName: u?.name || '',
+          userAvatar: u?.avatar_url || '/assets/avatar-me.png',
+          role: m.role as 'member' | 'owner',
+          joinedAt: m.joined_at as string,
+        };
+      }),
+      monthlyOfflineDay: (s.monthly_offline_day as string) || '',
+      isActive: s.is_active as boolean,
+    };
+  });
+}
+
+export async function joinSeojae(seojaeId: string, userId: string) {
+  // 정원 확인
+  const { count } = await supabase
+    .from('seojae_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('seojae_id', seojaeId);
+
+  const { data: seojae } = await supabase
+    .from('seojae')
+    .select('max_members')
+    .eq('id', seojaeId)
+    .single();
+
+  if (seojae && count !== null && count >= (seojae.max_members || 15)) {
+    throw new Error('정원이 초과되었습니다.');
+  }
+
+  const { error } = await supabase
+    .from('seojae_members')
+    .upsert({ seojae_id: seojaeId, user_id: userId, role: 'member' }, { onConflict: 'seojae_id,user_id' });
+  if (error) throw error;
+}
+
+export async function leaveSeojae(seojaeId: string, userId: string) {
+  const { error } = await supabase
+    .from('seojae_members')
+    .delete()
+    .eq('seojae_id', seojaeId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function fetchMyPairs(userId: string): Promise<HighlightPair[]> {
+  const { data, error } = await supabase
+    .from('highlight_pairs')
+    .select('*')
+    .eq('is_active', true)
+    .or(`user_a.eq.${userId},user_b.eq.${userId}`);
+
+  if (error) throw error;
+
+  const pairs: HighlightPair[] = [];
+  for (const p of (data || [])) {
+    const partnerId = p.user_a === userId ? p.user_b : p.user_a;
+    const { data: partner } = await supabase
+      .from('users')
+      .select('name, avatar_url')
+      .eq('id', partnerId)
+      .single();
+
+    pairs.push({
+      id: p.id,
+      seojaeId: p.seojae_id,
+      partnerUserId: partnerId,
+      partnerName: partner?.name || '알 수 없음',
+      partnerAvatar: partner?.avatar_url || '/assets/avatar-me.png',
+      book: { isbn: p.book_isbn, title: p.book_title, author: '', coverUrl: '' },
+      chatRoomId: p.chat_room_id || null,
+      streakCount: p.streak_count || 0,
+      lastInteractionDate: p.last_interaction_date || null,
+      periodStart: p.period_start,
+      isActive: p.is_active,
+    });
+  }
+  return pairs;
+}
+
+export async function reactToPairHighlight(pairId: string, reactorId: string, highlightId: string) {
+  const { error } = await supabase
+    .from('pair_daily_reactions')
+    .upsert({
+      pair_id: pairId,
+      reactor_id: reactorId,
+      highlight_id: highlightId,
+      reacted_date: new Date().toISOString().split('T')[0],
+    }, { onConflict: 'pair_id,reactor_id,reacted_date' });
+  if (error) throw error;
+}
+
+export async function checkTodayReacted(pairId: string, userId: string): Promise<boolean> {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await supabase
+    .from('pair_daily_reactions')
+    .select('id')
+    .eq('pair_id', pairId)
+    .eq('reactor_id', userId)
+    .eq('reacted_date', today)
+    .maybeSingle();
+  return !!data;
+}
+
+export async function fetchCityCommunity(region: string): Promise<CityCommunity | null> {
+  const { data } = await supabase
+    .from('city_communities')
+    .select('*')
+    .eq('region', region)
+    .single();
+
+  if (!data) return null;
+
+  const { count } = await supabase
+    .from('city_community_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('community_id', data.id);
+
+  return {
+    id: data.id,
+    region: data.region,
+    name: data.name,
+    description: data.description || '',
+    maxMembers: data.max_members || 150,
+    memberCount: count || 0,
+  };
+}
+
+// ── Utils ──
+
+function formatTimeAgo(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '방금 전';
+  if (mins < 60) return `${mins}분 전`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}일 전`;
+  return new Date(isoString).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}
