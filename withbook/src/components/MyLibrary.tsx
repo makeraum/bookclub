@@ -1,12 +1,12 @@
 'use client';
 
 import { useApp } from '../context/AppContext';
-import { PLACEHOLDER_COLORS } from '../lib/mock-data';
+import { PLACEHOLDER_COLORS, SHELL_METRIC_LABELS } from '../lib/mock-data';
 
 const GATE_LEVEL_LABEL = { reader: '독자', recorder: '기록자', librarian: '서재지기' } as const;
 
 export default function MyLibrary() {
-  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, highlightStats, gates, mySeojae, myHighlightPairs } = useApp();
+  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, highlightStats, gates, mySeojae, myHighlightPairs, shellMetrics } = useApp();
   const myPosts = posts.filter(p => p.userId === (authUserId || profile.id));
 
   return (
@@ -39,6 +39,9 @@ export default function MyLibrary() {
                 : 'bg-action text-white'
             }`}>
               {GATE_LEVEL_LABEL[gateLevel]}
+              {gateLevel === 'librarian' && (
+                <span className="ml-1 font-normal opacity-80">· 초대로 승급</span>
+              )}
             </span>
             {gates.gate1At ? (
               <span className="text-[12px] text-sub">
@@ -102,6 +105,29 @@ export default function MyLibrary() {
           </div>
         </div>
 
+        {/* 조개 지표 */}
+        <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
+          <h3 className="text-[15px] font-semibold text-ink mb-1" style={{ letterSpacing: '-0.3px' }}>조개 지표</h3>
+          <p className="text-[12px] text-sub mb-4">사고 팔 수 없는, 함께 읽어야만 쌓이는 지표</p>
+          <div className="space-y-3">
+            {SHELL_METRIC_LABELS.map(({ key, label, icon, description }) => {
+              const value = key === 'togetherDays'
+                ? (myHighlightPairs.reduce((sum, p) => sum + p.streakCount, 0) || shellMetrics.togetherDays)
+                : shellMetrics[key];
+              return (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="text-[16px] w-[24px] text-center flex-shrink-0">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13.5px] font-medium text-ink">{label}</p>
+                    <p className="text-[11.5px] text-sub">{description}</p>
+                  </div>
+                  <span className="text-[17px] font-bold text-ink flex-shrink-0">{value}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* AI 3원칙 브랜드 선언 */}
         <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
           <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>위드북이 지키는 3가지 원칙</h3>
@@ -129,6 +155,18 @@ export default function MyLibrary() {
             </div>
           </div>
         </div>
+
+        {/* 서재 운영 자료실 */}
+        <button
+          onClick={() => setSubView('resourceLibrary')}
+          className="press-scale w-full bg-surface mt-3 px-5 py-5 border-b border-border text-left flex items-center gap-3"
+        >
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>서재 운영 자료실</h3>
+            <p className="text-[12.5px] text-sub mt-0.5">진행표, 발제 질문, 스타터 키트 등</p>
+          </div>
+          <span className="text-[18px] text-sub flex-shrink-0">›</span>
+        </button>
 
         {/* Favorite books */}
         <div className="bg-surface mt-3 px-5 py-5 border-b border-border">

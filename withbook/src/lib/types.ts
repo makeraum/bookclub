@@ -1,6 +1,6 @@
 export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
-export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | null;
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | null;
 
 export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
 
@@ -218,6 +218,38 @@ export interface Chaekbang {
   quarterlyMeetingInfo: string;
   seojaeIds: string[];
   seojaeCount: number;
+}
+
+// ── 온보딩 답변 ──
+
+export interface OnboardingAnswers {
+  q1: number;
+  q2: number;
+  q3: number;
+}
+
+// ── 조개 지표 ──
+
+export interface ShellMetrics {
+  readingFollows: number;      // 이어읽기
+  togetherDays: number;        // 함께 읽은 날
+  discussionCredits: number;   // 발제 크레딧
+  mentorSticks: number;        // 붙듦
+  seasonBadges: number;        // 계절 배지
+}
+
+// ── 서재지기 초대 ──
+
+export interface LibrarianInvitation {
+  id: string;
+  inviteeId: string;
+  inviterId: string;
+  inviterName: string;
+  seojaeId: string | null;
+  seojaeName: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  message: string;
+  createdAt: string;
 }
 
 export interface HighlightPair {

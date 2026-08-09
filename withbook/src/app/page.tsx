@@ -14,6 +14,7 @@ import OfflineEvents from '../components/OfflineEvents';
 import MyLibrary from '../components/MyLibrary';
 import GroupChat from '../components/GroupChat';
 import GateCelebration from '../components/GateCelebration';
+import ResourceLibrary from '../components/ResourceLibrary';
 import BottomNav from '../components/BottomNav';
 
 function AppShell() {
@@ -36,7 +37,8 @@ function AppShell() {
     );
   }
 
-  // Pre-main routes
+  // Pre-main routes — 자료실은 어디서든 접근 가능
+  if (subView === 'resourceLibrary') return <ResourceLibrary />;
   if (route === 'splash') return <Splash />;
   if (route === 'login') return <Login />;
   if (route === 'onboarding') return <OnboardingSlides />;

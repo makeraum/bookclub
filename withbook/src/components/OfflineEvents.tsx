@@ -15,7 +15,7 @@ import {
 import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
-  const { appliedEvents, profile, gates, highlightStats, myCityRegion } = useApp();
+  const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView } = useApp();
   const myCommunity = MOCK_CITY_COMMUNITIES.find(c => c.region === myCityRegion);
   const [selectedEvent, setSelectedEvent] = useState<OfflineEvent | null>(null);
   const [showGateLock, setShowGateLock] = useState(false);
@@ -68,9 +68,17 @@ export default function OfflineEvents() {
     <div className="flex flex-col min-h-dvh bg-canvas">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-        <h1 className="text-[20px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
-          참가
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[20px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+            참가
+          </h1>
+          <button
+            onClick={() => setSubView('resourceLibrary')}
+            className="text-[13px] text-action font-medium press-scale"
+          >
+            자료실
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24">
