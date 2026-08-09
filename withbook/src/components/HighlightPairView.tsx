@@ -83,6 +83,14 @@ export default function HighlightPairView() {
               </div>
               <span className="text-[13px] text-sub">《{pair.book.title}》 함께 읽는 중</span>
             </div>
+
+            {/* 매칭 이유 (문장 기반, 점수 없음) */}
+            <p className="text-[11.5px] text-caption mt-2.5">
+              같은 서재에서 같은 책 《{pair.book.title}》을 읽고 있어 추천되었습니다
+            </p>
+            <p className="text-[10.5px] text-caption mt-0.5">
+              알고리즘이 고르고, 사람이 확인합니다
+            </p>
           </div>
 
           {/* 스트릭 카운터 */}

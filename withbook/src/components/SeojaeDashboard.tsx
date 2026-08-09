@@ -46,7 +46,8 @@ export default function SeojaeDashboard() {
           ) : (
             <div className="bg-surface rounded-[14px] border border-border p-5 text-center">
               <p className="text-[14px] text-sub">이번 달 밑줄 짝이 아직 매칭되지 않았어요</p>
-              <p className="text-[12px] text-caption mt-1">서재에서 같은 책을 읽는 짝이 자동으로 매칭됩니다</p>
+              <p className="text-[12px] text-caption mt-1">같은 서재에서 같은 책을 읽는 사람 중에서 추천됩니다</p>
+              <p className="text-[11px] text-caption mt-0.5">알고리즘이 고르고, 사람이 확인합니다</p>
             </div>
           )}
         </section>

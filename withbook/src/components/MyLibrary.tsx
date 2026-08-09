@@ -102,6 +102,34 @@ export default function MyLibrary() {
           </div>
         </div>
 
+        {/* AI 3원칙 브랜드 선언 */}
+        <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
+          <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>위드북이 지키는 3가지 원칙</h3>
+          <div className="bg-dark rounded-[14px] px-5 py-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-[15px] mt-0.5 flex-shrink-0">📖</span>
+              <div>
+                <p className="text-white/95 text-[13.5px] font-medium leading-[1.5]">AI가 대신 읽어주지 않습니다</p>
+                <p className="text-white/55 text-[12px] leading-[1.5] mt-0.5">요약 없이, 밑줄과 메모만 남깁니다</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[15px] mt-0.5 flex-shrink-0">✍️</span>
+              <div>
+                <p className="text-white/95 text-[13.5px] font-medium leading-[1.5]">밑줄은 사람이 쓴 것만 인정합니다</p>
+                <p className="text-white/55 text-[12px] leading-[1.5] mt-0.5">AI는 &ldquo;왜 이 문장이 남았나요?&rdquo;만 묻습니다</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[15px] mt-0.5 flex-shrink-0">🤝</span>
+              <div>
+                <p className="text-white/95 text-[13.5px] font-medium leading-[1.5]">매칭의 최종 확정은 사람이 합니다</p>
+                <p className="text-white/55 text-[12px] leading-[1.5] mt-0.5">알고리즘이 고르고, 사람이 확인합니다</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Favorite books */}
         <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
           <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>인생책 3권</h3>
