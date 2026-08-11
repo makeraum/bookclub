@@ -1,13 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region } from '../lib/types';
-import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS } from '../lib/mock-data';
+import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics } from '../lib/types';
+import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
 const DEFAULT_GATES: UserGates = { gate0At: null, gate1At: null, gate2At: null };
 const DEFAULT_STATS: HighlightStats = { totalCount: 0, bookCount: 0 };
+const DEFAULT_SHELL_METRICS: ShellMetrics = { readingFollows: 0, togetherDays: 0, discussionCredits: 0, mentorSticks: 0, seasonBadges: 0 };
 const GATE1_HIGHLIGHT_THRESHOLD = 30;
 const GATE1_BOOK_THRESHOLD = 3;
 
@@ -28,6 +29,9 @@ interface AppState {
   gates: UserGates;
   highlightStats: HighlightStats;
   gateLevel: GateLevel;
+  // 온보딩 답변 + 조개 지표
+  onboardingAnswers: OnboardingAnswers | null;
+  shellMetrics: ShellMetrics;
   // 던바 구조
   mySeojae: Seojae[];
   myHighlightPairs: HighlightPair[];
@@ -57,6 +61,7 @@ interface AppContextType extends AppState {
   addHighlight: (book: Book, sentence: string, reason: string, context: string) => Promise<void>;
   toggleHighlightReaction: (highlightId: string, reactionType: HighlightReactionType) => void;
   completeGate0: (book: Book, sentence: string, reason: string, context: string) => Promise<void>;
+  saveOnboardingAnswers: (answers: OnboardingAnswers) => Promise<void>;
   selectSeojae: (id: string | null) => void;
   selectPair: (id: string | null) => void;
   reactToPairHighlight: (pairId: string, highlightId: string) => Promise<void>;
@@ -91,6 +96,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [highlights, setHighlights] = useState<Highlight[]>(MOCK_HIGHLIGHTS);
   const [gates, setGates] = useState<UserGates>(DEFAULT_GATES);
   const [highlightStats, setHighlightStats] = useState<HighlightStats>(DEFAULT_STATS);
+
+  // 온보딩 답변 + 조개 지표
+  const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers | null>(null);
+  const [shellMetrics, setShellMetrics] = useState<ShellMetrics>(DEFAULT_SHELL_METRICS);
 
   // 던바 구조 상태
   const [mySeojae, setMySeojae] = useState<Seojae[]>(MOCK_SEOJAE.slice(0, 2));
@@ -149,6 +158,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setGates(userGates);
           const stats = await db.fetchHighlightStats(session.user.id);
           setHighlightStats(stats);
+
+          // 조개 지표 + 온보딩 답변 로드
+          try {
+            const metrics = await db.fetchShellMetrics(session.user.id);
+            setShellMetrics(metrics);
+          } catch {
+            setShellMetrics(MOCK_SHELL_METRICS);
+          }
+          try {
+            const answers = await db.fetchOnboardingAnswers(session.user.id);
+            setOnboardingAnswers(answers);
+          } catch {
+            // 답변 없으면 null 유지
+          }
 
           // Gate 0 통과 여부로 라우팅 결정
           if (userGates.gate0At) {
@@ -270,6 +293,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setGates(DEFAULT_GATES);
     setHighlightStats(DEFAULT_STATS);
     setOnboardingComplete(false);
+    setOnboardingAnswers(null);
+    setShellMetrics(DEFAULT_SHELL_METRICS);
     setJoinedSeojaeIds(new Set());
     setAppliedEvents(new Set());
     setMySeojae(MOCK_SEOJAE.slice(0, 2));
@@ -507,6 +532,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [authUserId, highlights]);
 
+  // ── 온보딩 답변 저장 ──
+  const saveOnboardingAnswersAction = useCallback(async (answers: OnboardingAnswers) => {
+    setOnboardingAnswers(answers);
+    if (authUserId) {
+      try {
+        await db.saveOnboardingAnswers(authUserId, answers);
+      } catch { /* DB 실패해도 로컬에는 저장됨 */ }
+    }
+  }, [authUserId]);
+
   // ── 스토리 ──
   const markStoryViewed = useCallback((userId: string) => {
     setViewedStoryUsers(prev => new Set(prev).add(userId));
@@ -564,6 +599,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         highlights, addHighlight, toggleHighlightReaction,
         gates, highlightStats, gateLevel,
         completeGate0,
+        // 온보딩 답변 + 조개 지표
+        onboardingAnswers, shellMetrics,
+        saveOnboardingAnswers: saveOnboardingAnswersAction,
         // 던바 구조
         mySeojae, myHighlightPairs, myCityRegion,
         selectedSeojaeId, selectedPairId,

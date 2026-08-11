@@ -2,7 +2,17 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOCK_SEOJAE, MOCK_OFFLINE_EVENTS, MOCK_BOOK_TOPICS, EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from '../lib/mock-data';
+import {
+  MOCK_SEOJAE,
+  MOCK_OFFLINE_EVENTS,
+  MOCK_BOOK_TOPICS,
+  EVENT_TYPE_COLORS,
+  EVENT_TYPE_LABELS,
+  DEMO_CHAT_ROOMS,
+  DEMO_CHAT_MESSAGES,
+  DEMO_BOOK_TOPICS,
+} from '../lib/mock-data';
+import type { DemoChatRoom } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 import type { ChatMessage, ChatMember } from '../lib/types';
@@ -39,7 +49,7 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
     };
   });
 
-  // DB에 없지만 로컬 상태로 참여 중인 방도 표시 (아직 DB 반영 전)
+  // DB에 없지만 로컬 상태로 참여 중인 방도 표시
   const dbIds = new Set(dbRooms.map(r => r.id));
   const localSeojaeRooms = MOCK_SEOJAE
     .filter(s => joinedSeojaeIds.has(s.id) && s.chatRoomId && !dbIds.has(s.chatRoomId!))
@@ -59,7 +69,6 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
       seojaeName: undefined,
       eventType: e.type,
     }));
-  // 밑줄 짝 채팅방
   const localPairRooms = myHighlightPairs
     .filter(p => p.chatRoomId && !dbIds.has(p.chatRoomId!))
     .map(p => ({
@@ -71,7 +80,11 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
       partnerAvatar: p.partnerAvatar,
     }));
 
-  const allRooms = [...rooms, ...localSeojaeRooms, ...localEventRooms, ...localPairRooms];
+  const realRooms = [...rooms, ...localSeojaeRooms, ...localEventRooms, ...localPairRooms];
+
+  // 실제 참여한 방이 없으면 데모 채팅방을 보여줌
+  // 실제 유저가 생기면 이 분기는 자연스럽게 사라집니다.
+  const showDemo = realRooms.length === 0;
 
   return (
     <div className="pb-24">
@@ -80,7 +93,45 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
         <h1 className="text-[20px] font-bold text-ink">채팅</h1>
       </header>
 
-      {allRooms.length === 0 ? (
+      {showDemo ? (
+        /* ── 데모 채팅 목록 ── */
+        <ul className="divide-y divide-border">
+          {DEMO_CHAT_ROOMS.map(room => {
+            const msgs = DEMO_CHAT_MESSAGES[room.id] || [];
+            const lastMsg = msgs.filter(m => m.type === 'message').at(-1);
+            return (
+              <li key={room.id}>
+                <button
+                  className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-muted/20 transition-colors"
+                  onClick={() => onSelectRoom(room.id)}
+                >
+                  <DemoRoomIcon room={room} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-ink truncate">{room.name}</span>
+                      {lastMsg && (
+                        <span className="text-[11px] text-sub flex-shrink-0">{lastMsg.createdAt.split(' ').slice(-1)[0]}</span>
+                      )}
+                    </div>
+                    {lastMsg && (
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className="text-[13px] text-sub truncate">
+                          {lastMsg.isMe ? '' : `${lastMsg.senderName}: `}{lastMsg.text}
+                        </p>
+                        {room.unreadCount > 0 && (
+                          <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-action text-white text-[11px] font-bold flex items-center justify-center">
+                            {room.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : realRooms.length === 0 ? (
         <div className="flex flex-col items-center justify-center pt-32 px-6 text-center">
           <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-sub">
@@ -91,8 +142,9 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
           <p className="text-[14px] text-sub leading-relaxed">서재에 참여하거나<br />오프라인 행사에 신청하면<br />채팅이 열려요</p>
         </div>
       ) : (
+        /* ── 실제 채팅 목록 ── */
         <ul className="divide-y divide-border">
-          {allRooms.map(room => (
+          {realRooms.map(room => (
             <li key={room.id}>
               <button
                 className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-muted/20 transition-colors"
@@ -144,6 +196,36 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
   );
 }
 
+/* ── 데모 방 아이콘 ── */
+function DemoRoomIcon({ room }: { room: DemoChatRoom }) {
+  if (room.type === 'highlight_pair') {
+    return (
+      <div className="w-12 h-12 rounded-full bg-muted/30 overflow-hidden flex-shrink-0">
+        {room.iconAvatar ? (
+          <img src={room.iconAvatar} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"><span className="text-[14px]">📖</span></div>
+        )}
+      </div>
+    );
+  }
+  if (room.type === 'seojae') {
+    return (
+      <div className="w-12 h-12 rounded-[12px] bg-action/10 flex items-center justify-center flex-shrink-0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066cc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      </div>
+    );
+  }
+  // event
+  return (
+    <div className="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF6B6B20' }}>
+      <span className="text-[11px] font-bold" style={{ color: '#FF6B6B' }}>로테</span>
+    </div>
+  );
+}
+
 /* ── 채팅방 뷰 ── */
 function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }) {
   const { profile, authUserId } = useApp();
@@ -153,13 +235,24 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 데모 방인지 확인
+  const isDemo = roomId.startsWith('demo-');
+  const demoRoom = DEMO_CHAT_ROOMS.find(r => r.id === roomId);
+
   const seojae = MOCK_SEOJAE.find(s => s.chatRoomId === roomId);
   const event = MOCK_OFFLINE_EVENTS.find(e => e.id === roomId);
-  const roomName = seojae?.name || event?.title || '채팅';
-  const topic = MOCK_BOOK_TOPICS[roomId];
+  const roomName = demoRoom?.name || seojae?.name || event?.title || '채팅';
+  const topic = DEMO_BOOK_TOPICS[roomId] || MOCK_BOOK_TOPICS[roomId];
 
   // 메시지 로드 + Realtime 구독
   useEffect(() => {
+    // 데모 방이면 데모 메시지 로드
+    if (isDemo) {
+      setMessages(DEMO_CHAT_MESSAGES[roomId] || []);
+      setMemberCount(demoRoom?.memberCount || 2);
+      return;
+    }
+
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     async function init() {
@@ -194,16 +287,14 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
               created_at: string;
             };
 
-            // 낙관적으로 추가한 메시지와 중복 방지
             setMessages(prev => {
               if (prev.some(m => m.id === row.id)) return prev;
-
               const isMe = row.sender_id === authUserId && row.type === 'message';
               const newMsg: ChatMessage = {
                 id: row.id,
                 roomId: row.room_id,
                 senderId: row.sender_id || '',
-                senderName: '', // 아래에서 조회
+                senderName: '',
                 senderAvatar: '/assets/avatar-me.png',
                 type: row.type as 'message' | 'system',
                 text: row.text,
@@ -213,7 +304,6 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
               return [...prev, newMsg];
             });
 
-            // sender 정보 조회해서 업데이트
             if (row.sender_id) {
               try {
                 const { data: user } = await supabase
@@ -233,7 +323,6 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
               } catch { /* ignore */ }
             }
 
-            // 시스템 메시지(입장/퇴장)면 멤버 수 갱신
             if (row.type === 'system') {
               try {
                 const count = await db.fetchRoomMemberCount(roomId);
@@ -252,7 +341,7 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
         supabase.removeChannel(channel);
       }
     };
-  }, [roomId, authUserId]);
+  }, [roomId, authUserId, isDemo, demoRoom?.memberCount]);
 
   // 메시지가 추가되면 스크롤
   useEffect(() => {
@@ -261,9 +350,28 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || !authUserId) return;
+    if (!text) return;
 
-    // 낙관적 메시지
+    // 데모 방에서도 메시지 전송 (로컬에만 추가)
+    if (isDemo) {
+      const demoMsg: ChatMessage = {
+        id: `demo-my-${Date.now()}`,
+        roomId,
+        senderId: 'me',
+        senderName: profile.name || '나',
+        senderAvatar: profile.avatarUrl,
+        type: 'message',
+        text,
+        createdAt: '방금',
+        isMe: true,
+      };
+      setMessages(prev => [...prev, demoMsg]);
+      setInput('');
+      return;
+    }
+
+    if (!authUserId) return;
+
     const optimisticId = `opt-${Date.now()}`;
     const optimisticMsg: ChatMessage = {
       id: optimisticId,
@@ -281,20 +389,18 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
 
     try {
       const created = await db.sendChatMessage(roomId, authUserId, text);
-      // 낙관적 메시지를 실제 ID로 교체
       setMessages(prev =>
         prev.map(m => m.id === optimisticId ? { ...m, id: created.id } : m)
       );
     } catch {
-      // 실패 시 낙관적 메시지 제거
       setMessages(prev => prev.filter(m => m.id !== optimisticId));
     }
-  }, [input, authUserId, roomId, profile.name, profile.avatarUrl]);
+  }, [input, authUserId, roomId, profile.name, profile.avatarUrl, isDemo]);
 
   return (
-    <div className="flex flex-col h-dvh bg-canvas">
+    <div className="fixed inset-0 z-40 flex flex-col bg-canvas">
       {/* 헤더 */}
-      <header className="sticky top-0 z-10 bg-surface border-b border-border flex items-center gap-3 px-4 py-3">
+      <header className="flex-shrink-0 bg-surface border-b border-border flex items-center gap-3 px-4 py-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
         <button onClick={onBack} className="p-1 -ml-1" aria-label="뒤로가기">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
@@ -306,18 +412,20 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
             <p className="text-[12px] text-sub">참여자 {memberCount}명</p>
           )}
         </div>
-        <button
-          onClick={() => setShowMembers(true)}
-          className="p-2 -mr-1 rounded-lg active:bg-muted/20"
-          aria-label="멤버 목록"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-        </button>
+        {!isDemo && (
+          <button
+            onClick={() => setShowMembers(true)}
+            className="p-2 -mr-1 rounded-lg active:bg-muted/20"
+            aria-label="멤버 목록"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </button>
+        )}
       </header>
 
       {/* 메시지 영역 */}
@@ -344,27 +452,29 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 하단 입력 바 */}
-      <div className="sticky bottom-0 bg-surface border-t border-border px-4 py-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSend(); }}
-          placeholder="메시지를 입력하세요"
-          className="flex-1 bg-muted/30 rounded-full px-4 py-2.5 text-[14px] text-ink placeholder:text-sub outline-none focus:ring-2 focus:ring-action/30"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          className="w-9 h-9 rounded-full bg-action flex items-center justify-center disabled:opacity-40 transition-opacity"
-          aria-label="전송"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        </button>
+      {/* 하단 입력 바 — 탭바 위에 노출, safe-area 포함 */}
+      <div className="flex-shrink-0 bg-surface border-t border-border px-4 py-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSend(); }}
+            placeholder="메시지를 입력하세요"
+            className="flex-1 bg-muted/30 rounded-full px-4 py-2.5 text-[14px] text-ink placeholder:text-sub outline-none focus:ring-2 focus:ring-action/30"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim()}
+            className="w-9 h-9 rounded-full bg-action flex items-center justify-center disabled:opacity-40 transition-opacity flex-shrink-0"
+            aria-label="전송"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* 멤버 목록 오버레이 */}

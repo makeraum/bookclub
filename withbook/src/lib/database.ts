@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity } from './types';
+import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity, OnboardingAnswers, ShellMetrics, LibrarianInvitation } from './types';
 
 // ── Auth ──
 
@@ -741,6 +741,105 @@ export async function fetchCityCommunity(region: string): Promise<CityCommunity 
     maxMembers: data.max_members || 150,
     memberCount: count || 0,
   };
+}
+
+// ── 온보딩 답변 ──
+
+export async function saveOnboardingAnswers(userId: string, answers: OnboardingAnswers) {
+  const { error } = await supabase
+    .from('onboarding_answers')
+    .upsert({
+      user_id: userId,
+      q1_answer: answers.q1,
+      q2_answer: answers.q2,
+      q3_answer: answers.q3,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+  if (error) throw error;
+}
+
+export async function fetchOnboardingAnswers(userId: string): Promise<OnboardingAnswers | null> {
+  const { data } = await supabase
+    .from('onboarding_answers')
+    .select('q1_answer, q2_answer, q3_answer')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!data) return null;
+  return { q1: data.q1_answer, q2: data.q2_answer, q3: data.q3_answer };
+}
+
+// ── 조개 지표 ──
+
+export async function fetchShellMetrics(userId: string): Promise<ShellMetrics> {
+  const [followsRes, creditsRes, mentorRes, seasonRes] = await Promise.all([
+    supabase
+      .from('reading_follows')
+      .select('id', { count: 'exact', head: true })
+      .eq('follower_id', userId),
+    supabase
+      .from('discussion_credits')
+      .select('id', { count: 'exact', head: true })
+      .eq('author_id', userId),
+    supabase
+      .from('mentor_links')
+      .select('id', { count: 'exact', head: true })
+      .eq('mentor_id', userId),
+    supabase
+      .from('season_completions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+  ]);
+
+  return {
+    readingFollows: followsRes.count || 0,
+    togetherDays: 0, // 라이브 계산은 클라이언트에서
+    discussionCredits: creditsRes.count || 0,
+    mentorSticks: mentorRes.count || 0,
+    seasonBadges: seasonRes.count || 0,
+  };
+}
+
+// ── 서재지기 초대 ──
+
+export async function fetchMyLibrarianInvitations(userId: string): Promise<LibrarianInvitation[]> {
+  const { data, error } = await supabase
+    .from('librarian_invitations')
+    .select('*, inviter:inviter_id(name), seojae:seojae_id(name)')
+    .eq('invitee_id', userId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map((row: Record<string, unknown>) => {
+    const inviter = row.inviter as { name: string } | null;
+    const seojae = row.seojae as { name: string } | null;
+    return {
+      id: row.id as string,
+      inviteeId: row.invitee_id as string,
+      inviterId: row.inviter_id as string,
+      inviterName: inviter?.name || '알 수 없음',
+      seojaeId: (row.seojae_id as string) || null,
+      seojaeName: seojae?.name || null,
+      status: row.status as 'pending' | 'accepted' | 'declined',
+      message: (row.message as string) || '',
+      createdAt: row.created_at as string,
+    };
+  });
+}
+
+export async function acceptLibrarianInvitation(userId: string, invitationId: string) {
+  const { error: updateErr } = await supabase
+    .from('librarian_invitations')
+    .update({ status: 'accepted', updated_at: new Date().toISOString() })
+    .eq('id', invitationId)
+    .eq('invitee_id', userId);
+
+  if (updateErr) throw updateErr;
+
+  // gate_2 통과
+  await passGate(userId, 'gate_2');
 }
 
 // ── Utils ──
