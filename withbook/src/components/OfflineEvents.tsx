@@ -15,7 +15,7 @@ import {
 import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
-  const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView } = useApp();
+  const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView, isTestMode } = useApp();
   const myCommunity = MOCK_CITY_COMMUNITIES.find(c => c.region === myCityRegion);
   const [selectedEvent, setSelectedEvent] = useState<OfflineEvent | null>(null);
   const [showGateLock, setShowGateLock] = useState(false);
@@ -36,8 +36,8 @@ export default function OfflineEvents() {
   }, [typeFilter, regionFilter, selectedDate]);
 
   const handleEventTap = (ev: OfflineEvent) => {
-    // rotation(소개팅) 타입은 Gate 2 필요
-    if (ev.type === 'rotation' && !gates.gate2At) {
+    // rotation(북 라운지) 타입은 Gate 2 필요
+    if (ev.type === 'rotation' && !gates.gate2At && !isTestMode) {
       setShowGateLock(true);
       return;
     }
@@ -336,7 +336,12 @@ function EventCard({
         )}
       </div>
 
-      <h4 className="text-[15px] font-semibold text-ink leading-snug mb-2">{event.title}</h4>
+      <h4 className="text-[15px] font-semibold text-ink leading-snug mb-1">{event.title}</h4>
+      {event.type === 'rotation' && (
+        <p className="text-[12px] text-sub mb-2 leading-relaxed">
+          책 취향이 닿는 사람들과 돌아가며 이야기하는 자리
+        </p>
+      )}
 
       <div className="space-y-1">
         <div className="flex items-center gap-2">
@@ -574,7 +579,7 @@ function EventDetail({
   );
 }
 
-/* ── Gate Lock Card (소개팅 이벤트 잠금 안내) ── */
+/* ── Gate Lock Card (북 라운지 이벤트 잠금 안내) ── */
 function GateLockCard({
   highlightStats,
   gate1At,

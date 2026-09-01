@@ -6,7 +6,7 @@ import Input from './ui/Input';
 import { useApp } from '../context/AppContext';
 
 export default function Login() {
-  const { handleSignUp, handleSignIn, handleGoogleSignIn } = useApp();
+  const { handleSignUp, handleSignIn, handleGoogleSignIn, handleDemoLogin, isTestMode } = useApp();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,10 +14,12 @@ export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
-  const passwordLongEnough = password.length >= 6;
+  const minPwLength = isTestMode ? 4 : 6;
+  const passwordLongEnough = password.length >= minPwLength;
   const passwordsMatch = password === passwordConfirm;
   const signupReady = mode === 'signup'
     ? !!(email.trim() && name.trim() && passwordLongEnough && passwordConfirm && passwordsMatch)
@@ -34,7 +36,7 @@ export default function Login() {
       return;
     }
     if (!passwordLongEnough) {
-      setError('비밀번호는 6자 이상이어야 해요.');
+      setError(`비밀번호는 ${minPwLength}자 이상이어야 해요.`);
       return;
     }
     if (mode === 'signup' && !passwordsMatch) {
@@ -57,6 +59,17 @@ export default function Login() {
       else setError(errMsg);
     }
     setLoading(false);
+  };
+
+  const handleDemo = async () => {
+    setError('');
+    setDemoLoading(true);
+    try {
+      await handleDemoLogin();
+    } catch {
+      setError('체험 계정 준비에 실패했어요.');
+    }
+    setDemoLoading(false);
   };
 
   const handleGoogle = async () => {
@@ -114,7 +127,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="비밀번호 (6자 이상)"
+                  placeholder={`비밀번호 (${minPwLength}자 이상)`}
                   className={`w-full px-4 py-3 pr-11 rounded-[11px] border bg-surface text-ink text-[14px] placeholder:text-inactive outline-none transition-colors duration-200 ${
                     !password
                       ? 'border-border focus:border-action'
@@ -146,7 +159,7 @@ export default function Login() {
               {password && (
                 <p className={`text-[12px] mt-1.5 px-1 flex items-center gap-1 ${passwordLongEnough ? 'text-[#34c759]' : 'text-[#ff3b30]'}`}>
                   <span className="text-[13px]">{passwordLongEnough ? '✓' : '✕'}</span>
-                  {passwordLongEnough ? '사용 가능한 비밀번호예요' : '비밀번호는 6자 이상이어야 해요'}
+                  {passwordLongEnough ? '사용 가능한 비밀번호예요' : `비밀번호는 ${minPwLength}자 이상이어야 해요`}
                 </p>
               )}
             </div>
@@ -263,6 +276,24 @@ export default function Login() {
           카카오로 계속하기 (준비 중)
         </Button>
       </div>
+
+      {/* Demo login (test mode only) */}
+      {isTestMode && (
+        <>
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[12px] text-sub">또는</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <button
+            onClick={handleDemo}
+            disabled={demoLoading || loading}
+            className="press-scale w-full py-3 text-[14px] text-action font-medium transition-all duration-200 disabled:opacity-40"
+          >
+            {demoLoading ? '체험 계정 준비 중...' : '체험 계정으로 둘러보기'}
+          </button>
+        </>
+      )}
 
       {/* Terms */}
       <p className="text-[11px] text-caption text-center mt-8 leading-relaxed">

@@ -208,6 +208,7 @@ export interface Seojae {
   members: SeojaeMember[];
   monthlyOfflineDay: string;
   isActive: boolean;
+  currentBook?: Book;
 }
 
 export interface Chaekbang {

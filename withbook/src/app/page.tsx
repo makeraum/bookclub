@@ -18,7 +18,7 @@ import ResourceLibrary from '../components/ResourceLibrary';
 import BottomNav from '../components/BottomNav';
 
 function AppShell() {
-  const { route, tab, subView, authLoading } = useApp();
+  const { route, tab, subView, authLoading, isTestMode } = useApp();
 
   // 세션 확인 중 로딩 표시
   if (authLoading) {
@@ -47,6 +47,13 @@ function AppShell() {
   // Main app with tabs
   return (
     <div className="relative min-h-dvh bg-canvas">
+      {/* Test mode badge */}
+      {isTestMode && (
+        <div className="fixed top-[calc(env(safe-area-inset-top,0px)+6px)] right-3 z-50 px-2 py-0.5 bg-yellow-400/90 text-yellow-900 text-[10px] font-semibold rounded-full">
+          테스트 모드
+        </div>
+      )}
+
       {/* Tab content */}
       <div className="animate-fade" key={tab}>
         {tab === 'home' && <HomeFeed />}

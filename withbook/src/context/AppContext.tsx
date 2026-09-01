@@ -6,6 +6,8 @@ import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIG
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
+const isTestMode = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
+
 const DEFAULT_GATES: UserGates = { gate0At: null, gate1At: null, gate2At: null };
 const DEFAULT_STATS: HighlightStats = { totalCount: 0, bookCount: 0 };
 const DEFAULT_SHELL_METRICS: ShellMetrics = { readingFollows: 0, togetherDays: 0, discussionCredits: 0, mentorSticks: 0, seasonBadges: 0 };
@@ -56,6 +58,8 @@ interface AppContextType extends AppState {
   handleSignIn: (email: string, password: string) => Promise<string | null>;
   handleGoogleSignIn: () => Promise<string | null>;
   handleSignOut: () => void;
+  handleDemoLogin: () => Promise<void>;
+  isTestMode: boolean;
   markStoryViewed: (userId: string) => void;
   saveProfileToDb: () => Promise<void>;
   addHighlight: (book: Book, sentence: string, reason: string, context: string) => Promise<void>;
@@ -110,6 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ── 게이트 레벨 계산 ──
   const gateLevel: GateLevel = useMemo(() => {
+    if (isTestMode) return 'librarian';
     if (gates.gate2At) return 'librarian';
     if (gates.gate1At) return 'recorder';
     return 'reader';
@@ -302,6 +307,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRoute('splash');
     setTab('home');
     setSubView(null);
+  }, []);
+
+  // ── 체험 계정 로그인 ──
+  const handleDemoLogin = useCallback(async () => {
+    const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL || 'test@withbook.kr';
+    const testPassword = process.env.NEXT_PUBLIC_TEST_PASSWORD || 'test1234';
+    const now = new Date().toISOString();
+
+    const applyDemoState = () => {
+      setProfile(prev => ({ ...prev, name: prev.name || '체험 사용자' }));
+      setGates({ gate0At: now, gate1At: now, gate2At: now });
+      setHighlightStats({ totalCount: 35, bookCount: 5 });
+      setMySeojae(MOCK_SEOJAE.slice(0, 3));
+      setJoinedSeojaeIds(new Set(['sj1', 'sj2', 'sj3']));
+      setOnboardingComplete(true);
+      setRoute('main');
+    };
+
+    try {
+      // 기존 계정으로 로그인 시도
+      const signInResult = await db.signIn(testEmail, testPassword);
+      if (signInResult.user) {
+        setAuthUserId(signInResult.user.id);
+        const p = await db.fetchProfile(signInResult.user.id);
+        if (p) setProfile(p);
+        applyDemoState();
+        return;
+      }
+    } catch {
+      // 로그인 실패 → 가입 시도
+      try {
+        const signUpResult = await db.signUp(testEmail, testPassword, '체험 사용자');
+        if (signUpResult.user) {
+          // 가입 후 로그인 재시도
+          try {
+            const retryResult = await db.signIn(testEmail, testPassword);
+            if (retryResult.user) {
+              setAuthUserId(retryResult.user.id);
+            }
+          } catch {
+            setAuthUserId(signUpResult.user.id);
+          }
+          applyDemoState();
+          return;
+        }
+      } catch {
+        // Supabase 연결 실패 → 로컬 데모 모드로 진입
+      }
+    }
+
+    // 폴백: Supabase 연결 실패 시에도 로컬 데모 상태로 진입
+    applyDemoState();
   }, []);
 
   // ── 프로필 ──
@@ -594,7 +651,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         appliedEvents, applyEvent, cancelEvent,
         onboardingComplete, completeOnboarding,
         authLoading, authUserId,
-        handleSignUp, handleSignIn, handleGoogleSignIn, handleSignOut,
+        handleSignUp, handleSignIn, handleGoogleSignIn, handleSignOut, handleDemoLogin,
+        isTestMode,
         viewedStoryUsers, markStoryViewed,
         highlights, addHighlight, toggleHighlightReaction,
         gates, highlightStats, gateLevel,

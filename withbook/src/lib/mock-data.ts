@@ -213,15 +213,15 @@ export const MOCK_BOOK_CLUBS: BookClub[] = [
 export const PLACEHOLDER_COLORS = ['#C96A22', '#4F6D5A', '#B0522F', '#8A6D46', '#6E5849', '#D9C08A'];
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  rotation: '로테이션 소개팅',
   bookclub: '독서모임',
+  rotation: '북 라운지',
   gathering: '소모임',
   quarterly: '책방 분기모임',
 };
 
 export const EVENT_TYPE_COLORS: Record<EventType, string> = {
-  rotation: '#FF6B6B',
   bookclub: '#0066cc',
+  rotation: '#B8926A',
   gathering: '#34C759',
   quarterly: '#9B59B6',
 };
@@ -232,8 +232,8 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev1',
     type: 'rotation',
-    title: '7월 대전 로테이션 소개팅',
-    description: '책을 매개로 새로운 사람을 만나는 로테이션 소개팅! 참가자들이 각자 좋아하는 책 한 권을 가져와 돌아가며 소개하고, 짧은 대화를 나눕니다. 편안한 분위기에서 독서 취향이 맞는 사람을 만나보세요.',
+    title: '7월 대전 북 라운지',
+    description: '책 취향이 닿는 사람들과 돌아가며 이야기하는 자리입니다. 참가자들이 각자 좋아하는 책 한 권을 가져와 돌아가며 소개하고, 짧은 대화를 나눕니다. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다.',
     date: '2025-07-12',
     time: '오후 3:00',
     region: '대전',
@@ -275,8 +275,8 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev4',
     type: 'rotation',
-    title: '7월 청주 로테이션 소개팅',
-    description: '청주에서 열리는 두 번째 로테이션 소개팅! 책을 매개로 자연스럽게 대화를 나누며 새로운 인연을 만들어보세요. 음료와 간단한 다과가 제공됩니다.',
+    title: '7월 청주 북 라운지',
+    description: '청주에서 열리는 북 라운지입니다. 책을 매개로 자연스럽게 대화를 나누며 독서 취향이 맞는 사람을 만나보세요. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다. 음료와 간단한 다과가 제공됩니다.',
     date: '2025-07-20',
     time: '오후 2:00',
     region: '청주',
@@ -402,23 +402,47 @@ export interface DemoChatRoom {
 }
 
 export const DEMO_CHAT_ROOMS: DemoChatRoom[] = [
+  // ── 밑줄 짝 (3개) ──
   {
-    id: 'demo-pair',
+    id: 'demo-pair-1',
     name: '박도윤과의 밑줄 짝',
     type: 'highlight_pair',
     iconAvatar: '/assets/avatar-doyoon.png',
     unreadCount: 2,
   },
   {
-    id: 'demo-seojae',
+    id: 'demo-pair-2',
+    name: '한소율과의 밑줄 짝',
+    type: 'highlight_pair',
+    iconAvatar: '/assets/avatar-soyul.png',
+    unreadCount: 1,
+  },
+  {
+    id: 'demo-pair-3',
+    name: '오지환과의 밑줄 짝',
+    type: 'highlight_pair',
+    iconAvatar: '/assets/avatar-jihwan.png',
+    unreadCount: 0,
+  },
+  // ── 단톡방: 서재 (2개) ──
+  {
+    id: 'demo-seojae-1',
     name: '대전 화요 서재',
     type: 'seojae',
     memberCount: 12,
     unreadCount: 5,
   },
   {
-    id: 'demo-event',
-    name: '9월 로테이션 책소개팅',
+    id: 'demo-seojae-2',
+    name: '천안 목요 저녁 서재',
+    type: 'seojae',
+    memberCount: 10,
+    unreadCount: 3,
+  },
+  // ── 단톡방: 북 라운지 (1개) ──
+  {
+    id: 'demo-lounge',
+    name: '9월 대전 북 라운지',
     type: 'event',
     memberCount: 8,
     unreadCount: 0,
@@ -426,44 +450,69 @@ export const DEMO_CHAT_ROOMS: DemoChatRoom[] = [
 ];
 
 export const DEMO_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
-  // ── 밑줄 짝 1:1 대화 (박도윤) ──
-  // 같은 책 《싯다르타》를 읽으며 서로의 밑줄에 반응하는 대화
-  'demo-pair': [
-    { id: 'dp1', roomId: 'demo-pair', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '어제 올려주신 밑줄 봤어요. "강물은 어디서나 동시에 존재한다" — 그 문장, 저도 접어뒀어요.', createdAt: '어제 오후 9:12' },
-    { id: 'dp2', roomId: 'demo-pair', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '진짜요? 저는 그 문장 읽고 한참 멍했어요. 시간에 대한 생각이 완전히 바뀌는 느낌이었거든요.', createdAt: '어제 오후 9:18', isMe: true },
-    { id: 'dp3', roomId: 'demo-pair', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '같은 부분이에요. 저는 출퇴근 지하철에서 읽었는데, 주변이 멈춘 것 같았어요. 읽는 장소에 따라 울림이 다른 것 같아요.', createdAt: '어제 오후 9:25' },
-    { id: 'dp4', roomId: 'demo-pair', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '맞아요. 저는 새벽에 읽어서 그런지 좀 더 고요하게 와닿았어요. 혹시 5장까지 읽으셨어요?', createdAt: '어제 오후 9:31', isMe: true },
-    { id: 'dp5', roomId: 'demo-pair', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '아직 4장이요! 오늘 밤에 5장 읽으려고요. 밑줄 그으면 바로 올릴게요.', createdAt: '어제 오후 9:33' },
-    { id: 'dp6', roomId: 'demo-pair', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '5장에 진짜 좋은 문장이 있어요. 스포 안 할게요 ㅎㅎ 기대하세요.', createdAt: '어제 오후 9:40', isMe: true },
-    { id: 'dp7', roomId: 'demo-pair', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '기대할게요! 같은 책 읽는 사람이 있으니까 페이스가 유지돼서 좋네요.', createdAt: '오늘 오전 8:15' },
-    { id: 'dp8', roomId: 'demo-pair', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '아 그리고 어제 밑줄에 남겨주신 이유, "앞만 보고 달려온 시간이 헛되지 않았다는 위로" — 그 문장이 도윤이에게도 위로가 됐어요. 고마워요.', createdAt: '오늘 오전 8:17' },
+  // ── 밑줄 짝 1: 박도윤 × 싯다르타 (오늘) ──
+  'demo-pair-1': [
+    { id: 'dp1-1', roomId: 'demo-pair-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '어제 올려주신 밑줄 봤어요. "강물은 어디서나 동시에 존재한다" \u2014 그 문장, 저도 접어뒀어요.', createdAt: '어제 오후 9:12' },
+    { id: 'dp1-2', roomId: 'demo-pair-1', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '진짜요? 저는 그 문장 읽고 한참 멍했어요. 시간에 대한 생각이 완전히 바뀌는 느낌이었거든요.', createdAt: '어제 오후 9:18', isMe: true },
+    { id: 'dp1-3', roomId: 'demo-pair-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '같은 부분이에요. 저는 출퇴근 지하철에서 읽었는데, 주변이 멈춘 것 같았어요. 읽는 장소에 따라 울림이 다른 것 같아요.', createdAt: '어제 오후 9:25' },
+    { id: 'dp1-4', roomId: 'demo-pair-1', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '맞아요. 저는 새벽에 읽어서 그런지 좀 더 고요하게 와닿았어요. 혹시 5장까지 읽으셨어요?', createdAt: '어제 오후 9:31', isMe: true },
+    { id: 'dp1-5', roomId: 'demo-pair-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '아직 4장이요! 오늘 밤에 5장 읽으려고요. 밑줄 그으면 바로 올릴게요.', createdAt: '어제 오후 9:33' },
+    { id: 'dp1-6', roomId: 'demo-pair-1', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '5장에 진짜 좋은 문장이 있어요. 스포 안 할게요 ㅎㅎ 기대하세요.', createdAt: '어제 오후 9:40', isMe: true },
+    { id: 'dp1-7', roomId: 'demo-pair-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '기대할게요! 같은 책 읽는 사람이 있으니까 페이스가 유지돼서 좋네요.', createdAt: '오늘 오전 8:15' },
+    { id: 'dp1-8', roomId: 'demo-pair-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '아 그리고 어제 밑줄에 남겨주신 이유, "앞만 보고 달려온 시간이 헛되지 않았다는 위로" \u2014 그게 도윤이에게도 위로가 됐어요. 고마워요.', createdAt: '오늘 오전 8:17' },
   ],
 
-  // ── 서재 단톡방 (대전 화요 서재, 12명) ──
-  // 순수하게 독서 이야기와 모임 일정 조율
-  'demo-seojae': [
-    { id: 'ds1', roomId: 'demo-seojae', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '다음 주 화요일 모임 책은 《데미안》으로 확정할까요? 지난번에 투표했을 때 1위였어요.', createdAt: '어제 오후 2:10' },
-    { id: 'ds2', roomId: 'demo-seojae', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '좋아요! 데미안이면 싯다르타랑 이어서 헤세 연속이네요. 연결 지어서 읽으면 재밌을 것 같아요.', createdAt: '어제 오후 2:25' },
-    { id: 'ds3', roomId: 'demo-seojae', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '저 발제 해볼게요! "새는 알에서 나오려고 투쟁한다" 부분으로 준비하고 싶어요.', createdAt: '어제 오후 3:04' },
-    { id: 'ds4', roomId: 'demo-seojae', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '소율님 발제 기대돼요! 그 문장이면 각자 "깨뜨려야 했던 알"이 뭐였는지 이야기 나눌 수 있겠다.', createdAt: '어제 오후 3:15' },
-    { id: 'ds5', roomId: 'demo-seojae', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '장소는 지난번이랑 같은 카페 사이 맞나요? 7시 시작?', createdAt: '오늘 오전 10:30' },
-    { id: 'ds6', roomId: 'demo-seojae', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '네, 카페 사이 2층 예약해뒀어요. 화요일 저녁 7시! 완독 안 하셔도 괜찮으니 편하게 오세요.', createdAt: '오늘 오전 10:45' },
+  // ── 밑줄 짝 2: 한소율 × 모순 (어제) ──
+  'demo-pair-2': [
+    { id: 'dp2-1', roomId: 'demo-pair-2', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '《모순》 3장까지 읽었는데, "모순이 없는 삶은 없다"는 문장에서 한참 멈췄어요.', createdAt: '그저께 오후 7:00' },
+    { id: 'dp2-2', roomId: 'demo-pair-2', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '저도요! 좋아하는 일과 안정 사이에서 갈등할 때 그 문장이 "둘 다 맞다"고 말해주는 것 같았어요.', createdAt: '그저께 오후 7:15', isMe: true },
+    { id: 'dp2-3', roomId: 'demo-pair-2', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '완전 공감해요. 양귀자 작가 문체가 참 좋은 게, 무겁지 않게 깊은 이야기를 하거든요. 다음 장도 기대됩니다.', createdAt: '그저께 오후 7:30' },
+    { id: 'dp2-4', roomId: 'demo-pair-2', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '소율님은 어떤 순간에 모순을 가장 크게 느끼셨어요?', createdAt: '어제 오후 8:10', isMe: true },
+    { id: 'dp2-5', roomId: 'demo-pair-2', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '회사를 다니면서 글쓰기 수업을 듣기 시작했을 때요. 양립할 수 없는 것 같은데, 둘 다 포기하고 싶지 않았거든요. 그래서 이 책이 더 와닿아요.', createdAt: '어제 오후 8:25' },
   ],
 
-  // ── 모임 단톡방 (9월 로테이션 책소개팅) ──
-  // 참가 안내와 기대 인사
-  'demo-event': [
-    { id: 'de1', roomId: 'demo-event', senderId: 'system', senderName: '', senderAvatar: '', type: 'system', text: '9월 로테이션 책소개팅 채팅방이 개설되었습니다.', createdAt: '9월 1일' },
-    { id: 'de2', roomId: 'demo-event', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '안녕하세요! 9월 13일 대전 로테이션 참가자 여러분 반갑습니다. 당일 각자 좋아하는 책 한 권을 가져와서 돌아가며 소개하는 시간이에요.', createdAt: '9월 1일 오후 1:00' },
-    { id: 'de3', roomId: 'demo-event', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '기대되네요! 어떤 책을 가져갈지 고민 중이에요. 과학책 가져가도 괜찮을까요?', createdAt: '9월 1일 오후 2:30' },
-    { id: 'de4', roomId: 'demo-event', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '물론이죠! 장르 제한 없어요. 내가 좋아하는 책이면 다 좋습니다. 장소는 대전 유성구 카페 북앤톡, 오후 3시 시작이에요.', createdAt: '9월 1일 오후 2:45' },
+  // ── 밑줄 짝 3: 오지환 × 코스모스 (3일 전) ──
+  'demo-pair-3': [
+    { id: 'dp3-1', roomId: 'demo-pair-3', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '코스모스 읽기 시작했어요. 칼 세이건 문체가 생각보다 따뜻하네요.', createdAt: '4일 전 오후 6:00' },
+    { id: 'dp3-2', roomId: 'demo-pair-3', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '맞아요! 과학책인데 시적이라는 게 칼 세이건의 매력인 것 같아요. 어디까지 읽으셨어요?', createdAt: '4일 전 오후 6:20', isMe: true },
+    { id: 'dp3-3', roomId: 'demo-pair-3', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '2장이요. "우리는 별의 먼지로 만들어진 존재다"라는 문장에 밑줄 그었어요. 이런 문장은 과학이 아니라 철학에 가까운 것 같아요.', createdAt: '4일 전 오후 6:35' },
+    { id: 'dp3-4', roomId: 'demo-pair-3', senderId: 'me', senderName: '나', senderAvatar: '', type: 'message', text: '그 문장 좋죠. 저도 그 부분에서 밑줄 남겼어요. 읽으시면서 인상 깊은 문장 공유해주세요!', createdAt: '3일 전 오전 9:00', isMe: true },
+    { id: 'dp3-5', roomId: 'demo-pair-3', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '네! 이번 주 안에 5장까지 읽고 올릴게요. 같이 읽으니까 혼자 읽을 때보다 훨씬 집중이 잘 돼요.', createdAt: '3일 전 오전 9:15' },
+  ],
+
+  // ── 서재 단톡방 1: 대전 화요 서재 (12명) ──
+  'demo-seojae-1': [
+    { id: 'ds1-1', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '다음 주 화요일 모임 책은 《데미안》으로 확정할까요? 지난번에 투표했을 때 1위였어요.', createdAt: '어제 오후 2:10' },
+    { id: 'ds1-2', roomId: 'demo-seojae-1', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '좋아요! 데미안이면 싯다르타랑 이어서 헤세 연속이네요. 연결 지어서 읽으면 재밌을 것 같아요.', createdAt: '어제 오후 2:25' },
+    { id: 'ds1-3', roomId: 'demo-seojae-1', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '저 발제 해볼게요! "새는 알에서 나오려고 투쟁한다" 부분으로 준비하고 싶어요.', createdAt: '어제 오후 3:04' },
+    { id: 'ds1-4', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '소율님 발제 기대돼요! 그 문장이면 각자 "깨뜨려야 했던 알"이 뭐였는지 이야기 나눌 수 있겠다.', createdAt: '어제 오후 3:15' },
+    { id: 'ds1-5', roomId: 'demo-seojae-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '장소는 지난번이랑 같은 카페 사이 맞나요? 7시 시작?', createdAt: '오늘 오전 10:30' },
+    { id: 'ds1-6', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '네, 카페 사이 2층 예약해뒀어요. 화요일 저녁 7시! 완독 안 하셔도 괜찮으니 편하게 오세요.', createdAt: '오늘 오전 10:45' },
+  ],
+
+  // ── 서재 단톡방 2: 천안 목요 저녁 서재 (10명) ──
+  'demo-seojae-2': [
+    { id: 'ds2-1', roomId: 'demo-seojae-2', senderId: 'u-rec1', senderName: '김하늘', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '이번 달 책 《미움받을 용기》 다들 잘 읽고 계신가요? 다음 모임에서 2부 중심으로 이야기해볼게요.', createdAt: '어제 오후 5:30' },
+    { id: 'ds2-2', roomId: 'demo-seojae-2', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '2부 "모든 고민은 대인관계의 고민이다" 부분이 와닿았어요. 발제 때 이야기 나눠요!', createdAt: '어제 오후 6:00' },
+    { id: 'ds2-3', roomId: 'demo-seojae-2', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '저는 "과거에 어떤 일이 있었든, 그것이 미래를 결정하지는 않는다"가 좋았어요. 목요일에 뵐게요!', createdAt: '오늘 오전 9:00' },
+  ],
+
+  // ── 북 라운지 단톡방 (9월 대전 북 라운지) ──
+  'demo-lounge': [
+    { id: 'dl1', roomId: 'demo-lounge', senderId: 'system', senderName: '', senderAvatar: '', type: 'system', text: '9월 대전 북 라운지 채팅방이 개설되었습니다.', createdAt: '9월 1일' },
+    { id: 'dl2', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '안녕하세요! 9월 13일 대전 북 라운지 참가자 여러분 반갑습니다. 당일 각자 좋아하는 책 한 권을 가져와서 돌아가며 소개하는 시간이에요.', createdAt: '9월 1일 오후 1:00' },
+    { id: 'dl3', roomId: 'demo-lounge', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '기대되네요! 어떤 책을 가져갈지 고민 중이에요. 과학책 가져가도 괜찮을까요?', createdAt: '9월 1일 오후 2:30' },
+    { id: 'dl4', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '물론이죠! 장르 제한 없어요. 내가 좋아하는 책이면 다 좋습니다. 장소는 대전 유성구 카페 북앤톡, 오후 3시 시작이에요.', createdAt: '9월 1일 오후 2:45' },
   ],
 };
 
 export const DEMO_BOOK_TOPICS: Record<string, BookTopic> = {
-  'demo-pair': { question: '싯다르타가 강에서 깨달은 것 — 같은 문장에서 서로 다른 울림이 있었나요?', bookTitle: '싯다르타', bookAuthor: '헤르만 헤세' },
-  'demo-seojae': { question: '"새는 알에서 나오려고 투쟁한다" — 나에게 \u2018알\u2019은 무엇이었나요?', bookTitle: '데미안', bookAuthor: '헤르만 헤세' },
-  'demo-event': { question: '처음 만나는 사람에게 책 한 권으로 나를 소개한다면?', bookTitle: '자유 주제', bookAuthor: '참가자 선택' },
+  'demo-pair-1': { question: '싯다르타가 강에서 깨달은 것 \u2014 같은 문장에서 서로 다른 울림이 있었나요?', bookTitle: '싯다르타', bookAuthor: '헤르만 헤세' },
+  'demo-pair-2': { question: '"모순을 껴안는다"는 것, 지금 내 삶에서는 어떤 모습일까요?', bookTitle: '모순', bookAuthor: '양귀자' },
+  'demo-pair-3': { question: '"우리는 별의 먼지"라는 문장이 주는 위로 \u2014 어떻게 느끼셨나요?', bookTitle: '코스모스', bookAuthor: '칼 세이건' },
+  'demo-seojae-1': { question: '"새는 알에서 나오려고 투쟁한다" \u2014 나에게 \u2018알\u2019은 무엇이었나요?', bookTitle: '데미안', bookAuthor: '헤르만 헤세' },
+  'demo-seojae-2': { question: '"미움받을 용기"가 정말 필요했던 순간은 언제인가요?', bookTitle: '미움받을 용기', bookAuthor: '기시미 이치로' },
+  'demo-lounge': { question: '처음 만나는 사람에게 책 한 권으로 나를 소개한다면?', bookTitle: '자유 주제', bookAuthor: '참가자 선택' },
 };
 
 // ── 밑줄 목업 데이터 ──
@@ -546,6 +595,97 @@ export const MOCK_SEOJAE: Seojae[] = [
     monthlyOfflineDay: '매월 셋째 토요일 오후 4시',
     isActive: true,
   },
+  // ── 추천 서재 (비공개 테스트용 데모 데이터) ──
+  {
+    id: 'sj4',
+    communityId: 'city-cheonan',
+    name: '천안 목요 저녁 서재',
+    description: '퇴근 후 목요일 저녁, 책 한 권으로 일상을 환기하는 서재입니다. 장르 제한 없이 매달 한 권을 정해 함께 읽어요.',
+    ownerId: 'u-rec1',
+    ownerName: '김하늘',
+    ownerAvatar: '/assets/avatar-seoyeon.png',
+    chatRoomId: 'sj4-chat',
+    maxMembers: 12,
+    memberCount: 9,
+    members: [
+      { userId: 'u-rec1', userName: '김하늘', userAvatar: '/assets/avatar-seoyeon.png', role: 'owner', joinedAt: '2025-03-01' },
+    ],
+    monthlyOfflineDay: '매월 둘째·넷째 목요일 저녁 7시 30분',
+    isActive: true,
+    currentBook: { isbn: '6', title: '미움받을 용기', author: '기시미 이치로', coverUrl: '' },
+  },
+  {
+    id: 'sj5',
+    communityId: 'city-daejeon',
+    name: '대전 과학책 서재',
+    description: '우주, 생물, 물리, 뇌과학\u2026 과학 교양서를 함께 읽으며 질문을 나누는 서재입니다. 비전공자 환영!',
+    ownerId: 'u-rec2',
+    ownerName: '정우진',
+    ownerAvatar: '/assets/avatar-jihwan.png',
+    chatRoomId: 'sj5-chat',
+    maxMembers: 15,
+    memberCount: 11,
+    members: [
+      { userId: 'u-rec2', userName: '정우진', userAvatar: '/assets/avatar-jihwan.png', role: 'owner', joinedAt: '2025-02-15' },
+    ],
+    monthlyOfflineDay: '매월 첫째·셋째 토요일 오후 2시',
+    isActive: true,
+    currentBook: { isbn: '9', title: '코스모스', author: '칼 세이건', coverUrl: '' },
+  },
+  {
+    id: 'sj6',
+    communityId: 'city-sejong',
+    name: '세종 에세이 서재',
+    description: '에세이를 좋아하는 사람들이 모여 각자의 문장을 나누는 서재입니다. 한 달에 한 권, 느긋하게 읽어요.',
+    ownerId: 'u-rec3',
+    ownerName: '박지은',
+    ownerAvatar: '/assets/avatar-soyul.png',
+    chatRoomId: 'sj6-chat',
+    maxMembers: 12,
+    memberCount: 7,
+    members: [
+      { userId: 'u-rec3', userName: '박지은', userAvatar: '/assets/avatar-soyul.png', role: 'owner', joinedAt: '2025-04-01' },
+    ],
+    monthlyOfflineDay: '매월 셋째 일요일 오후 3시',
+    isActive: true,
+    currentBook: { isbn: 'e1', title: '걷는 사람, 하정우', author: '하정우', coverUrl: '' },
+  },
+  {
+    id: 'sj7',
+    communityId: 'city-cheongju',
+    name: '청주 주말 아침 서재',
+    description: '토요일 아침, 커피 한 잔과 함께 시작하는 독서 모임입니다. 아침형 독서인을 위한 서재!',
+    ownerId: 'u-rec4',
+    ownerName: '이준혁',
+    ownerAvatar: '/assets/avatar-doyoon.png',
+    chatRoomId: 'sj7-chat',
+    maxMembers: 10,
+    memberCount: 6,
+    members: [
+      { userId: 'u-rec4', userName: '이준혁', userAvatar: '/assets/avatar-doyoon.png', role: 'owner', joinedAt: '2025-05-01' },
+    ],
+    monthlyOfflineDay: '매주 토요일 오전 8시',
+    isActive: true,
+    currentBook: { isbn: '8', title: '데미안', author: '헤르만 헤세', coverUrl: '' },
+  },
+  {
+    id: 'sj8',
+    communityId: 'city-daejeon',
+    name: '30대 전환기 서재',
+    description: '커리어 전환, 관계 변화, 삶의 방향\u2026 30대의 질문을 책에서 찾는 서재입니다. 자기계발서부터 문학까지 폭넓게.',
+    ownerId: 'u-rec5',
+    ownerName: '최민서',
+    ownerAvatar: '/assets/avatar-seoyeon.png',
+    chatRoomId: 'sj8-chat',
+    maxMembers: 15,
+    memberCount: 13,
+    members: [
+      { userId: 'u-rec5', userName: '최민서', userAvatar: '/assets/avatar-seoyeon.png', role: 'owner', joinedAt: '2025-01-15' },
+    ],
+    monthlyOfflineDay: '매월 둘째 토요일 오후 4시',
+    isActive: true,
+    currentBook: { isbn: '11', title: '아몬드', author: '손원평', coverUrl: '' },
+  },
 ];
 
 export const MOCK_HIGHLIGHT_PAIRS: HighlightPair[] = [
@@ -560,6 +700,32 @@ export const MOCK_HIGHLIGHT_PAIRS: HighlightPair[] = [
     streakCount: 12,
     lastInteractionDate: new Date().toISOString().split('T')[0],
     periodStart: '2025-06-20',
+    isActive: true,
+  },
+  {
+    id: 'pair2',
+    seojaeId: 'sj3',
+    partnerUserId: 'u3',
+    partnerName: '한소율',
+    partnerAvatar: '/assets/avatar-soyul.png',
+    book: BOOKS[2], // 모순
+    chatRoomId: 'pair2-chat',
+    streakCount: 7,
+    lastInteractionDate: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })(),
+    periodStart: '2025-07-01',
+    isActive: true,
+  },
+  {
+    id: 'pair3',
+    seojaeId: 'sj2',
+    partnerUserId: 'u4',
+    partnerName: '오지환',
+    partnerAvatar: '/assets/avatar-jihwan.png',
+    book: BOOKS[8], // 코스모스
+    chatRoomId: 'pair3-chat',
+    streakCount: 3,
+    lastInteractionDate: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d.toISOString().split('T')[0]; })(),
+    periodStart: '2025-07-10',
     isActive: true,
   },
 ];

@@ -94,43 +94,42 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
       </header>
 
       {showDemo ? (
-        /* ── 데모 채팅 목록 ── */
-        <ul className="divide-y divide-border">
-          {DEMO_CHAT_ROOMS.map(room => {
-            const msgs = DEMO_CHAT_MESSAGES[room.id] || [];
-            const lastMsg = msgs.filter(m => m.type === 'message').at(-1);
+        /* ── 데모 채팅 목록 (섹션별) ── */
+        <div>
+          {/* 밑줄 짝 섹션 */}
+          {(() => {
+            const pairRooms = DEMO_CHAT_ROOMS.filter(r => r.type === 'highlight_pair');
+            const groupRooms = DEMO_CHAT_ROOMS.filter(r => r.type !== 'highlight_pair');
             return (
-              <li key={room.id}>
-                <button
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-muted/20 transition-colors"
-                  onClick={() => onSelectRoom(room.id)}
-                >
-                  <DemoRoomIcon room={room} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[15px] font-semibold text-ink truncate">{room.name}</span>
-                      {lastMsg && (
-                        <span className="text-[11px] text-sub flex-shrink-0">{lastMsg.createdAt.split(' ').slice(-1)[0]}</span>
-                      )}
+              <>
+                {pairRooms.length > 0 && (
+                  <>
+                    <div className="px-5 pt-4 pb-1">
+                      <h3 className="text-[13px] font-semibold text-sub">밑줄 짝</h3>
                     </div>
-                    {lastMsg && (
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <p className="text-[13px] text-sub truncate">
-                          {lastMsg.isMe ? '' : `${lastMsg.senderName}: `}{lastMsg.text}
-                        </p>
-                        {room.unreadCount > 0 && (
-                          <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-action text-white text-[11px] font-bold flex items-center justify-center">
-                            {room.unreadCount}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              </li>
+                    <ul className="divide-y divide-border">
+                      {pairRooms.map(room => (
+                        <DemoChatItem key={room.id} room={room} onSelect={onSelectRoom} />
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {groupRooms.length > 0 && (
+                  <>
+                    <div className="px-5 pt-5 pb-1">
+                      <h3 className="text-[13px] font-semibold text-sub">단톡방</h3>
+                    </div>
+                    <ul className="divide-y divide-border">
+                      {groupRooms.map(room => (
+                        <DemoChatItem key={room.id} room={room} onSelect={onSelectRoom} />
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
             );
-          })}
-        </ul>
+          })()}
+        </div>
       ) : realRooms.length === 0 ? (
         <div className="flex flex-col items-center justify-center pt-32 px-6 text-center">
           <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
@@ -196,6 +195,42 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
   );
 }
 
+/* ── 데모 채팅 아이템 ── */
+function DemoChatItem({ room, onSelect }: { room: DemoChatRoom; onSelect: (id: string) => void }) {
+  const msgs = DEMO_CHAT_MESSAGES[room.id] || [];
+  const lastMsg = msgs.filter(m => m.type === 'message').at(-1);
+  return (
+    <li>
+      <button
+        className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-muted/20 transition-colors"
+        onClick={() => onSelect(room.id)}
+      >
+        <DemoRoomIcon room={room} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[15px] font-semibold text-ink truncate">{room.name}</span>
+            {lastMsg && (
+              <span className="text-[11px] text-sub flex-shrink-0">{lastMsg.createdAt.split(' ').slice(-1)[0]}</span>
+            )}
+          </div>
+          {lastMsg && (
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <p className="text-[13px] text-sub truncate">
+                {lastMsg.isMe ? '' : `${lastMsg.senderName}: `}{lastMsg.text}
+              </p>
+              {room.unreadCount > 0 && (
+                <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-action text-white text-[11px] font-bold flex items-center justify-center">
+                  {room.unreadCount}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </button>
+    </li>
+  );
+}
+
 /* ── 데모 방 아이콘 ── */
 function DemoRoomIcon({ room }: { room: DemoChatRoom }) {
   if (room.type === 'highlight_pair') {
@@ -218,10 +253,10 @@ function DemoRoomIcon({ room }: { room: DemoChatRoom }) {
       </div>
     );
   }
-  // event
+  // event (북 라운지)
   return (
-    <div className="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF6B6B20' }}>
-      <span className="text-[11px] font-bold" style={{ color: '#FF6B6B' }}>로테</span>
+    <div className="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#B8926A20' }}>
+      <span className="text-[11px] font-bold" style={{ color: '#B8926A' }}>라운지</span>
     </div>
   );
 }
