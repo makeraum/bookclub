@@ -108,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // 던바 구조 상태
   const [mySeojae, setMySeojae] = useState<Seojae[]>(MOCK_SEOJAE.slice(0, 2));
   const [myHighlightPairs, setMyHighlightPairs] = useState<HighlightPair[]>(MOCK_HIGHLIGHT_PAIRS);
-  const [myCityRegion, setMyCityRegion] = useState<Region | null>('대전');
+  const [myCityRegion, setMyCityRegion] = useState<Region | null>('성남·분당');
   const [selectedSeojaeId, setSelectedSeojaeId] = useState<string | null>(null);
   const [selectedPairId, setSelectedPairId] = useState<string | null>(null);
 

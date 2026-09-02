@@ -78,7 +78,7 @@ export interface BookClub {
 }
 
 export type EventType = 'rotation' | 'bookclub' | 'gathering' | 'quarterly';
-export type Region = '천안' | '대전' | '세종' | '청주';
+export type Region = '서울' | '성남·분당' | '수원' | '용인' | '안양·평촌' | '화성·동탄' | '천안';
 
 export interface OfflineEvent {
   id: string;

@@ -243,10 +243,13 @@ function RecommendedSeojaeCard({
 
   // 지역 라벨 추출
   const regionMap: Record<string, string> = {
+    'city-seoul': '서울',
+    'city-seongnam': '성남·분당',
+    'city-suwon': '수원',
+    'city-yongin': '용인',
+    'city-anyang': '안양·평촌',
+    'city-hwaseong': '화성·동탄',
     'city-cheonan': '천안',
-    'city-daejeon': '대전',
-    'city-sejong': '세종',
-    'city-cheongju': '청주',
   };
   const region = regionMap[seojae.communityId] || '';
 

@@ -226,18 +226,18 @@ export const EVENT_TYPE_COLORS: Record<EventType, string> = {
   quarterly: '#9B59B6',
 };
 
-export const REGIONS: Region[] = ['천안', '대전', '세종', '청주'];
+export const REGIONS: Region[] = ['서울', '성남·분당', '수원', '용인', '안양·평촌', '화성·동탄', '천안'];
 
 export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev1',
     type: 'rotation',
-    title: '7월 대전 북 라운지',
+    title: '7월 강남 북 라운지',
     description: '책 취향이 닿는 사람들과 돌아가며 이야기하는 자리입니다. 참가자들이 각자 좋아하는 책 한 권을 가져와 돌아가며 소개하고, 짧은 대화를 나눕니다. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다.',
     date: '2025-07-12',
     time: '오후 3:00',
-    region: '대전',
-    venue: '대전 유성구 카페 북앤톡',
+    region: '서울',
+    venue: '강남 역삼동 독립서점 북티크',
     maxParticipants: 12,
     currentParticipants: 8,
     fee: 15000,
@@ -265,8 +265,8 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     description: '과학 소설을 사랑하는 사람들의 자유로운 번개모임입니다. 최근 읽은 SF 소설에 대해 이야기하고, 서로 추천작을 공유해요. 부담 없이 오세요!',
     date: '2025-07-19',
     time: '오후 5:00',
-    region: '세종',
-    venue: '세종시 보람동 커뮤니티카페 모여',
+    region: '수원',
+    venue: '수원 행궁동 카페 문장의 숲',
     maxParticipants: 15,
     currentParticipants: 6,
     fee: 0,
@@ -275,12 +275,12 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev4',
     type: 'rotation',
-    title: '7월 청주 북 라운지',
-    description: '청주에서 열리는 북 라운지입니다. 책을 매개로 자연스럽게 대화를 나누며 독서 취향이 맞는 사람을 만나보세요. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다. 음료와 간단한 다과가 제공됩니다.',
+    title: '7월 분당 북 라운지',
+    description: '분당에서 열리는 북 라운지입니다. 책을 매개로 자연스럽게 대화를 나누며 독서 취향이 맞는 사람을 만나보세요. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다. 음료와 간단한 다과가 제공됩니다.',
     date: '2025-07-20',
     time: '오후 2:00',
-    region: '청주',
-    venue: '청주 상당구 라운지 리딩룸',
+    region: '성남·분당',
+    venue: '분당 정자동 카페 페이지터너',
     maxParticipants: 10,
     currentParticipants: 3,
     fee: 15000,
@@ -293,8 +293,8 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     description: '양귀자 작가의 《모순》을 함께 읽고 토론합니다. 삶의 모순과 아이러니에 대해 깊이 생각해보는 시간입니다. 완독 후 참여를 권장합니다.',
     date: '2025-07-26',
     time: '오후 3:00',
-    region: '대전',
-    venue: '대전 중구 북카페 사이',
+    region: '용인',
+    venue: '용인 수지구 카페 오후의 서재',
     maxParticipants: 10,
     currentParticipants: 5,
     fee: 5000,
@@ -318,16 +318,16 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev7',
     type: 'quarterly',
-    title: '대전 인문 책방 분기모임',
-    description: '대전 인문 책방 소속 서재들이 한자리에 모이는 분기 모임입니다. 각 서재에서 이번 분기에 읽은 책을 소개하고, 인상 깊었던 밑줄을 공유합니다.',
+    title: '성남 인문 책방 분기모임',
+    description: '성남 인문 책방 소속 서재들이 한자리에 모이는 분기 모임입니다. 각 서재에서 이번 분기에 읽은 책을 소개하고, 인상 깊었던 밑줄을 공유합니다.',
     date: '2025-09-20',
     time: '오후 2:00',
-    region: '대전',
-    venue: '대전 유성구 북카페 사이',
+    region: '성남·분당',
+    venue: '분당 서현역 북카페 달빛책방',
     maxParticipants: 40,
     currentParticipants: 18,
     fee: 5000,
-    host: '대전 인문 책방',
+    host: '성남 인문 책방',
   },
 ];
 
@@ -349,7 +349,7 @@ export const MOCK_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
     { id: 'c4m1', roomId: 'club4', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '이기적 유전자 5장 밈 개념 부분이 가장 흥미로웠어요', createdAt: '오후 9:00' },
   ],
   ev1: [
-    { id: 'e1m1', roomId: 'ev1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '대전 로테이션 참가하시는 분들 어떤 책 가져오시나요?', createdAt: '오후 1:00' },
+    { id: 'e1m1', roomId: 'ev1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '강남 북 라운지 참가하시는 분들 어떤 책 가져오시나요?', createdAt: '오후 1:00' },
     { id: 'e1m2', roomId: 'ev1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '저는 좋아하는 에세이 한 권 들고 갈 예정이에요!', createdAt: '오후 1:30' },
   ],
   ev2: [
@@ -367,7 +367,7 @@ export const MOCK_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
     { id: 'e6m1', roomId: 'ev6', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '에세이 모임 장소가 카페 오후의 서재 맞나요?', createdAt: '오후 6:00' },
   ],
   ev7: [
-    { id: 'e7m1', roomId: 'ev7', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '분기모임 때 각 서재에서 이번에 읽은 책 발표 준비해 오시나요?', createdAt: '오후 3:00' },
+    { id: 'e7m1', roomId: 'ev7', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '성남 분기모임 때 각 서재에서 이번에 읽은 책 발표 준비해 오시나요?', createdAt: '오후 3:00' },
   ],
   'sj1-chat': [
     { id: 'sj1m1', roomId: 'sj1-chat', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '이번 달 책 싯다르타 다들 잘 읽고 계신가요?', createdAt: '오후 2:00' },
@@ -427,14 +427,14 @@ export const DEMO_CHAT_ROOMS: DemoChatRoom[] = [
   // ── 단톡방: 서재 (2개) ──
   {
     id: 'demo-seojae-1',
-    name: '대전 화요 서재',
+    name: '강남 화요 서재',
     type: 'seojae',
     memberCount: 12,
     unreadCount: 5,
   },
   {
     id: 'demo-seojae-2',
-    name: '천안 목요 저녁 서재',
+    name: '분당 목요 저녁 서재',
     type: 'seojae',
     memberCount: 10,
     unreadCount: 3,
@@ -442,7 +442,7 @@ export const DEMO_CHAT_ROOMS: DemoChatRoom[] = [
   // ── 단톡방: 북 라운지 (1개) ──
   {
     id: 'demo-lounge',
-    name: '9월 대전 북 라운지',
+    name: '9월 강남 북 라운지',
     type: 'event',
     memberCount: 8,
     unreadCount: 0,
@@ -480,29 +480,29 @@ export const DEMO_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
     { id: 'dp3-5', roomId: 'demo-pair-3', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '네! 이번 주 안에 5장까지 읽고 올릴게요. 같이 읽으니까 혼자 읽을 때보다 훨씬 집중이 잘 돼요.', createdAt: '3일 전 오전 9:15' },
   ],
 
-  // ── 서재 단톡방 1: 대전 화요 서재 (12명) ──
+  // ── 서재 단톡방 1: 강남 화요 서재 (12명) ──
   'demo-seojae-1': [
     { id: 'ds1-1', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '다음 주 화요일 모임 책은 《데미안》으로 확정할까요? 지난번에 투표했을 때 1위였어요.', createdAt: '어제 오후 2:10' },
     { id: 'ds1-2', roomId: 'demo-seojae-1', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '좋아요! 데미안이면 싯다르타랑 이어서 헤세 연속이네요. 연결 지어서 읽으면 재밌을 것 같아요.', createdAt: '어제 오후 2:25' },
     { id: 'ds1-3', roomId: 'demo-seojae-1', senderId: 'u3', senderName: '한소율', senderAvatar: '/assets/avatar-soyul.png', type: 'message', text: '저 발제 해볼게요! "새는 알에서 나오려고 투쟁한다" 부분으로 준비하고 싶어요.', createdAt: '어제 오후 3:04' },
     { id: 'ds1-4', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '소율님 발제 기대돼요! 그 문장이면 각자 "깨뜨려야 했던 알"이 뭐였는지 이야기 나눌 수 있겠다.', createdAt: '어제 오후 3:15' },
-    { id: 'ds1-5', roomId: 'demo-seojae-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '장소는 지난번이랑 같은 카페 사이 맞나요? 7시 시작?', createdAt: '오늘 오전 10:30' },
-    { id: 'ds1-6', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '네, 카페 사이 2층 예약해뒀어요. 화요일 저녁 7시! 완독 안 하셔도 괜찮으니 편하게 오세요.', createdAt: '오늘 오전 10:45' },
+    { id: 'ds1-5', roomId: 'demo-seojae-1', senderId: 'u2', senderName: '박도윤', senderAvatar: '/assets/avatar-doyoon.png', type: 'message', text: '장소는 지난번이랑 같은 역삼 북티크 맞나요? 7시 시작?', createdAt: '오늘 오전 10:30' },
+    { id: 'ds1-6', roomId: 'demo-seojae-1', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '네, 북티크 2층 예약해뒀어요. 화요일 저녁 7시! 완독 안 하셔도 괜찮으니 편하게 오세요.', createdAt: '오늘 오전 10:45' },
   ],
 
-  // ── 서재 단톡방 2: 천안 목요 저녁 서재 (10명) ──
+  // ── 서재 단톡방 2: 분당 목요 저녁 서재 (10명) ──
   'demo-seojae-2': [
     { id: 'ds2-1', roomId: 'demo-seojae-2', senderId: 'u-rec1', senderName: '김하늘', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '이번 달 책 《미움받을 용기》 다들 잘 읽고 계신가요? 다음 모임에서 2부 중심으로 이야기해볼게요.', createdAt: '어제 오후 5:30' },
     { id: 'ds2-2', roomId: 'demo-seojae-2', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '2부 "모든 고민은 대인관계의 고민이다" 부분이 와닿았어요. 발제 때 이야기 나눠요!', createdAt: '어제 오후 6:00' },
     { id: 'ds2-3', roomId: 'demo-seojae-2', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '저는 "과거에 어떤 일이 있었든, 그것이 미래를 결정하지는 않는다"가 좋았어요. 목요일에 뵐게요!', createdAt: '오늘 오전 9:00' },
   ],
 
-  // ── 북 라운지 단톡방 (9월 대전 북 라운지) ──
+  // ── 북 라운지 단톡방 (9월 강남 북 라운지) ──
   'demo-lounge': [
-    { id: 'dl1', roomId: 'demo-lounge', senderId: 'system', senderName: '', senderAvatar: '', type: 'system', text: '9월 대전 북 라운지 채팅방이 개설되었습니다.', createdAt: '9월 1일' },
-    { id: 'dl2', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '안녕하세요! 9월 13일 대전 북 라운지 참가자 여러분 반갑습니다. 당일 각자 좋아하는 책 한 권을 가져와서 돌아가며 소개하는 시간이에요.', createdAt: '9월 1일 오후 1:00' },
+    { id: 'dl1', roomId: 'demo-lounge', senderId: 'system', senderName: '', senderAvatar: '', type: 'system', text: '9월 강남 북 라운지 채팅방이 개설되었습니다.', createdAt: '9월 1일' },
+    { id: 'dl2', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '안녕하세요! 9월 13일 강남 북 라운지 참가자 여러분 반갑습니다. 당일 각자 좋아하는 책 한 권을 가져와서 돌아가며 소개하는 시간이에요.', createdAt: '9월 1일 오후 1:00' },
     { id: 'dl3', roomId: 'demo-lounge', senderId: 'u4', senderName: '오지환', senderAvatar: '/assets/avatar-jihwan.png', type: 'message', text: '기대되네요! 어떤 책을 가져갈지 고민 중이에요. 과학책 가져가도 괜찮을까요?', createdAt: '9월 1일 오후 2:30' },
-    { id: 'dl4', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '물론이죠! 장르 제한 없어요. 내가 좋아하는 책이면 다 좋습니다. 장소는 대전 유성구 카페 북앤톡, 오후 3시 시작이에요.', createdAt: '9월 1일 오후 2:45' },
+    { id: 'dl4', roomId: 'demo-lounge', senderId: 'u1', senderName: '이서연', senderAvatar: '/assets/avatar-seoyeon.png', type: 'message', text: '물론이죠! 장르 제한 없어요. 내가 좋아하는 책이면 다 좋습니다. 장소는 강남 역삼동 독립서점 북티크, 오후 3시 시작이에요.', createdAt: '9월 1일 오후 2:45' },
   ],
 };
 
@@ -532,18 +532,21 @@ export const REACTION_ICONS: Record<HighlightReactionType, string> = {
 // ── 던바 구조 목업 데이터 ──
 
 export const MOCK_CITY_COMMUNITIES: CityCommunity[] = [
-  { id: 'city-daejeon', region: '대전', name: '대전 위드북', description: '대전 독서 커뮤니티', maxMembers: 150, memberCount: 87 },
+  { id: 'city-seoul', region: '서울', name: '서울 위드북', description: '서울 독서 커뮤니티', maxMembers: 150, memberCount: 98 },
+  { id: 'city-seongnam', region: '성남·분당', name: '성남 위드북', description: '성남·분당 독서 커뮤니티', maxMembers: 150, memberCount: 87 },
+  { id: 'city-suwon', region: '수원', name: '수원 위드북', description: '수원 독서 커뮤니티', maxMembers: 150, memberCount: 62 },
+  { id: 'city-yongin', region: '용인', name: '용인 위드북', description: '용인 독서 커뮤니티', maxMembers: 150, memberCount: 45 },
+  { id: 'city-anyang', region: '안양·평촌', name: '안양 위드북', description: '안양·평촌 독서 커뮤니티', maxMembers: 150, memberCount: 38 },
+  { id: 'city-hwaseong', region: '화성·동탄', name: '화성 위드북', description: '화성·동탄 독서 커뮤니티', maxMembers: 150, memberCount: 53 },
   { id: 'city-cheonan', region: '천안', name: '천안 위드북', description: '천안 독서 커뮤니티', maxMembers: 150, memberCount: 62 },
-  { id: 'city-sejong', region: '세종', name: '세종 위드북', description: '세종 독서 커뮤니티', maxMembers: 150, memberCount: 45 },
-  { id: 'city-cheongju', region: '청주', name: '청주 위드북', description: '청주 독서 커뮤니티', maxMembers: 150, memberCount: 53 },
 ];
 
 export const MOCK_SEOJAE: Seojae[] = [
   {
     id: 'sj1',
-    communityId: 'city-daejeon',
-    name: '헤세를 좋아하는 서재',
-    description: '헤르만 헤세의 작품을 함께 읽고 이야기 나누는 서재입니다. 매달 한 권씩 헤세 작품을 선정해 읽어요.',
+    communityId: 'city-seoul',
+    name: '강남 화요 서재',
+    description: '화요일 저녁, 강남에서 책 한 권으로 하루를 마무리하는 서재입니다. 매달 한 권씩 함께 읽어요.',
     ownerId: 'u1',
     ownerName: '이서연',
     ownerAvatar: '/assets/avatar-seoyeon.png',
@@ -561,7 +564,7 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj2',
-    communityId: 'city-daejeon',
+    communityId: 'city-suwon',
     name: '과학 산책 서재',
     description: '과학 교양서를 함께 읽으며 세상을 보는 새로운 눈을 키워요. 부담 없이 참여하세요!',
     ownerId: 'u4',
@@ -579,7 +582,7 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj3',
-    communityId: 'city-cheonan',
+    communityId: 'city-seongnam',
     name: '한국 소설 깊이 읽기',
     description: '한국 현대 소설의 깊이를 함께 탐구하는 서재입니다. 매달 한국 작가의 소설 한 권을 선정합니다.',
     ownerId: 'u3',
@@ -598,8 +601,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   // ── 추천 서재 (비공개 테스트용 데모 데이터) ──
   {
     id: 'sj4',
-    communityId: 'city-cheonan',
-    name: '천안 목요 저녁 서재',
+    communityId: 'city-seongnam',
+    name: '분당 목요 저녁 서재',
     description: '퇴근 후 목요일 저녁, 책 한 권으로 일상을 환기하는 서재입니다. 장르 제한 없이 매달 한 권을 정해 함께 읽어요.',
     ownerId: 'u-rec1',
     ownerName: '김하늘',
@@ -616,8 +619,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj5',
-    communityId: 'city-daejeon',
-    name: '대전 과학책 서재',
+    communityId: 'city-suwon',
+    name: '수원 과학책 서재',
     description: '우주, 생물, 물리, 뇌과학\u2026 과학 교양서를 함께 읽으며 질문을 나누는 서재입니다. 비전공자 환영!',
     ownerId: 'u-rec2',
     ownerName: '정우진',
@@ -634,8 +637,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj6',
-    communityId: 'city-sejong',
-    name: '세종 에세이 서재',
+    communityId: 'city-yongin',
+    name: '용인 에세이 서재',
     description: '에세이를 좋아하는 사람들이 모여 각자의 문장을 나누는 서재입니다. 한 달에 한 권, 느긋하게 읽어요.',
     ownerId: 'u-rec3',
     ownerName: '박지은',
@@ -652,8 +655,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj7',
-    communityId: 'city-cheongju',
-    name: '청주 주말 아침 서재',
+    communityId: 'city-hwaseong',
+    name: '동탄 주말 아침 서재',
     description: '토요일 아침, 커피 한 잔과 함께 시작하는 독서 모임입니다. 아침형 독서인을 위한 서재!',
     ownerId: 'u-rec4',
     ownerName: '이준혁',
@@ -670,8 +673,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj8',
-    communityId: 'city-daejeon',
-    name: '30대 전환기 서재',
+    communityId: 'city-cheonan',
+    name: '천안 30대 전환기 서재',
     description: '커리어 전환, 관계 변화, 삶의 방향\u2026 30대의 질문을 책에서 찾는 서재입니다. 자기계발서부터 문학까지 폭넓게.',
     ownerId: 'u-rec5',
     ownerName: '최민서',
@@ -733,11 +736,11 @@ export const MOCK_HIGHLIGHT_PAIRS: HighlightPair[] = [
 export const MOCK_CHAEKBANG: Chaekbang[] = [
   {
     id: 'cb1',
-    communityId: 'city-daejeon',
-    name: '대전 인문 책방',
-    description: '대전의 인문학 서재들이 모인 책방입니다.',
-    quarterlyMeetingInfo: '9월 셋째 주 토요일 대전 유성구 북카페',
-    seojaeIds: ['sj1', 'sj2'],
+    communityId: 'city-seongnam',
+    name: '성남 인문 책방',
+    description: '성남·분당의 인문학 서재들이 모인 책방입니다.',
+    quarterlyMeetingInfo: '9월 셋째 주 토요일 분당 서현역 북카페',
+    seojaeIds: ['sj3', 'sj4'],
     seojaeCount: 2,
   },
 ];
