@@ -217,8 +217,8 @@ function MiniCalendar({
   typeFilter: EventType | null;
   regionFilter: Region | null;
 }) {
-  const year = 2025;
-  const month = 6; // July (0-indexed)
+  const year = 2026;
+  const month = 8; // September (0-indexed)
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -242,7 +242,7 @@ function MiniCalendar({
   return (
     <div className="mx-5 bg-surface rounded-[18px] border border-border p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[15px] font-semibold text-ink">2025년 7월</h3>
+        <h3 className="text-[15px] font-semibold text-ink">2026년 9월</h3>
         {selectedDate !== null && (
           <button
             onClick={() => onSelectDate(null)}

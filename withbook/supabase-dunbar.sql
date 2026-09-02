@@ -17,7 +17,7 @@ ALTER TABLE public.chat_rooms ADD CONSTRAINT chat_rooms_type_check
 CREATE TABLE IF NOT EXISTS public.city_communities (
   id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   region     text NOT NULL UNIQUE
-             CHECK (region IN ('천안', '대전', '세종', '청주')),
+             CHECK (region IN ('서울', '성남·분당', '수원', '용인', '안양·평촌', '화성·동탄', '천안')),
   name       text NOT NULL,
   description text DEFAULT '',
   max_members int DEFAULT 150,
@@ -197,14 +197,17 @@ CREATE POLICY "pdr_insert_own" ON public.pair_daily_reactions
   FOR INSERT WITH CHECK (auth.uid() = reactor_id);
 
 -- ============================================================
--- 시드 데이터: 4개 도시 커뮤니티
+-- 시드 데이터: 7개 도시 커뮤니티
 -- ============================================================
 
 INSERT INTO public.city_communities (region, name, description) VALUES
-  ('대전', '대전 위드북', '대전 독서 커뮤니티'),
-  ('천안', '천안 위드북', '천안 독서 커뮤니티'),
-  ('세종', '세종 위드북', '세종 독서 커뮤니티'),
-  ('청주', '청주 위드북', '청주 독서 커뮤니티')
+  ('서울', '서울 위드북', '서울 독서 커뮤니티'),
+  ('성남·분당', '성남 위드북', '성남·분당 독서 커뮤니티'),
+  ('수원', '수원 위드북', '수원 독서 커뮤니티'),
+  ('용인', '용인 위드북', '용인 독서 커뮤니티'),
+  ('안양·평촌', '안양 위드북', '안양·평촌 독서 커뮤니티'),
+  ('화성·동탄', '화성 위드북', '화성·동탄 독서 커뮤니티'),
+  ('천안', '천안 위드북', '천안 독서 커뮤니티')
 ON CONFLICT (region) DO NOTHING;
 
 -- ============================================================

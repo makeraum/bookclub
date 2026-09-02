@@ -294,7 +294,7 @@ export const STARTER_KIT: { step: string; detail: string }[] = [
 
 /** 운영 숫자 대시보드 (목업 데이터) */
 export const OPERATION_DASHBOARD: { label: string; value: string; note?: string }[] = [
-  { label: '전체 가입자', value: '1,247명', note: '2025년 7월 기준' },
+  { label: '전체 가입자', value: '1,247명', note: '2026년 9월 기준' },
   { label: '30일 잔존율', value: '68%', note: '첫 밑줄 기록 후 30일 내 재방문' },
   { label: '활성 서재 수', value: '42개', note: '월 1회 이상 모임 진행' },
   { label: '평균 완독률', value: '74%', note: '모임 참여자 기준' },
