@@ -257,6 +257,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     fee: 5000,
     book: BOOKS[0],
     host: '이서연',
+    hostId: 'u1',
   },
   {
     id: 'ev3',
@@ -271,6 +272,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     currentParticipants: 6,
     fee: 0,
     host: '박도윤',
+    hostId: 'u2',
   },
   {
     id: 'ev4',
@@ -300,6 +302,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     fee: 5000,
     book: BOOKS[2],
     host: '한소율',
+    hostId: 'u3',
   },
   {
     id: 'ev6',
@@ -314,6 +317,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     currentParticipants: 9,
     fee: 3000,
     host: '오지환',
+    hostId: 'u4',
   },
   {
     id: 'ev7',

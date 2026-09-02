@@ -12,6 +12,7 @@ import {
   REGIONS,
   PLACEHOLDER_COLORS,
 } from '../lib/mock-data';
+import HostProfileCard from './HostProfileCard';
 import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
@@ -525,20 +526,12 @@ function EventDetail({
         )}
 
         {/* Host */}
-        <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
-          <h3
-            className="text-[15px] font-semibold text-ink mb-2"
-            style={{ letterSpacing: '-0.3px' }}
-          >
-            주최자
-          </h3>
-          <div className="flex items-center gap-3">
-            <div className="w-[40px] h-[40px] rounded-full bg-canvas border border-border flex items-center justify-center">
-              <span className="text-[16px]">👤</span>
-            </div>
-            <span className="text-[14px] text-ink font-medium">{event.host}</span>
-          </div>
-        </div>
+        <HostProfileCard
+          hostId={event.hostId}
+          hostName={event.host}
+          sectionTitle="주최자"
+          book={event.book}
+        />
 
         {/* Application form */}
         {showForm && !applied && (

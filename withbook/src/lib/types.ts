@@ -94,6 +94,7 @@ export interface OfflineEvent {
   fee: number;
   book?: Book;
   host: string;
+  hostId?: string;
 }
 
 export interface ChatMessage {
@@ -237,6 +238,37 @@ export interface ShellMetrics {
   discussionCredits: number;   // 발제 크레딧
   mentorSticks: number;        // 붙듦
   seasonBadges: number;        // 계절 배지
+}
+
+// ── 주최자 프로필 ──
+
+export interface HostHighlight {
+  sentence: string;
+  reason: string;
+}
+
+export interface HostBookData {
+  highlightCount: number;
+  bookTitle: string;
+  featured: HostHighlight[];
+}
+
+export interface HostProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  title: '기록자' | '서재지기';
+  intro: string;
+  metrics: {
+    highlightCount: number;
+    completedBooks: number;
+    hostedMeetings: number;
+    discussionCredits: number;
+    mentorSticks: number;
+  };
+  bookHighlights: Record<string, HostBookData>;
+  hasEnoughRecords: boolean;
+  introVisible: boolean;
 }
 
 // ── 서재지기 초대 ──

@@ -2,6 +2,7 @@
 
 import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE } from '../lib/mock-data';
+import HostProfileCard from './HostProfileCard';
 
 export default function SeojaeDetail() {
   const { selectedSeojaeId, selectSeojae, joinSeojae, leaveSeojae, joinedSeojaeIds, mySeojae, setTab } = useApp();
@@ -68,24 +69,13 @@ export default function SeojaeDetail() {
           </div>
 
           {/* 서재지기 */}
-          <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
-            <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>
-              서재지기
-            </h3>
-            <div className="flex items-center gap-3">
-              <div className="w-[44px] h-[44px] rounded-full overflow-hidden flex-shrink-0">
-                <img src={seojae.ownerAvatar} alt={seojae.ownerName} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-semibold text-ink">{seojae.ownerName}</span>
-                  <span className="px-2 py-0.5 bg-action/10 text-action text-[10.5px] font-semibold rounded-full">
-                    서재지기
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <HostProfileCard
+            hostId={seojae.ownerId}
+            hostName={seojae.ownerName}
+            hostAvatar={seojae.ownerAvatar}
+            sectionTitle="서재지기"
+            book={seojae.currentBook}
+          />
 
           {/* 소개 */}
           <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
