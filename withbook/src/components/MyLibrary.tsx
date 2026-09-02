@@ -1,13 +1,33 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PLACEHOLDER_COLORS, SHELL_METRIC_LABELS } from '../lib/mock-data';
+import { toKoreanCount } from '../lib/utils';
 
 const GATE_LEVEL_LABEL = { reader: '독자', recorder: '기록자', librarian: '서재지기' } as const;
 
 export default function MyLibrary() {
-  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, highlightStats, gates, mySeojae, myHighlightPairs, shellMetrics } = useApp();
+  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, highlightStats, gates, mySeojae, myHighlightPairs, shellMetrics, myCoAttendances, coAttendanceVisible, toggleCoAttendanceVisible, selectCoAttendee } = useApp();
   const myPosts = posts.filter(p => p.userId === (authUserId || profile.id));
+
+  // 최초 안내 배너
+  const [showCoAttendanceNotice, setShowCoAttendanceNotice] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && myCoAttendances.length > 0) {
+      const shown = localStorage.getItem('withbook-coattendance-notice-shown');
+      if (!shown) {
+        setShowCoAttendanceNotice(true);
+      }
+    }
+  }, [myCoAttendances.length]);
+
+  const dismissCoAttendanceNotice = () => {
+    setShowCoAttendanceNotice(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('withbook-coattendance-notice-shown', 'true');
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-dvh bg-canvas">
@@ -104,6 +124,59 @@ export default function MyLibrary() {
             </div>
           </div>
         </div>
+
+        {/* 함께 읽은 사람들 */}
+        {myCoAttendances.length > 0 && (
+          <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>함께 읽은 사람들</h3>
+              <button
+                onClick={toggleCoAttendanceVisible}
+                className="flex items-center gap-1.5 press-scale"
+                aria-label={coAttendanceVisible ? '숨기기' : '보이기'}
+              >
+                <span className="text-[11.5px] text-sub">{coAttendanceVisible ? '보임' : '숨김'}</span>
+                <div className={`w-[36px] h-[20px] rounded-full transition-colors duration-200 flex items-center ${coAttendanceVisible ? 'bg-action justify-end' : 'bg-chip-border justify-start'}`}>
+                  <div className="w-[16px] h-[16px] rounded-full bg-white mx-[2px] shadow-sm" />
+                </div>
+              </button>
+            </div>
+            <p className="text-[12px] text-sub mb-4">오프라인 모임에서 함께한 사람들이에요</p>
+
+            {/* 최초 안내 배너 */}
+            {showCoAttendanceNotice && coAttendanceVisible && (
+              <div className="bg-action/5 border border-action/20 rounded-[11px] p-3 mb-4 flex items-start gap-2">
+                <span className="text-[14px] mt-0.5 flex-shrink-0">👋</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12.5px] text-ink leading-[1.5]">
+                    같은 모임에 참석했던 사람들의 기록이에요. 프라이버시가 걱정되면 토글을 꺼주세요.
+                  </p>
+                </div>
+                <button onClick={dismissCoAttendanceNotice} className="text-[12px] text-sub flex-shrink-0 press-scale">닫기</button>
+              </div>
+            )}
+
+            {coAttendanceVisible && (
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-5 px-5 pb-1">
+                {myCoAttendances.map(att => (
+                  <button
+                    key={att.userId}
+                    onClick={() => selectCoAttendee(att.userId)}
+                    className="press-scale flex-shrink-0 w-[120px] flex flex-col items-center bg-canvas rounded-[14px] p-3"
+                  >
+                    <div className="w-[48px] h-[48px] rounded-full overflow-hidden mb-2">
+                      <img src={att.userAvatar} alt={att.userName} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-ink mb-0.5">{att.userName}</p>
+                    <p className="text-[11px] text-sub text-center leading-[1.4]">
+                      {toKoreanCount(att.count)} 번 같은 자리
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 서재지기 콘솔 — 주최 서재가 1개 이상일 때만 표시 */}
         {mySeojae.some(s => s.members.some(m => m.role === 'owner')) && (

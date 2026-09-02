@@ -1,6 +1,6 @@
 export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
-export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | null;
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | null;
 
 export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
 
@@ -325,6 +325,34 @@ export interface NoShowMember {
   userName: string;
   userAvatar: string;
   missedCount: number;
+}
+
+// ── 동석 기록 ──
+
+export interface CoAttendance {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  count: number;
+}
+
+export interface SharedMeeting {
+  seojaeId: string;
+  seojaeName: string;
+  book: Book;
+  date: string;
+}
+
+export interface SharedHighlight {
+  sentence: string;
+  book: Book;
+  myReason: string;
+  partnerReason: string;
+}
+
+export interface CoAttendanceDetail extends CoAttendance {
+  sharedMeetings: SharedMeeting[];
+  sharedHighlight?: SharedHighlight;
 }
 
 export interface HighlightPair {

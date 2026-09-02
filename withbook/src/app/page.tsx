@@ -16,6 +16,7 @@ import GroupChat from '../components/GroupChat';
 import GateCelebration from '../components/GateCelebration';
 import ResourceLibrary from '../components/ResourceLibrary';
 import LibrarianConsole from '../components/LibrarianConsole';
+import CoAttendeeProfile from '../components/CoAttendeeProfile';
 import BottomNav from '../components/BottomNav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FeedbackButton from '../components/FeedbackButton';
@@ -74,6 +75,7 @@ function AppShell() {
       {subView === 'seojaeDetail' && <SeojaeDetail />}
       {subView === 'highlightPairView' && <HighlightPairView />}
       {subView === 'librarianConsole' && <LibrarianConsole />}
+      {subView === 'coAttendeeProfile' && <CoAttendeeProfile />}
 
       {/* Feedback floating button */}
       <FeedbackButton />

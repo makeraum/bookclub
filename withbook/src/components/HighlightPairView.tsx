@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_HIGHLIGHTS, PLACEHOLDER_COLORS } from '../lib/mock-data';
+import { toKoreanCount } from '../lib/utils';
 
 export default function HighlightPairView() {
-  const { selectedPairId, selectPair, myHighlightPairs, setTab, profile, authUserId } = useApp();
+  const { selectedPairId, selectPair, myHighlightPairs, setTab, profile, authUserId, myCoAttendances } = useApp();
   const [todayReacted, setTodayReacted] = useState(false);
 
   const pair = myHighlightPairs.find(p => p.id === selectedPairId);
@@ -91,6 +92,15 @@ export default function HighlightPairView() {
             <p className="text-[10.5px] text-caption mt-0.5">
               알고리즘이 고르고, 사람이 확인합니다
             </p>
+            {(() => {
+              const coAtt = myCoAttendances.find(a => a.userId === pair.partnerUserId);
+              if (!coAtt) return null;
+              return (
+                <p className="text-[11.5px] text-action/80 mt-1.5">
+                  이미 {toKoreanCount(coAtt.count)} 번 같은 자리에 있었어요
+                </p>
+              );
+            })()}
           </div>
 
           {/* 스트릭 카운터 */}

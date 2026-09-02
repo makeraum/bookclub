@@ -858,6 +858,14 @@ export async function submitFeedback(
   if (error) throw error;
 }
 
+// ── 동석 기록 (Co-Attendances) ──
+
+export async function fetchMyCoAttendances(_userId: string) {
+  // TODO: co_attendances 테이블에서 user_id 기준 조회
+  // 현재는 목업 데이터 사용, DB 연동 시 구현 예정
+  return [];
+}
+
 // ── Utils ──
 
 function formatTimeAgo(isoString: string): string {

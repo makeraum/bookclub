@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics } from '../lib/types';
-import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS } from '../lib/mock-data';
+import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance } from '../lib/types';
+import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
@@ -40,6 +40,10 @@ interface AppState {
   myCityRegion: Region | null;
   selectedSeojaeId: string | null;
   selectedPairId: string | null;
+  // 동석 기록
+  myCoAttendances: CoAttendance[];
+  selectedCoAttendeeId: string | null;
+  coAttendanceVisible: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -69,6 +73,8 @@ interface AppContextType extends AppState {
   selectSeojae: (id: string | null) => void;
   selectPair: (id: string | null) => void;
   reactToPairHighlight: (pairId: string, highlightId: string) => Promise<void>;
+  selectCoAttendee: (id: string | null) => void;
+  toggleCoAttendanceVisible: () => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -120,6 +126,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [myCityRegion, setMyCityRegion] = useState<Region | null>('성남·분당');
   const [selectedSeojaeId, setSelectedSeojaeId] = useState<string | null>(null);
   const [selectedPairId, setSelectedPairId] = useState<string | null>(null);
+
+  // 동석 기록 상태
+  const [myCoAttendances, setMyCoAttendances] = useState<CoAttendance[]>(MOCK_CO_ATTENDANCES);
+  const [selectedCoAttendeeId, setSelectedCoAttendeeId] = useState<string | null>(null);
+  const [coAttendanceVisible, setCoAttendanceVisible] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('withbook-coattendance-visible');
+      return stored !== null ? stored === 'true' : true;
+    }
+    return true;
+  });
 
   // ── 게이트 레벨 계산 ──
   const gateLevel: GateLevel = useMemo(() => {
@@ -659,6 +676,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [authUserId]);
 
+  // ── 동석 기록 ──
+  const selectCoAttendee = useCallback((id: string | null) => {
+    setSelectedCoAttendeeId(id);
+    if (id) {
+      setSubView('coAttendeeProfile');
+    } else {
+      setSubView(null);
+    }
+  }, []);
+
+  const toggleCoAttendanceVisible = useCallback(() => {
+    setCoAttendanceVisible(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('withbook-coattendance-visible', String(next));
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -685,6 +722,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         mySeojae, myHighlightPairs, myCityRegion,
         selectedSeojaeId, selectedPairId,
         selectSeojae, selectPair, reactToPairHighlight,
+        // 동석 기록
+        myCoAttendances, selectedCoAttendeeId, coAttendanceVisible,
+        selectCoAttendee, toggleCoAttendanceVisible,
       }}
     >
       {children}

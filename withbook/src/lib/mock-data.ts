@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -786,6 +786,73 @@ export const ONBOARDING_QUESTIONS: { id: 'q1' | 'q2' | 'q3'; question: string; d
     description: '형광펜, 연필, 메모 앱 등 어떤 방식이든 괜찮아요.',
   },
 ];
+
+// ── 동석 기록 목업 데이터 ──
+
+export const MOCK_CO_ATTENDANCES: CoAttendance[] = [
+  { userId: 'u2', userName: '박도윤', userAvatar: '/assets/avatar-doyoon.png', count: 5 },
+  { userId: 'u3', userName: '한소율', userAvatar: '/assets/avatar-soyul.png', count: 3 },
+  { userId: 'u4', userName: '오지환', userAvatar: '/assets/avatar-jihwan.png', count: 2 },
+  { userId: 'u1', userName: '이서연', userAvatar: '/assets/avatar-seoyeon.png', count: 1 },
+];
+
+export const MOCK_CO_ATTENDANCE_DETAILS: Record<string, CoAttendanceDetail> = {
+  u2: {
+    userId: 'u2',
+    userName: '박도윤',
+    userAvatar: '/assets/avatar-doyoon.png',
+    count: 5,
+    sharedMeetings: [
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[0], date: '2026-08-10' },
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[7], date: '2026-07-13' },
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[9], date: '2026-06-08' },
+      { seojaeId: 'sj2', seojaeName: '과학 산책 서재', book: BOOKS[3], date: '2026-05-25' },
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[8], date: '2026-04-12' },
+    ],
+    sharedHighlight: {
+      sentence: '강물은 어디서나 동시에 존재한다. 발원지에서도, 하구에서도, 폭포에서도.',
+      book: BOOKS[0],
+      myReason: '시간에 쫓기며 살던 때에 이 문장을 만났어요. 앞만 보고 달려온 시간이 헛되지 않았다는 위로.',
+      partnerReason: '출퇴근 지하철에서 읽었는데 주변이 멈춘 것 같았어요. 시간의 흐름이 달라 보였습니다.',
+    },
+  },
+  u3: {
+    userId: 'u3',
+    userName: '한소율',
+    userAvatar: '/assets/avatar-soyul.png',
+    count: 3,
+    sharedMeetings: [
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[0], date: '2026-08-10' },
+      { seojaeId: 'sj3', seojaeName: '한국 소설 깊이 읽기', book: BOOKS[2], date: '2026-07-20' },
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[7], date: '2026-06-14' },
+    ],
+  },
+  u4: {
+    userId: 'u4',
+    userName: '오지환',
+    userAvatar: '/assets/avatar-jihwan.png',
+    count: 2,
+    sharedMeetings: [
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[0], date: '2026-08-10' },
+      { seojaeId: 'sj2', seojaeName: '과학 산책 서재', book: BOOKS[3], date: '2026-07-27' },
+    ],
+  },
+  u1: {
+    userId: 'u1',
+    userName: '이서연',
+    userAvatar: '/assets/avatar-seoyeon.png',
+    count: 1,
+    sharedMeetings: [
+      { seojaeId: 'sj3', seojaeName: '한국 소설 깊이 읽기', book: BOOKS[2], date: '2026-08-17' },
+    ],
+    sharedHighlight: {
+      sentence: '모순이 없는 삶은 없다. 다만 그 모순을 어떻게 껴안느냐가 삶의 질을 결정한다.',
+      book: BOOKS[2],
+      myReason: '좋아하는 일과 돈 버는 일 사이 갈등이 이 한 문장으로 풀렸어요.',
+      partnerReason: '안정적인 직장을 그만둘까 고민하던 시기에, 두 마음이 다 맞다는 허락처럼 느껴졌어요.',
+    },
+  },
+};
 
 export const MOCK_HIGHLIGHTS: Highlight[] = [
   {
