@@ -5,7 +5,7 @@ import { MOCK_SEOJAE } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
 
 export default function SeojaeDetail() {
-  const { selectedSeojaeId, selectSeojae, joinSeojae, leaveSeojae, joinedSeojaeIds, mySeojae, setTab } = useApp();
+  const { selectedSeojaeId, selectSeojae, joinSeojae, leaveSeojae, joinedSeojaeIds, mySeojae, setTab, setSubView } = useApp();
 
   const seojae = MOCK_SEOJAE.find(s => s.id === selectedSeojaeId)
     || mySeojae.find(s => s.id === selectedSeojaeId);
@@ -43,6 +43,14 @@ export default function SeojaeDetail() {
               <span className="text-[18px]">‹</span>
             </button>
             <h1 className="text-[17px] font-semibold text-ink truncate flex-1">{seojae.name}</h1>
+            {isOwner && (
+              <button
+                onClick={() => setSubView('librarianConsole')}
+                className="px-3 py-1.5 rounded-full border border-action/30 text-[12px] font-semibold text-action press-scale"
+              >
+                운영
+              </button>
+            )}
             {isJoined && (
               <button
                 onClick={handleChatOpen}

@@ -1,6 +1,6 @@
 export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
-export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | null;
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | null;
 
 export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
 
@@ -283,6 +283,48 @@ export interface LibrarianInvitation {
   status: 'pending' | 'accepted' | 'declined';
   message: string;
   createdAt: string;
+}
+
+// ── 서재지기 콘솔 ──
+
+export interface AttendanceRecord {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  attended: boolean;
+}
+
+export interface MeetingSession {
+  seojaeId: string;
+  meetingDate: string;
+  attendances: AttendanceRecord[];
+}
+
+export interface DiscussionQuestion {
+  id: string;
+  order: number;
+  text: string;
+  isUsed: boolean;
+}
+
+export interface SessionNote {
+  seojaeId: string;
+  meetingDate: string;
+  content: string;
+}
+
+export interface QuietMember {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  weeksSilent: number;
+}
+
+export interface NoShowMember {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  missedCount: number;
 }
 
 export interface HighlightPair {

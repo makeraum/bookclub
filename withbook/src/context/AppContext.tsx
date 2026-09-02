@@ -106,7 +106,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [shellMetrics, setShellMetrics] = useState<ShellMetrics>(DEFAULT_SHELL_METRICS);
 
   // 던바 구조 상태
-  const [mySeojae, setMySeojae] = useState<Seojae[]>(MOCK_SEOJAE.slice(0, 2));
+  const [mySeojae, setMySeojae] = useState<Seojae[]>(() =>
+    MOCK_SEOJAE.slice(0, 2).map(s => {
+      if (s.id === 'sj1') {
+        return { ...s, members: s.members.map(m =>
+          m.userId === 'u1' ? { ...m, role: 'owner' as const, userId: 'me' } : m
+        )};
+      }
+      return s;
+    })
+  );
   const [myHighlightPairs, setMyHighlightPairs] = useState<HighlightPair[]>(MOCK_HIGHLIGHT_PAIRS);
   const [myCityRegion, setMyCityRegion] = useState<Region | null>('성남·분당');
   const [selectedSeojaeId, setSelectedSeojaeId] = useState<string | null>(null);
@@ -319,7 +328,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProfile(prev => ({ ...prev, name: prev.name || '체험 사용자' }));
       setGates({ gate0At: now, gate1At: now, gate2At: now });
       setHighlightStats({ totalCount: 35, bookCount: 5 });
-      setMySeojae(MOCK_SEOJAE.slice(0, 3));
+      // sj1을 체험 사용자 소유로 설정 (서재지기 콘솔 체험용)
+      const demoSeojae = MOCK_SEOJAE.slice(0, 3).map(s => {
+        if (s.id === 'sj1') {
+          return {
+            ...s,
+            members: s.members.map(m =>
+              m.userId === 'u1' ? { ...m, role: 'owner' as const, userId: 'me' } : m
+            ),
+          };
+        }
+        return s;
+      });
+      setMySeojae(demoSeojae);
       setJoinedSeojaeIds(new Set(['sj1', 'sj2', 'sj3']));
       setOnboardingComplete(true);
       setRoute('main');

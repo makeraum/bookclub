@@ -105,6 +105,26 @@ export default function MyLibrary() {
           </div>
         </div>
 
+        {/* 서재지기 콘솔 — 주최 서재가 1개 이상일 때만 표시 */}
+        {mySeojae.some(s => s.members.some(m => m.role === 'owner')) && (
+          <button
+            onClick={() => setSubView('librarianConsole')}
+            className="press-scale w-full bg-surface mt-3 px-5 py-5 border-b border-border text-left flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-[11px] bg-action/10 flex items-center justify-center flex-shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066cc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>서재지기 콘솔</h3>
+              <p className="text-[12.5px] text-sub mt-0.5">출석 체크, 발제 질문, 운영 관리</p>
+            </div>
+            <span className="text-[18px] text-sub flex-shrink-0">›</span>
+          </button>
+        )}
+
         {/* 조개 지표 */}
         <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
           <h3 className="text-[15px] font-semibold text-ink mb-1" style={{ letterSpacing: '-0.3px' }}>조개 지표</h3>
