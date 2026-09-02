@@ -169,9 +169,9 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
                 ) : room.type === 'event' && room.eventType ? (
                   <div
                     className="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: EVENT_TYPE_COLORS[room.eventType] + '20' }}
+                    style={{ backgroundColor: EVENT_TYPE_COLORS[room.eventType].bg + (room.eventType === 'rotation' ? '20' : '') }}
                   >
-                    <span className="text-[11px] font-bold" style={{ color: EVENT_TYPE_COLORS[room.eventType] }}>
+                    <span className="text-[11px] font-bold" style={{ color: room.eventType === 'rotation' ? '#0066cc' : '#1d1d1f' }}>
                       {EVENT_TYPE_LABELS[room.eventType].slice(0, 2)}
                     </span>
                   </div>
@@ -255,8 +255,8 @@ function DemoRoomIcon({ room }: { room: DemoChatRoom }) {
   }
   // event (북 라운지)
   return (
-    <div className="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#B8926A20' }}>
-      <span className="text-[11px] font-bold" style={{ color: '#B8926A' }}>라운지</span>
+    <div className="w-12 h-12 rounded-[12px] bg-action/10 flex items-center justify-center flex-shrink-0">
+      <span className="text-[11px] font-bold text-action">라운지</span>
     </div>
   );
 }

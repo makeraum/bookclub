@@ -111,7 +111,6 @@ export default function OfflineEvents() {
                 key={t}
                 label={EVENT_TYPE_LABELS[t]}
                 selected={typeFilter === t}
-                color={EVENT_TYPE_COLORS[t]}
                 onTap={() => setTypeFilter(typeFilter === t ? null : t)}
               />
             ))}
@@ -180,23 +179,25 @@ export default function OfflineEvents() {
 function FilterChip({
   label,
   selected,
-  color,
   onTap,
 }: {
   label: string;
   selected: boolean;
-  color?: string;
   onTap: () => void;
 }) {
   return (
     <button
       onClick={onTap}
-      className={`press-scale px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 border whitespace-nowrap ${
+      className={`press-scale px-4 py-2 rounded-full text-[13px] font-semibold transition-all duration-200 border whitespace-nowrap ${
         selected
           ? 'text-white border-transparent'
-          : 'bg-transparent text-ink border-chip-border'
+          : 'bg-white text-ink'
       }`}
-      style={selected ? { backgroundColor: color || '#1d1d1f', borderColor: color || '#1d1d1f' } : undefined}
+      style={
+        selected
+          ? { backgroundColor: '#1d1d1f', borderColor: '#1d1d1f' }
+          : { borderColor: '#d2d2d7' }
+      }
     >
       {label}
     </button>
@@ -318,8 +319,11 @@ function EventCard({
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <span
-            className="px-2.5 py-0.5 text-[10.5px] font-semibold rounded-full text-white"
-            style={{ backgroundColor: EVENT_TYPE_COLORS[event.type] }}
+            className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full"
+            style={{
+              backgroundColor: EVENT_TYPE_COLORS[event.type].bg,
+              color: EVENT_TYPE_COLORS[event.type].text,
+            }}
           >
             {EVENT_TYPE_LABELS[event.type]}
           </span>
@@ -423,8 +427,11 @@ function EventDetail({
         {/* Hero */}
         <div className="bg-surface px-5 py-6 flex flex-col items-center border-b border-border">
           <span
-            className="px-3 py-1 text-[12px] font-semibold rounded-full text-white mb-3"
-            style={{ backgroundColor: EVENT_TYPE_COLORS[event.type] }}
+            className="px-3 py-1 text-[12px] font-semibold rounded-full mb-3"
+            style={{
+              backgroundColor: EVENT_TYPE_COLORS[event.type].bg,
+              color: EVENT_TYPE_COLORS[event.type].text,
+            }}
           >
             {EVENT_TYPE_LABELS[event.type]}
           </span>

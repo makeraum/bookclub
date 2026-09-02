@@ -219,11 +219,11 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   quarterly: '책방 분기모임',
 };
 
-export const EVENT_TYPE_COLORS: Record<EventType, string> = {
-  bookclub: '#0066cc',
-  rotation: '#B8926A',
-  gathering: '#34C759',
-  quarterly: '#9B59B6',
+export const EVENT_TYPE_COLORS: Record<EventType, { bg: string; text: string }> = {
+  bookclub: { bg: '#f5f5f7', text: '#1d1d1f' },
+  rotation: { bg: '#0066cc', text: '#ffffff' },
+  gathering: { bg: '#f5f5f7', text: '#1d1d1f' },
+  quarterly: { bg: '#f5f5f7', text: '#1d1d1f' },
 };
 
 export const REGIONS: Region[] = ['서울', '성남·분당', '수원', '용인', '안양·평촌', '화성·동탄', '천안'];
