@@ -16,6 +16,9 @@ import GroupChat from '../components/GroupChat';
 import GateCelebration from '../components/GateCelebration';
 import ResourceLibrary from '../components/ResourceLibrary';
 import BottomNav from '../components/BottomNav';
+import ErrorBoundary from '../components/ErrorBoundary';
+import FeedbackButton from '../components/FeedbackButton';
+import BetaNotice from '../components/BetaNotice';
 
 function AppShell() {
   const { route, tab, subView, authLoading, isTestMode } = useApp();
@@ -70,6 +73,12 @@ function AppShell() {
       {subView === 'seojaeDetail' && <SeojaeDetail />}
       {subView === 'highlightPairView' && <HighlightPairView />}
 
+      {/* Feedback floating button */}
+      <FeedbackButton />
+
+      {/* Beta test notice (shown once) */}
+      <BetaNotice />
+
       {/* Bottom navigation */}
       <BottomNav />
     </div>
@@ -78,10 +87,12 @@ function AppShell() {
 
 export default function Page() {
   return (
-    <AppProvider>
-      <div className="max-w-[430px] mx-auto w-full min-h-dvh bg-canvas">
-        <AppShell />
-      </div>
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <div className="max-w-[430px] mx-auto w-full min-h-dvh bg-canvas">
+          <AppShell />
+        </div>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

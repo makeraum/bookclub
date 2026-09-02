@@ -129,13 +129,30 @@ export default function HomeFeed() {
 
         {/* Highlight cards */}
         <div className="space-y-3 px-5">
-          {highlights.map(highlight => (
-            <HighlightCard
-              key={highlight.id}
-              highlight={highlight}
-              onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
-            />
-          ))}
+          {highlights.length > 0 ? (
+            highlights.map(highlight => (
+              <HighlightCard
+                key={highlight.id}
+                highlight={highlight}
+                onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
+              />
+            ))
+          ) : (
+            <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
+              <p className="text-[32px] mb-2">📖</p>
+              <p className="text-[15px] font-semibold text-ink mb-1">아직 밑줄이 없어요</p>
+              <p className="text-[13px] text-sub leading-[1.6]">
+                책을 읽고 인상 깊은 문장에 밑줄을 남겨보세요.<br />
+                다른 사람들의 밑줄도 여기에 나타나요.
+              </p>
+              <button
+                onClick={() => setSubView('compose')}
+                className="press-scale mt-4 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
+              >
+                첫 밑줄 남기기
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 서재 넛지 카드 */}

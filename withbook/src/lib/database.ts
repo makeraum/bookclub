@@ -842,6 +842,22 @@ export async function acceptLibrarianInvitation(userId: string, invitationId: st
   await passGate(userId, 'gate_2');
 }
 
+// ── Feedback ──
+
+export async function submitFeedback(
+  screenName: string,
+  message: string,
+  userId?: string,
+) {
+  const { error } = await supabase.from('feedback').insert({
+    user_id: userId || null,
+    screen_name: screenName,
+    message,
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+  });
+  if (error) throw error;
+}
+
 // ── Utils ──
 
 function formatTimeAgo(isoString: string): string {
