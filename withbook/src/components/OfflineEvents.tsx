@@ -9,12 +9,13 @@ import {
   MOCK_CITY_COMMUNITIES,
   EVENT_TYPE_LABELS,
   EVENT_TYPE_COLORS,
-  REGIONS,
   PLACEHOLDER_COLORS,
   DEFAULT_PROMISES,
 } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
-import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
+import RegionSelector from './ui/RegionSelector';
+import { ALL_REGIONS, matchesRegion, type RegionSelection } from '../lib/regions';
+import type { OfflineEvent, EventType, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
   const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView, isTestMode, pendingRetrospectiveEventId, openRetrospective } = useApp();
@@ -22,13 +23,13 @@ export default function OfflineEvents() {
   const [selectedEvent, setSelectedEvent] = useState<OfflineEvent | null>(null);
   const [showGateLock, setShowGateLock] = useState(false);
   const [typeFilter, setTypeFilter] = useState<EventType | null>(null);
-  const [regionFilter, setRegionFilter] = useState<Region | null>(null);
+  const [regionFilter, setRegionFilter] = useState<RegionSelection>(ALL_REGIONS);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
 
   const filteredEvents = useMemo(() => {
     return MOCK_OFFLINE_EVENTS.filter(ev => {
       if (typeFilter && ev.type !== typeFilter) return false;
-      if (regionFilter && ev.region !== regionFilter) return false;
+      if (!matchesRegion(regionFilter, ev.region)) return false;
       if (selectedDate !== null) {
         const evDay = new Date(ev.date).getDate();
         if (evDay !== selectedDate) return false;
@@ -143,18 +144,9 @@ export default function OfflineEvents() {
           </div>
         </div>
 
-        {/* Region filter */}
+        {/* Region filter — 시·도 → 세부 지역 2단 */}
         <div className="px-5 pt-2 pb-3">
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-            {REGIONS.map(r => (
-              <FilterChip
-                key={r}
-                label={r}
-                selected={regionFilter === r}
-                onTap={() => setRegionFilter(regionFilter === r ? null : r)}
-              />
-            ))}
-          </div>
+          <RegionSelector value={regionFilter} onChange={setRegionFilter} />
         </div>
 
         {/* Mini calendar */}
@@ -186,7 +178,7 @@ export default function OfflineEvents() {
               <button
                 onClick={() => {
                   setTypeFilter(null);
-                  setRegionFilter(null);
+                  setRegionFilter(ALL_REGIONS);
                   setSelectedDate(null);
                 }}
                 className="mt-3 text-[13px] text-action font-medium"
@@ -242,7 +234,7 @@ function MiniCalendar({
   selectedDate: number | null;
   onSelectDate: (d: number | null) => void;
   typeFilter: EventType | null;
-  regionFilter: Region | null;
+  regionFilter: RegionSelection;
 }) {
   const year = 2026;
   const month = 8; // September (0-indexed)
@@ -254,7 +246,7 @@ function MiniCalendar({
     const days = new Set<number>();
     events.forEach(ev => {
       if (typeFilter && ev.type !== typeFilter) return;
-      if (regionFilter && ev.region !== regionFilter) return;
+      if (!matchesRegion(regionFilter, ev.region)) return;
       const d = new Date(ev.date).getDate();
       days.add(d);
     });

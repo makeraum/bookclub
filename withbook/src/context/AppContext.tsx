@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent } from '../lib/types';
-import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS } from '../lib/mock-data';
+import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS, DEMO_RETROSPECTIVE_EVENT_ID } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
@@ -152,7 +152,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // 30초 회고 상태
   const [retrospectives, setRetrospectives] = useState<MeetingRetrospective[]>([]);
   const [remainingCards, setRemainingCards] = useState<RemainingSentenceCard[]>(DEMO_REMAINING_CARDS);
-  const [pendingRetrospectiveEventId, setPendingRetrospectiveEventId] = useState<string | null>(null);
+  // 사용자가 직접 연 회고 대상 (없으면 아래 자동 계산값을 씀)
+  const [openedRetrospectiveEventId, setOpenedRetrospectiveEventId] = useState<string | null>(null);
   const [notificationOptIn, setNotificationOptIn] = useState(false);
 
   // ── 게이트 레벨 계산 ──
@@ -164,14 +165,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [gates]);
 
   // ── 회고 대상 이벤트 계산 ──
-  useEffect(() => {
+  // 비공개 테스트: 참가·종료 모임이 없으면 데모 모임으로 폴백 — 회고 카드는 항상 노출된다
+  const pendingRetrospectiveEventId = useMemo(() => {
+    if (openedRetrospectiveEventId) return openedRetrospectiveEventId;
     const today = new Date().toISOString().split('T')[0];
     const retroEventIds = new Set(retrospectives.map(r => r.eventId));
     const pending = MOCK_OFFLINE_EVENTS.find(ev =>
       appliedEvents.has(ev.id) && ev.date < today && !retroEventIds.has(ev.id)
     );
-    setPendingRetrospectiveEventId(pending?.id || null);
-  }, [appliedEvents, retrospectives]);
+    return pending?.id || DEMO_RETROSPECTIVE_EVENT_ID;
+  }, [openedRetrospectiveEventId, appliedEvents, retrospectives]);
 
   // ── 앱 시작 시 세션 확인 ──
   useEffect(() => {
@@ -726,7 +729,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ── 30초 회고 ──
   const openRetrospective = useCallback((eventId: string) => {
-    setPendingRetrospectiveEventId(eventId);
+    setOpenedRetrospectiveEventId(eventId);
     setSubView('meetingRetrospective');
   }, []);
 
@@ -742,6 +745,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setRetrospectives(prev => [...prev, retro]);
+    // 직접 연 회고는 제출과 함께 해제 — 다음 회고 대상은 다시 자동 계산된다
+    setOpenedRetrospectiveEventId(null);
 
     // "남은 문장" 카드 자동 생성
     const event = MOCK_OFFLINE_EVENTS.find(ev => ev.id === eventId);
@@ -751,7 +756,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sentence: h.sentence.length > 80 ? h.sentence.slice(0, 80) + '…' : h.sentence,
         userName: h.userName,
       }));
-      if (sentences.length > 0) {
+      const alreadyHasCard = remainingCards.some(c => c.eventId === eventId);
+      if (sentences.length > 0 && !alreadyHasCard) {
         const card: RemainingSentenceCard = {
           id: `rc-me-${eventId}`,
           eventId,
@@ -767,7 +773,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
     // TODO: Supabase meeting_retrospectives 테이블에 insert
-  }, [highlights]);
+  }, [highlights, remainingCards]);
 
   const saveCardToLibrary = useCallback((cardId: string) => {
     setRemainingCards(prev => prev.map(c =>

@@ -1,3 +1,5 @@
+import type { District, ProvinceLabel } from './regions';
+
 export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
 export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | 'meetingRetrospective' | null;
@@ -78,7 +80,8 @@ export interface BookClub {
 }
 
 export type EventType = 'rotation' | 'bookclub' | 'gathering' | 'quarterly';
-export type Region = '서울' | '성남·분당' | '수원' | '용인' | '안양·평촌' | '화성·동탄' | '천안';
+/** 지역(세부 지역) — 목록은 lib/regions.ts에서 관리합니다 */
+export type Region = District;
 
 export interface OfflineEvent {
   id: string;
@@ -176,7 +179,7 @@ export interface Highlight {
 
 export interface CityCommunity {
   id: string;
-  region: Region;
+  region: Region | ProvinceLabel;
   name: string;
   description: string;
   maxMembers: number;

@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -226,8 +226,6 @@ export const EVENT_TYPE_COLORS: Record<EventType, { bg: string; text: string }> 
   quarterly: { bg: '#f5f5f7', text: '#1d1d1f' },
 };
 
-export const REGIONS: Region[] = ['서울', '성남·분당', '수원', '용인', '안양·평촌', '화성·동탄', '천안'];
-
 export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
   {
     id: 'ev1',
@@ -236,7 +234,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     description: '책 취향이 닿는 사람들과 돌아가며 이야기하는 자리입니다. 참가자들이 각자 좋아하는 책 한 권을 가져와 돌아가며 소개하고, 짧은 대화를 나눕니다. 얼굴이나 프로필이 아니라 밑줄과 문장을 먼저 나누는 자리입니다.',
     date: '2026-09-12',
     time: '오후 3:00',
-    region: '서울',
+    region: '강남·서초',
     venue: '강남 역삼동 독립서점 북티크',
     maxParticipants: 12,
     currentParticipants: 8,
@@ -250,7 +248,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     description: '헤르만 헤세의 《싯다르타》를 함께 읽고 깊이 있는 토론을 나눕니다. 참가 전 완독을 권장하며, 인상 깊은 구절이나 질문을 준비해 오시면 더욱 풍성한 시간이 됩니다.',
     date: '2026-09-13',
     time: '오후 2:00',
-    region: '천안',
+    region: '천안 서북구',
     venue: '천안 서북구 독립서점 책방길',
     maxParticipants: 8,
     currentParticipants: 8,
@@ -311,7 +309,7 @@ export const MOCK_OFFLINE_EVENTS: OfflineEvent[] = [
     description: '에세이를 즐겨 읽는 사람들의 가벼운 모임입니다. 각자 좋아하는 에세이 한 권을 가져와서 소개하고, 좋아하는 구절을 낭독해요. 따뜻한 대화가 기다리고 있습니다.',
     date: '2026-09-27',
     time: '오후 4:00',
-    region: '천안',
+    region: '천안 동남구',
     venue: '천안 동남구 카페 오후의 서재',
     maxParticipants: 12,
     currentParticipants: 9,
@@ -541,8 +539,8 @@ export const MOCK_CITY_COMMUNITIES: CityCommunity[] = [
   { id: 'city-suwon', region: '수원', name: '수원 위드북', description: '수원 독서 커뮤니티', maxMembers: 150, memberCount: 62 },
   { id: 'city-yongin', region: '용인', name: '용인 위드북', description: '용인 독서 커뮤니티', maxMembers: 150, memberCount: 45 },
   { id: 'city-anyang', region: '안양·평촌', name: '안양 위드북', description: '안양·평촌 독서 커뮤니티', maxMembers: 150, memberCount: 38 },
-  { id: 'city-hwaseong', region: '화성·동탄', name: '화성 위드북', description: '화성·동탄 독서 커뮤니티', maxMembers: 150, memberCount: 53 },
-  { id: 'city-cheonan', region: '천안', name: '천안 위드북', description: '천안 독서 커뮤니티', maxMembers: 150, memberCount: 62 },
+  { id: 'city-goyang', region: '고양·일산', name: '고양 위드북', description: '고양·일산 독서 커뮤니티', maxMembers: 150, memberCount: 53 },
+  { id: 'city-cheonan', region: '천안 서북구', name: '천안 위드북', description: '천안 독서 커뮤니티', maxMembers: 150, memberCount: 62 },
 ];
 
 export const MOCK_SEOJAE: Seojae[] = [
@@ -659,8 +657,8 @@ export const MOCK_SEOJAE: Seojae[] = [
   },
   {
     id: 'sj7',
-    communityId: 'city-hwaseong',
-    name: '동탄 주말 아침 서재',
+    communityId: 'city-goyang',
+    name: '일산 주말 아침 서재',
     description: '토요일 아침, 커피 한 잔과 함께 시작하는 독서 모임입니다. 아침형 독서인을 위한 서재!',
     ownerId: 'u-rec4',
     ownerName: '이준혁',
@@ -836,6 +834,21 @@ export const MOCK_CO_ATTENDANCE_DETAILS: Record<string, CoAttendanceDetail> = {
       { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[0], date: '2026-08-10' },
       { seojaeId: 'sj2', seojaeName: '과학 산책 서재', book: BOOKS[3], date: '2026-07-27' },
     ],
+  },
+  'u-diff1': {
+    userId: 'u-diff1',
+    userName: '윤채린',
+    userAvatar: '/assets/avatar-soyul.png',
+    count: 1,
+    sharedMeetings: [
+      { seojaeId: 'sj1', seojaeName: '강남 화요 서재', book: BOOKS[0], date: '2026-08-10' },
+    ],
+    sharedHighlight: {
+      sentence: '강물은 어디서나 동시에 존재한다. 발원지에서도, 하구에서도, 폭포에서도.',
+      book: BOOKS[0],
+      myReason: '앞만 보고 달려온 시간이 헛되지 않았다는 위로처럼 느껴졌어요.',
+      partnerReason: '고통 한복판에 있는 사람에게 "현재만 존재한다"는 말은 위로가 아니라 외면인 것 같아요.',
+    },
   },
   u1: {
     userId: 'u1',
@@ -1090,3 +1103,16 @@ export const DEMO_REMAINING_CARDS: RemainingSentenceCard[] = [
     sharedToFeed: false,
   },
 ];
+
+// ── 비공개 테스트용 데모 상수 ──
+// 신규 계정에서도 기능이 보이도록 홈 피드가 이 데이터를 기본값으로 씁니다.
+
+/** 회고 유도 카드의 기본 대상 모임 (실제 참가·종료 모임이 없을 때) */
+export const DEMO_RETROSPECTIVE_EVENT_ID = 'ev2';
+
+/** '같은 책, 다르게 읽었어요' 카드의 기본 상대 감상 */
+export const DEMO_DIFFERENT_PERSPECTIVE: Highlight =
+  MOCK_HIGHLIGHTS.find(h => h.id === 'h6')!;
+
+/** 다른 시선 카드를 붙일 기준 책 — 《싯다르타》 밑줄 카드 다음에 삽입 */
+export const DEMO_DIFFERENT_PERSPECTIVE_ISBN = BOOKS[0].isbn;

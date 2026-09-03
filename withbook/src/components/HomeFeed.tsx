@@ -2,9 +2,19 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { STORY_USERS, SAME_BOOK_GROUPS, MOCK_STORIES, PLACEHOLDER_COLORS, REACTION_LABELS, MOCK_HIGHLIGHTS, MOCK_OFFLINE_EVENTS } from '../lib/mock-data';
+import {
+  STORY_USERS,
+  SAME_BOOK_GROUPS,
+  MOCK_STORIES,
+  PLACEHOLDER_COLORS,
+  REACTION_LABELS,
+  MOCK_OFFLINE_EVENTS,
+  DEMO_DIFFERENT_PERSPECTIVE,
+  DEMO_DIFFERENT_PERSPECTIVE_ISBN,
+  DEMO_RETROSPECTIVE_EVENT_ID,
+} from '../lib/mock-data';
 import StoryViewer from './StoryViewer';
-import type { Highlight, HighlightReactionType, GateLevel, HighlightSentiment } from '../lib/types';
+import type { Highlight, HighlightReactionType, GateLevel } from '../lib/types';
 
 /** 피드용 하이라이트와 "다른 시선" 후보를 분리 */
 function splitHighlights(allHighlights: Highlight[]) {
@@ -15,11 +25,14 @@ function splitHighlights(allHighlights: Highlight[]) {
   return { feed, others };
 }
 
-/** 현재 유저의 하이라이트와 같은 책이면서 다른 sentiment를 가진 감상을 찾음 */
+/**
+ * 같은 책을 다른 sentiment로 읽은 감상을 찾음.
+ * 매칭이 없어도 데모 감상을 돌려주므로 카드는 비지 않는다.
+ */
 function getDifferentPerspective(
   feedHighlights: Highlight[],
   otherHighlights: Highlight[],
-): Highlight | null {
+): Highlight {
   // 피드에 있는 positive 하이라이트의 책 목록
   const feedBooks = feedHighlights
     .filter(h => h.sentiment === 'positive')
@@ -41,11 +54,12 @@ function getDifferentPerspective(
     if (reserved) return reserved;
   }
 
-  return null;
+  // 매칭 결과가 없어도 비어 보이지 않게 데모 감상으로 폴백
+  return DEMO_DIFFERENT_PERSPECTIVE;
 }
 
 export default function HomeFeed() {
-  const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates, pendingRetrospectiveEventId, openRetrospective } = useApp();
+  const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates, pendingRetrospectiveEventId, openRetrospective, retrospectives, selectCoAttendee } = useApp();
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
 
@@ -57,8 +71,16 @@ export default function HomeFeed() {
     () => getDifferentPerspective(feedHighlights, otherHighlights),
     [feedHighlights, otherHighlights]
   );
-  // 삽입 위치: 인덱스 4 (5번째) 또는 피드가 짧으면 마지막
-  const insertIndex = Math.min(4, feedHighlights.length);
+  // 삽입 위치: 《싯다르타》 밑줄 카드 바로 다음 (없으면 첫 카드 다음)
+  const insertIndex = useMemo(() => {
+    const idx = feedHighlights.findIndex(h => h.book.isbn === DEMO_DIFFERENT_PERSPECTIVE_ISBN);
+    return (idx >= 0 ? idx : 0) + 1;
+  }, [feedHighlights]);
+
+  // 회고 유도 카드 — 대상이 없으면 데모 모임으로 항상 노출
+  const retroEventId = pendingRetrospectiveEventId ?? DEMO_RETROSPECTIVE_EVENT_ID;
+  const retroEvent = MOCK_OFFLINE_EVENTS.find(ev => ev.id === retroEventId);
+  const retroDone = retrospectives.some(r => r.eventId === retroEventId);
 
   const storyUserIds = new Set(MOCK_STORIES.map(s => s.userId));
 
@@ -121,29 +143,31 @@ export default function HomeFeed() {
           </div>
         </div>
 
-        {/* Retrospective prompt */}
-        {pendingRetrospectiveEventId && (() => {
-          const retroEvent = MOCK_OFFLINE_EVENTS.find(ev => ev.id === pendingRetrospectiveEventId);
-          if (!retroEvent) return null;
-          const bookTitle = retroEvent.book?.title || '모임';
-          return (
-            <div className="px-5 mb-4">
-              <div className="bg-surface rounded-[18px] border border-border p-5">
-                <p className="text-[11px] font-semibold text-action tracking-[0.3px] uppercase mb-2">30초 회고</p>
-                <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
-                  《{bookTitle}》 모임은 어땠나요?
-                </h3>
-                <p className="text-[12.5px] text-sub mt-1">30초면 됩니다</p>
-                <button
-                  onClick={() => openRetrospective(pendingRetrospectiveEventId)}
-                  className="press-scale mt-3 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
-                >
-                  회고 남기기
-                </button>
-              </div>
+        {/* 회고 유도 카드 — 스토리 행 바로 아래, 항상 노출 */}
+        <div className="px-5 mb-4">
+          <button
+            onClick={() => openRetrospective(retroEventId)}
+            className="press-scale w-full bg-surface rounded-[18px] border border-border px-4 py-3.5 flex items-center gap-3 text-left"
+          >
+            <div className="w-[36px] h-[36px] rounded-full bg-action/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[16px]">✎</span>
             </div>
-          );
-        })()}
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-ink" style={{ letterSpacing: '-0.2px' }}>
+                지난 모임은 어땠나요?
+                <span className="text-[12px] text-sub font-normal ml-1.5">· 30초</span>
+              </p>
+              <p className="text-[12px] text-sub mt-0.5 truncate">
+                {retroDone
+                  ? `${retroEvent?.book?.title ? `《${retroEvent.book.title}》 ` : ''}남은 문장 카드 보기`
+                  : retroEvent?.book?.title
+                  ? `《${retroEvent.book.title}》 모임 · 3문항이면 끝나요`
+                  : '3문항이면 끝나요'}
+              </p>
+            </div>
+            <span className="text-[16px] text-inactive flex-shrink-0">&rsaquo;</span>
+          </button>
+        </div>
 
         {/* Gate progress card */}
         <GateProgressCard
@@ -206,38 +230,44 @@ export default function HomeFeed() {
             <>
               {feedHighlights.map((highlight, idx) => (
                 <div key={highlight.id}>
-                  {/* "다른 시선" 카드 삽입 */}
-                  {idx === insertIndex && differentPerspective && (
-                    <div className="mb-3">
-                      <DifferentPerspectiveCard highlight={differentPerspective} />
-                    </div>
-                  )}
                   <HighlightCard
                     highlight={highlight}
                     onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
                   />
+                  {/* '같은 책, 다르게 읽었어요' 카드 — 기준 책 밑줄 카드 바로 다음 */}
+                  {idx + 1 === insertIndex && (
+                    <div className="mt-3">
+                      <DifferentPerspectiveCard
+                        highlight={differentPerspective}
+                        onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
-              {/* 피드 길이가 insertIndex 이하이면 마지막에 삽입 */}
-              {feedHighlights.length <= insertIndex && differentPerspective && (
-                <DifferentPerspectiveCard highlight={differentPerspective} />
-              )}
             </>
           ) : (
-            <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
-              <p className="text-[32px] mb-2">📖</p>
-              <p className="text-[15px] font-semibold text-ink mb-1">아직 밑줄이 없어요</p>
-              <p className="text-[13px] text-sub leading-[1.6]">
-                책을 읽고 인상 깊은 문장에 밑줄을 남겨보세요.<br />
-                다른 사람들의 밑줄도 여기에 나타나요.
-              </p>
-              <button
-                onClick={() => setSubView('compose')}
-                className="press-scale mt-4 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
-              >
-                첫 밑줄 남기기
-              </button>
-            </div>
+            <>
+              <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
+                <p className="text-[32px] mb-2">📖</p>
+                <p className="text-[15px] font-semibold text-ink mb-1">아직 밑줄이 없어요</p>
+                <p className="text-[13px] text-sub leading-[1.6]">
+                  책을 읽고 인상 깊은 문장에 밑줄을 남겨보세요.<br />
+                  다른 사람들의 밑줄도 여기에 나타나요.
+                </p>
+                <button
+                  onClick={() => setSubView('compose')}
+                  className="press-scale mt-4 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
+                >
+                  첫 밑줄 남기기
+                </button>
+              </div>
+              {/* 밑줄이 없어도 다른 시선 카드는 유지 */}
+              <DifferentPerspectiveCard
+                highlight={differentPerspective}
+                onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
+              />
+            </>
           )}
         </div>
 
@@ -487,22 +517,31 @@ function HighlightCard({
   );
 }
 
-/* ── Different Perspective Card ── */
+/* ── 같은 책, 다르게 읽었어요 ── */
 
-function DifferentPerspectiveCard({ highlight }: { highlight: Highlight }) {
-  const reasonTruncated = highlight.reason.length > 80
-    ? highlight.reason.slice(0, 80) + '…'
+function DifferentPerspectiveCard({
+  highlight,
+  onViewProfile,
+}: {
+  highlight: Highlight;
+  onViewProfile: () => void;
+}) {
+  // 그 사람의 '다른 해석' 문장 1개
+  const interpretation = highlight.reason.length > 120
+    ? highlight.reason.slice(0, 120) + '…'
     : highlight.reason;
 
   return (
-    <div className="bg-surface rounded-[18px] border border-border overflow-hidden p-4">
-      {/* Label */}
+    <div className="bg-surface rounded-[18px] border border-border p-4">
+      {/* 제목 */}
       <div className="mb-3">
-        <span className="text-[11px] text-sub font-medium">다른 시선</span>
-        <p className="text-[12.5px] text-sub/70 mt-0.5">이 책을 이렇게 읽은 사람도 있어요</p>
+        <h4 className="text-[14px] font-semibold text-ink" style={{ letterSpacing: '-0.2px' }}>
+          같은 책, 다르게 읽었어요
+        </h4>
+        <p className="text-[12px] text-sub mt-0.5">《{highlight.book.title}》를 이렇게 읽은 사람도 있어요</p>
       </div>
 
-      {/* Profile */}
+      {/* 상대 이름 · 프로필 */}
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-[34px] h-[34px] rounded-full overflow-hidden flex-shrink-0">
           <img src={highlight.userAvatar} alt={highlight.userName} className="w-full h-full object-cover" />
@@ -513,42 +552,18 @@ function DifferentPerspectiveCard({ highlight }: { highlight: Highlight }) {
         </div>
       </div>
 
-      {/* Book info */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-[38px] h-[52px] rounded-[6px] overflow-hidden flex-shrink-0">
-          {highlight.book.coverUrl ? (
-            <img src={highlight.book.coverUrl} alt={highlight.book.title} className="w-full h-full object-cover" />
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center"
-              style={{ backgroundColor: PLACEHOLDER_COLORS[parseInt(highlight.book.isbn) % PLACEHOLDER_COLORS.length] }}
-            >
-              <span className="text-white text-[8px] text-center px-0.5">{highlight.book.title}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-ink truncate">《{highlight.book.title}》</p>
-          <p className="text-[11.5px] text-sub">{highlight.book.author}</p>
-        </div>
+      {/* 그 사람의 다른 해석 */}
+      <div className="border-l-[3px] border-sub/30 pl-4 py-1 mb-3">
+        <p className="text-[13.5px] text-ink/85 leading-[1.75]" style={{ letterSpacing: '-0.1px' }}>
+          &ldquo;{interpretation}&rdquo;
+        </p>
       </div>
 
-      {/* Sentence */}
-      <div className="mb-3">
-        <div className="border-l-[3px] border-sub/30 pl-4 py-2">
-          <p className="text-[14px] text-ink leading-[1.75] font-medium" style={{ letterSpacing: '-0.2px' }}>
-            &ldquo;{highlight.sentence}&rdquo;
-          </p>
-        </div>
-      </div>
-
-      {/* Reason (truncated) */}
-      <p className="text-[13px] text-ink/80 leading-[1.7]" style={{ letterSpacing: '-0.1px' }}>
-        {reasonTruncated}
-      </p>
-
-      {/* Profile link */}
-      <button className="mt-3 text-[12.5px] text-action font-medium press-scale">
+      {/* 프로필 보기 */}
+      <button
+        onClick={onViewProfile}
+        className="press-scale text-[12.5px] text-action font-medium"
+      >
         프로필 보기
       </button>
     </div>

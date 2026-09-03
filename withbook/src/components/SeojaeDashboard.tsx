@@ -1,7 +1,7 @@
 'use client';
 
 import { useApp } from '../context/AppContext';
-import { MOCK_SEOJAE, PLACEHOLDER_COLORS } from '../lib/mock-data';
+import { MOCK_SEOJAE, MOCK_CITY_COMMUNITIES, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import type { Seojae, HighlightPair } from '../lib/types';
 
 export default function SeojaeDashboard() {
@@ -241,17 +241,8 @@ function RecommendedSeojaeCard({
     ? PLACEHOLDER_COLORS[parseInt(seojae.currentBook.isbn) % PLACEHOLDER_COLORS.length]
     : undefined;
 
-  // 지역 라벨 추출
-  const regionMap: Record<string, string> = {
-    'city-seoul': '서울',
-    'city-seongnam': '성남·분당',
-    'city-suwon': '수원',
-    'city-yongin': '용인',
-    'city-anyang': '안양·평촌',
-    'city-hwaseong': '화성·동탄',
-    'city-cheonan': '천안',
-  };
-  const region = regionMap[seojae.communityId] || '';
+  // 지역 라벨 — 도시 커뮤니티 정의(lib/mock-data)에서 가져옴
+  const region = MOCK_CITY_COMMUNITIES.find(c => c.id === seojae.communityId)?.region ?? '';
 
   return (
     <div className="bg-surface rounded-[18px] border border-border p-4">

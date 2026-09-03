@@ -10,6 +10,7 @@ type Step = 'questions' | 'card' | 'optIn';
 export default function MeetingRetrospective() {
   const {
     pendingRetrospectiveEventId,
+    retrospectives,
     remainingCards,
     setSubView,
     submitRetrospective,
@@ -19,13 +20,16 @@ export default function MeetingRetrospective() {
     setNotificationOptIn,
   } = useApp();
 
-  const [step, setStep] = useState<Step>('questions');
+  // 열린 시점의 대상 모임을 고정 — 제출 후 pending이 바뀌어도 화면이 흔들리지 않게
+  const [eventId] = useState<string | null>(pendingRetrospectiveEventId);
+  const alreadyAnswered = retrospectives.some(r => r.eventId === eventId);
+  const [step, setStep] = useState<Step>(alreadyAnswered ? 'card' : 'questions');
   const [bookRating, setBookRating] = useState<BookRating | null>(null);
   const [opinionDivergence, setOpinionDivergence] = useState<OpinionDivergence | null>(null);
   const [returnIntent, setReturnIntent] = useState<ReturnIntent | null>(null);
   const [freeText, setFreeText] = useState('');
 
-  const event = MOCK_OFFLINE_EVENTS.find(ev => ev.id === pendingRetrospectiveEventId);
+  const event = MOCK_OFFLINE_EVENTS.find(ev => ev.id === eventId);
 
   if (!event) {
     return (
@@ -47,8 +51,8 @@ export default function MeetingRetrospective() {
   const allAnswered = bookRating && opinionDivergence && returnIntent;
 
   function handleSubmit() {
-    if (!allAnswered || !pendingRetrospectiveEventId) return;
-    submitRetrospective(pendingRetrospectiveEventId, {
+    if (!allAnswered || !eventId) return;
+    submitRetrospective(eventId, {
       bookRating: bookRating!,
       opinionDivergence: opinionDivergence!,
       returnIntent: returnIntent!,
@@ -62,7 +66,7 @@ export default function MeetingRetrospective() {
   }
 
   // 방금 생성된 카드 찾기
-  const latestCard = remainingCards.find(c => c.eventId === pendingRetrospectiveEventId);
+  const latestCard = remainingCards.find(c => c.eventId === eventId);
 
   return (
     <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
