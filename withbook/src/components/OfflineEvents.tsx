@@ -14,7 +14,8 @@ import {
 } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
 import RegionSelector from './ui/RegionSelector';
-import { ALL_REGIONS, matchesRegion, type RegionSelection } from '../lib/regions';
+import { ChipRow, FilterChip, FilterDivider, FilterLabel } from './ui/FilterChips';
+import { ALL_REGIONS, matchesRegion, regionSummaryParts, type RegionSelection } from '../lib/regions';
 import type { OfflineEvent, EventType, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
@@ -37,6 +38,12 @@ export default function OfflineEvents() {
       return true;
     });
   }, [typeFilter, regionFilter, selectedDate]);
+
+  const hasFilterSelection = typeFilter !== null || regionFilter.province !== null;
+  const filterSummary = useMemo(() => {
+    const typeLabel = typeFilter ? EVENT_TYPE_LABELS[typeFilter] : '전체 종류';
+    return [...regionSummaryParts(regionFilter), typeLabel].join(' · ');
+  }, [typeFilter, regionFilter]);
 
   const handleEventTap = (ev: OfflineEvent) => {
     // rotation(북 라운지) 타입은 Gate 2 필요
@@ -125,28 +132,53 @@ export default function OfflineEvents() {
           );
         })()}
 
-        {/* Type filter */}
-        <div className="px-5 pt-4 pb-1">
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-            <FilterChip
-              label="전체"
-              selected={typeFilter === null}
-              onTap={() => setTypeFilter(null)}
-            />
-            {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map(t => (
+        {/* Filter card — 모임 종류 / 지역 한 카드에 묶음 */}
+        <div className="px-5 pt-4 pb-3">
+          <div className="bg-surface rounded-[16px] border border-border p-4">
+            {/* 모임 종류 */}
+            <FilterLabel>모임 종류</FilterLabel>
+            <ChipRow>
               <FilterChip
-                key={t}
-                label={EVENT_TYPE_LABELS[t]}
-                selected={typeFilter === t}
-                onTap={() => setTypeFilter(typeFilter === t ? null : t)}
+                label="전체"
+                selected={typeFilter === null}
+                onTap={() => setTypeFilter(null)}
               />
-            ))}
-          </div>
-        </div>
+              {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map(t => (
+                <FilterChip
+                  key={t}
+                  label={EVENT_TYPE_LABELS[t]}
+                  selected={typeFilter === t}
+                  onTap={() => setTypeFilter(typeFilter === t ? null : t)}
+                />
+              ))}
+            </ChipRow>
 
-        {/* Region filter — 시·도 → 세부 지역 2단 */}
-        <div className="px-5 pt-2 pb-3">
-          <RegionSelector value={regionFilter} onChange={setRegionFilter} />
+            <FilterDivider />
+
+            {/* 지역 — 시·도 → 세부 지역 2단 */}
+            <RegionSelector value={regionFilter} onChange={setRegionFilter} />
+
+            {/* 현재 선택 요약 */}
+            <div
+              className="mt-4 pt-3 flex items-center justify-between gap-3"
+              style={{ borderTop: '1px solid #f5f5f7' }}
+            >
+              <p className="text-[12px] truncate" style={{ color: '#86868b' }}>
+                {filterSummary}
+              </p>
+              {hasFilterSelection && (
+                <button
+                  onClick={() => {
+                    setTypeFilter(null);
+                    setRegionFilter(ALL_REGIONS);
+                  }}
+                  className="press-scale focus-ring text-[12px] font-medium text-action flex-shrink-0"
+                >
+                  초기화
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Mini calendar */}
@@ -190,35 +222,6 @@ export default function OfflineEvents() {
         </section>
       </div>
     </div>
-  );
-}
-
-/* ── Filter Chip ── */
-function FilterChip({
-  label,
-  selected,
-  onTap,
-}: {
-  label: string;
-  selected: boolean;
-  onTap: () => void;
-}) {
-  return (
-    <button
-      onClick={onTap}
-      className={`press-scale px-4 py-2 rounded-full text-[13px] font-semibold transition-all duration-200 border whitespace-nowrap ${
-        selected
-          ? 'text-white border-transparent'
-          : 'bg-white text-ink'
-      }`}
-      style={
-        selected
-          ? { backgroundColor: '#1d1d1f', borderColor: '#1d1d1f' }
-          : { borderColor: '#d2d2d7' }
-      }
-    >
-      {label}
-    </button>
   );
 }
 

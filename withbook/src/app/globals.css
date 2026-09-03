@@ -137,3 +137,12 @@
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* 칩·버튼 포커스 — 파란 아웃라인은 키보드 포커스에만 */
+.focus-ring:focus {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}

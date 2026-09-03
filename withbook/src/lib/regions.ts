@@ -88,6 +88,13 @@ export function regionSelectionLabel(sel: RegionSelection): string {
   return `${findProvince(sel.province)?.label ?? ''} 전체`;
 }
 
+/** 필터 요약용 조각 (예: ['경기', '수원'] / ['전체 지역']) */
+export function regionSummaryParts(sel: RegionSelection): string[] {
+  if (!sel.province) return ['전체 지역'];
+  const label = findProvince(sel.province)?.label ?? '';
+  return [label, sel.district ?? '전체'];
+}
+
 /** 특정 지역이 현재 선택 조건에 맞는지 */
 export function matchesRegion(sel: RegionSelection, region: string): boolean {
   if (!sel.province) return true;
