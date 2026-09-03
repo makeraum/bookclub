@@ -1,91 +1,143 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   STORY_USERS,
-  SAME_BOOK_GROUPS,
   MOCK_STORIES,
   PLACEHOLDER_COLORS,
   REACTION_LABELS,
-  MOCK_OFFLINE_EVENTS,
   DEMO_DIFFERENT_PERSPECTIVE,
-  DEMO_DIFFERENT_PERSPECTIVE_ISBN,
-  DEMO_RETROSPECTIVE_EVENT_ID,
 } from '../lib/mock-data';
 import StoryViewer from './StoryViewer';
 import MatchingDisabledNotice from './MatchingDisabledNotice';
-import type { Highlight, HighlightReactionType, GateLevel } from '../lib/types';
+import type { Highlight, HighlightReactionType } from '../lib/types';
 
-/** 피드용 하이라이트와 "다른 시선" 후보를 분리 */
+/**
+ * 홈 = 밑줄 피드 하나.
+ * 진행률·챌린지·책 캐러셀은 성격이 달라 각자 제 탭으로 옮겼습니다.
+ *   · 밑줄 진행 카드 → 마이 탭 (GateProgressCard)
+ *   · 챌린지 배너 + 같은 책 읽는 사람들 → 서재 탭 (ReadingChallenge)
+ *   · 회고 유도 카드 → 참가 탭
+ */
+
+/** 한 번에 그리는 피드 항목 수 */
+const PAGE_SIZE = 4;
+
+/** 피드용 밑줄과 "다른 시선" 후보를 분리 */
 function splitHighlights(allHighlights: Highlight[]) {
-  // 피드에 표시할 메인 하이라이트 (기존 5인 u1~u4)
   const mainUserIds = new Set(['u1', 'u2', 'u3', 'u4', 'me']);
   const feed = allHighlights.filter(h => mainUserIds.has(h.userId));
   const others = allHighlights.filter(h => !mainUserIds.has(h.userId));
   return { feed, others };
 }
 
+type FeedItem =
+  | { kind: 'highlight'; key: string; highlight: Highlight }
+  | { kind: 'perspective'; key: string; highlight: Highlight };
+
 /**
- * 같은 책을 다른 sentiment로 읽은 감상을 찾음.
- * 매칭이 없어도 데모 감상을 돌려주므로 카드는 비지 않는다.
+ * 밑줄 사이사이에 "같은 책, 다르게 읽었어요" 카드를 끼워 하나의 피드로 만듭니다.
+ * 독립 섹션이 아니라 피드 항목이라, 스크롤하다 자연스럽게 만나게 됩니다.
+ *
+ * 두 목록을 개수 비율에 맞춰 번갈아 섞으므로, 어느 한쪽이 뒤에 몰리지 않습니다.
+ * 다른 시선을 고를 때는 바로 앞에 나온 밑줄과 같은 책을 먼저 씁니다.
  */
-function getDifferentPerspective(
-  feedHighlights: Highlight[],
-  otherHighlights: Highlight[],
-): Highlight {
-  // 피드에 있는 positive 하이라이트의 책 목록
-  const feedBooks = feedHighlights
-    .filter(h => h.sentiment === 'positive')
-    .map(h => h.book.isbn);
+function buildFeedItems(feed: Highlight[], others: Highlight[]): FeedItem[] {
+  const pool = [...others];
+  const items: FeedItem[] = [];
+  const recentIsbns: string[] = [];
+  let fi = 0;
+  let taken = 0;
 
-  // contrary 우선 매칭
-  for (const isbn of feedBooks) {
-    const contrary = otherHighlights.find(
-      h => h.book.isbn === isbn && h.sentiment === 'contrary'
-    );
-    if (contrary) return contrary;
+  const takeHighlight = () => {
+    const h = feed[fi++];
+    items.push({ kind: 'highlight', key: `h-${h.id}`, highlight: h });
+    recentIsbns.push(h.book.isbn);
+  };
+
+  const takePerspective = () => {
+    // 같은 책 우선, 없으면 남은 것 중 앞에서
+    let idx = pool.findIndex(p => recentIsbns.includes(p.book.isbn));
+    if (idx < 0) idx = 0;
+    const [picked] = pool.splice(idx, 1);
+    items.push({ kind: 'perspective', key: `p-${picked.id}`, highlight: picked });
+    taken += 1;
+    recentIsbns.length = 0;
+  };
+
+  const totalPerspectives = pool.length;
+
+  // 피드는 언제나 밑줄로 시작합니다 — 첫 화면이 남의 해석 카드면 어색해요
+  if (feed.length > 0) takeHighlight();
+
+  while (fi < feed.length || pool.length > 0) {
+    if (pool.length === 0) { takeHighlight(); continue; }
+    if (fi >= feed.length) { takePerspective(); continue; }
+    // 진행 비율이 뒤처진 쪽을 먼저 넣습니다
+    const feedProgress = (fi + 1) / feed.length;
+    const perspectiveProgress = (taken + 1) / totalPerspectives;
+    if (feedProgress <= perspectiveProgress) takeHighlight();
+    else takePerspective();
   }
 
-  // reserved 차선 매칭
-  for (const isbn of feedBooks) {
-    const reserved = otherHighlights.find(
-      h => h.book.isbn === isbn && h.sentiment === 'reserved'
-    );
-    if (reserved) return reserved;
+  // 밑줄도 다른 시선도 없으면 데모 카드 하나는 남깁니다 (빈 화면 방지)
+  if (items.length === 0) {
+    items.push({
+      kind: 'perspective',
+      key: `p-${DEMO_DIFFERENT_PERSPECTIVE.id}`,
+      highlight: DEMO_DIFFERENT_PERSPECTIVE,
+    });
   }
-
-  // 매칭 결과가 없어도 비어 보이지 않게 데모 감상으로 폴백
-  return DEMO_DIFFERENT_PERSPECTIVE;
+  return items;
 }
 
 export default function HomeFeed() {
-  const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates, pendingRetrospectiveEventId, openRetrospective, retrospectives, selectCoAttendee, consents, sensitiveConsentGiven } = useApp();
+  const {
+    highlights,
+    toggleHighlightReaction,
+    setSubView,
+    setTab,
+    viewedStoryUsers,
+    markStoryViewed,
+    selectCoAttendee,
+    consents,
+    sensitiveConsentGiven,
+  } = useApp();
+
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const { feed: feedHighlights, others: otherHighlights } = useMemo(
-    () => splitHighlights(highlights),
-    [highlights]
-  );
-  const differentPerspective = useMemo(
-    () => getDifferentPerspective(feedHighlights, otherHighlights),
-    [feedHighlights, otherHighlights]
-  );
-  // 삽입 위치: 《싯다르타》 밑줄 카드 바로 다음 (없으면 첫 카드 다음)
-  const insertIndex = useMemo(() => {
-    const idx = feedHighlights.findIndex(h => h.book.isbn === DEMO_DIFFERENT_PERSPECTIVE_ISBN);
-    return (idx >= 0 ? idx : 0) + 1;
-  }, [feedHighlights]);
+  const { feed, others } = useMemo(() => splitHighlights(highlights), [highlights]);
+  const feedItems = useMemo(() => buildFeedItems(feed, others), [feed, others]);
 
-  // 민감정보 동의를 철회했으면 매칭 카드 대신 안내를 보여줍니다.
-  // 동의 기록 자체가 없는 상태(체험 계정·로컬 모드)에서는 기존대로 카드를 노출합니다.
+  // 민감정보 동의를 철회했으면 매칭 카드 대신 안내를 한 번만 보여줍니다.
+  // 동의 기록이 없는 상태(체험 계정·로컬 모드)에서는 기존대로 노출합니다.
   const matchingBlocked = consents.length > 0 && !sensitiveConsentGiven;
 
-  // 회고 유도 카드 — 대상이 없으면 데모 모임으로 항상 노출
-  const retroEventId = pendingRetrospectiveEventId ?? DEMO_RETROSPECTIVE_EVENT_ID;
-  const retroEvent = MOCK_OFFLINE_EVENTS.find(ev => ev.id === retroEventId);
-  const retroDone = retrospectives.some(r => r.eventId === retroEventId);
+  const visibleItems = feedItems.slice(0, visibleCount);
+  const hasMore = visibleCount < feedItems.length;
+
+  // 매칭 안내는 첫 번째 다른 시선 자리에만 한 번 보여줍니다
+  const firstPerspectiveKey = feedItems.find(i => i.kind === 'perspective')?.key ?? null;
+
+  // 무한 스크롤 — 바닥 감시자가 보이면 다음 묶음을 그립니다
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount(prev => Math.min(prev + PAGE_SIZE, feedItems.length));
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [feedItems.length, hasMore]);
 
   const storyUserIds = new Set(MOCK_STORIES.map(s => s.userId));
 
@@ -107,14 +159,13 @@ export default function HomeFeed() {
           </h1>
           <button
             onClick={() => setSubView('compose')}
-            className="press-scale px-4 py-1.5 bg-action text-white text-[13px] font-semibold rounded-full"
+            className="press-scale focus-ring px-4 py-1.5 bg-action text-white text-[13px] font-semibold rounded-full"
           >
             ＋ 밑줄
           </button>
         </div>
       </div>
 
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto pb-24">
         {/* Story row */}
         <div className="px-5 py-4">
@@ -148,157 +199,77 @@ export default function HomeFeed() {
           </div>
         </div>
 
-        {/* 회고 유도 카드 — 스토리 행 바로 아래, 항상 노출 */}
-        <div className="px-5 mb-4">
-          <button
-            onClick={() => openRetrospective(retroEventId)}
-            className="press-scale w-full bg-surface rounded-[18px] border border-border px-4 py-3.5 flex items-center gap-3 text-left"
-          >
-            <div className="w-[36px] h-[36px] rounded-full bg-action/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-[16px]">✎</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-ink" style={{ letterSpacing: '-0.2px' }}>
-                지난 모임은 어땠나요?
-                <span className="text-[12px] text-sub font-normal ml-1.5">· 30초</span>
-              </p>
-              <p className="text-[12px] text-sub mt-0.5 truncate">
-                {retroDone
-                  ? `${retroEvent?.book?.title ? `《${retroEvent.book.title}》 ` : ''}남은 문장 카드 보기`
-                  : retroEvent?.book?.title
-                  ? `《${retroEvent.book.title}》 모임 · 3문항이면 끝나요`
-                  : '3문항이면 끝나요'}
-              </p>
-            </div>
-            <span className="text-[16px] text-inactive flex-shrink-0">&rsaquo;</span>
-          </button>
-        </div>
-
-        {/* Gate progress card */}
-        <GateProgressCard
-          gateLevel={gateLevel}
-          totalCount={highlightStats.totalCount}
-          bookCount={highlightStats.bookCount}
-          gate1At={gates.gate1At}
-        />
-
-        {/* Challenge banner */}
-        <div className="px-5 mb-4">
-          <div className="bg-dark rounded-[18px] p-5">
-            <span className="text-[11px] font-semibold text-lightblue tracking-[0.5px] uppercase">
-              이달의 공동 독서 챌린지
-            </span>
-            <h3 className="text-white text-[17px] font-semibold mt-2" style={{ letterSpacing: '-0.3px' }}>
-              《싯다르타》 함께 읽기 · D-12
-            </h3>
-            <p className="text-white/60 text-[12.5px] mt-1">12명이 함께 읽고 있어요</p>
-          </div>
-        </div>
-
-        {/* Same book group */}
-        <div className="px-5 mb-5">
-          <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>
-            같은 책 읽는 사람들
-          </h3>
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar">
-            {SAME_BOOK_GROUPS.map(group => (
-              <div key={group.book.isbn} className="flex-shrink-0 w-[118px]">
-                <div className="aspect-[3/2] rounded-[8px] overflow-hidden mb-2">
-                  {group.book.coverUrl ? (
-                    <img src={group.book.coverUrl} alt={group.book.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ backgroundColor: PLACEHOLDER_COLORS[parseInt(group.book.isbn) % PLACEHOLDER_COLORS.length] }}
-                    >
-                      <span className="text-white text-[11px] font-medium">{group.book.title}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[12px] font-medium text-ink truncate">{group.book.title}</p>
-                <p className="text-[11px] text-sub">{group.readerCount}명 읽는 중</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section title */}
-        <div className="px-5 mb-3">
-          <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
-            사람들의 밑줄
-          </h3>
-        </div>
-
-        {/* Highlight cards */}
+        {/* 밑줄 피드 */}
         <div className="space-y-3 px-5">
-          {feedHighlights.length > 0 ? (
-            <>
-              {feedHighlights.map((highlight, idx) => (
-                <div key={highlight.id}>
-                  <HighlightCard
-                    highlight={highlight}
-                    onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
-                  />
-                  {/* '같은 책, 다르게 읽었어요' 카드 — 기준 책 밑줄 카드 바로 다음 */}
-                  {idx + 1 === insertIndex && (
-                    <div className="mt-3">
-                      {matchingBlocked ? (
-                        <MatchingDisabledNotice feature="같은 책, 다르게 읽었어요" />
-                      ) : (
-                        <DifferentPerspectiveCard
-                          highlight={differentPerspective}
-                          onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </>
-          ) : (
-            <>
-              <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
-                <p className="text-[32px] mb-2">📖</p>
-                <p className="text-[15px] font-semibold text-ink mb-1">아직 밑줄이 없어요</p>
-                <p className="text-[13px] text-sub leading-[1.6]">
-                  책을 읽고 인상 깊은 문장에 밑줄을 남겨보세요.<br />
-                  다른 사람들의 밑줄도 여기에 나타나요.
-                </p>
-                <button
-                  onClick={() => setSubView('compose')}
-                  className="press-scale mt-4 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
-                >
-                  첫 밑줄 남기기
-                </button>
-              </div>
-              {/* 밑줄이 없어도 다른 시선 카드는 유지 */}
-              {matchingBlocked ? (
-                <MatchingDisabledNotice feature="같은 책, 다르게 읽었어요" />
-              ) : (
-                <DifferentPerspectiveCard
-                  highlight={differentPerspective}
-                  onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
+          {visibleItems.map(item => {
+            if (item.kind === 'highlight') {
+              return (
+                <HighlightCard
+                  key={item.key}
+                  highlight={item.highlight}
+                  onReaction={type => toggleHighlightReaction(item.highlight.id, type)}
                 />
-              )}
-            </>
+              );
+            }
+            if (matchingBlocked) {
+              if (item.key !== firstPerspectiveKey) return null;
+              return (
+                <MatchingDisabledNotice key={item.key} feature="같은 책, 다르게 읽었어요" />
+              );
+            }
+            return (
+              <DifferentPerspectiveCard
+                key={item.key}
+                highlight={item.highlight}
+                onViewProfile={() => selectCoAttendee(item.highlight.userId)}
+              />
+            );
+          })}
+
+          {feedItems.length === 0 && (
+            <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
+              <p className="text-[32px] mb-2">📖</p>
+              <p className="text-[15px] font-semibold text-ink mb-1">아직 밑줄이 없어요</p>
+              <p className="text-[13px] text-sub leading-[1.6]">
+                책을 읽고 인상 깊은 문장에 밑줄을 남겨보세요.<br />
+                다른 사람들의 밑줄도 여기에 나타나요.
+              </p>
+              <button
+                onClick={() => setSubView('compose')}
+                className="press-scale focus-ring mt-4 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
+              >
+                첫 밑줄 남기기
+              </button>
+            </div>
           )}
         </div>
 
-        {/* 서재 넛지 카드 */}
-        <div className="px-5 mt-5 mb-8">
-          <div className="bg-surface rounded-[18px] border border-border p-5 text-center">
-            <p className="text-[14px] text-ink font-medium mb-1">
-              소규모 독서 서재에서 함께 읽어요
-            </p>
-            <p className="text-[12.5px] text-sub mb-4">같은 책을 읽는 사람들과 밑줄을 나누고, 매달 한 번 만나요</p>
-            <button
-              onClick={() => setTab('seojae')}
-              className="press-scale px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
-            >
-              서재 둘러보기
-            </button>
+        {/* 무한 스크롤 감시자 */}
+        {hasMore && (
+          <div ref={sentinelRef} className="py-6 text-center">
+            <span className="text-[12.5px] text-sub">불러오는 중...</span>
           </div>
-        </div>
+        )}
+
+        {/* 피드 맨 아래 — 서재 둘러보기 */}
+        {!hasMore && (
+          <div className="px-5 mt-5 mb-8">
+            <div className="bg-surface rounded-[18px] border border-border p-5 text-center">
+              <p className="text-[14px] text-ink font-medium mb-1">
+                소규모 독서 서재에서 함께 읽어요
+              </p>
+              <p className="text-[12.5px] text-sub mb-4">
+                같은 책을 읽는 사람들과 밑줄을 나누고, 매달 한 번 만나요
+              </p>
+              <button
+                onClick={() => setTab('seojae')}
+                className="press-scale focus-ring px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
+              >
+                서재 둘러보기
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Story Viewer Overlay */}
@@ -310,81 +281,6 @@ export default function HomeFeed() {
           onViewed={markStoryViewed}
         />
       )}
-    </div>
-  );
-}
-
-/* ── Gate Progress Card ── */
-
-const GATE_LEVEL_LABEL: Record<GateLevel, string> = {
-  reader: '독자',
-  recorder: '기록자',
-  librarian: '서재지기',
-};
-
-function GateProgressCard({
-  gateLevel,
-  totalCount,
-  bookCount,
-  gate1At,
-}: {
-  gateLevel: GateLevel;
-  totalCount: number;
-  bookCount: number;
-  gate1At: string | null;
-}) {
-  const threshold = 30;
-  const progress = Math.min(totalCount / threshold, 1);
-
-  // Gate 1 이미 달성
-  if (gate1At) {
-    return (
-      <div className="px-5 mb-4">
-        <div className="bg-surface rounded-[18px] border border-border p-4 flex items-center gap-3">
-          <div className="w-[36px] h-[36px] rounded-full bg-action/10 flex items-center justify-center flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-              <path d="M16 4L20 12L28 13.5L22 19.5L23.5 28L16 24L8.5 28L10 19.5L4 13.5L12 12L16 4Z" fill="#0066cc" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-semibold text-ink">기록자</span>
-              <span className="px-2 py-0.5 bg-action/10 text-action text-[10.5px] font-semibold rounded-full">달성</span>
-            </div>
-            <p className="text-[12px] text-sub mt-0.5">
-              {bookCount}권에서 {totalCount}개의 밑줄
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Gate 1 미달성: 프로그레스 바
-  return (
-    <div className="px-5 mb-4">
-      <div className="bg-surface rounded-[18px] border border-border p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 bg-ink text-white text-[10.5px] font-semibold rounded-full">
-              {GATE_LEVEL_LABEL[gateLevel]}
-            </span>
-            <span className="text-[13px] font-semibold text-ink">
-              밑줄 {totalCount}/{threshold}
-            </span>
-          </div>
-          <span className="text-[12px] text-sub">{bookCount}권에서</span>
-        </div>
-        <div className="w-full h-[6px] bg-canvas rounded-full overflow-hidden">
-          <div
-            className="h-full bg-action rounded-full transition-all duration-500"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-        <p className="text-[12px] text-sub mt-2">
-          기록이 쌓이고 있어요
-        </p>
-      </div>
     </div>
   );
 }

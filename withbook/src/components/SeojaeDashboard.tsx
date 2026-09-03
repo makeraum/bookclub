@@ -3,6 +3,7 @@
 import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE, MOCK_CITY_COMMUNITIES, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import MatchingDisabledNotice from './MatchingDisabledNotice';
+import ReadingChallenge from './ReadingChallenge';
 import type { Seojae, HighlightPair } from '../lib/types';
 
 export default function SeojaeDashboard() {
@@ -23,8 +24,11 @@ export default function SeojaeDashboard() {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24">
+        {/* 챌린지 + 같은 책 읽는 사람들 — 홈 피드에서 옮겨온 카드 */}
+        <ReadingChallenge />
+
         {/* 시간 예산 배너 */}
-        <div className="px-5 pt-4 pb-2">
+        <div className="px-5 pt-5 pb-2">
           <div className="bg-dark rounded-[14px] px-5 py-4">
             <p className="text-white/90 text-[14px] font-medium leading-[1.6]" style={{ letterSpacing: '-0.2px' }}>
               &ldquo;하루 5분, 한 달에 두 시간.<br />그게 전부입니다.&rdquo;

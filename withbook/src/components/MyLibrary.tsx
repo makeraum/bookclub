@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PLACEHOLDER_COLORS, SHELL_METRIC_LABELS } from '../lib/mock-data';
 import { toKoreanCount } from '../lib/utils';
+import GateProgressCard from './GateProgressCard';
 
 const GATE_LEVEL_LABEL = { reader: '독자', recorder: '기록자', librarian: '서재지기' } as const;
 
 export default function MyLibrary() {
-  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, highlightStats, gates, mySeojae, myHighlightPairs, shellMetrics, myCoAttendances, coAttendanceVisible, toggleCoAttendanceVisible, selectCoAttendee } = useApp();
+  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, mySeojae, myHighlightPairs, shellMetrics, myCoAttendances, coAttendanceVisible, toggleCoAttendanceVisible, selectCoAttendee } = useApp();
   const myPosts = posts.filter(p => p.userId === (authUserId || profile.id));
 
   // 최초 안내 배너
@@ -44,6 +45,11 @@ export default function MyLibrary() {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24">
+        {/* 밑줄 진행 — 홈 피드에서 옮겨온 카드 (내 기록이므로 여기가 제자리) */}
+        <div className="pt-4">
+          <GateProgressCard />
+        </div>
+
         {/* Profile section */}
         <div className="bg-surface px-5 py-6 flex flex-col items-center border-b border-border">
           <div className="w-[72px] h-[72px] rounded-full overflow-hidden mb-3">
@@ -51,7 +57,7 @@ export default function MyLibrary() {
           </div>
           <h2 className="text-[17px] font-semibold text-ink mb-2">{profile.name || '이름 미설정'}</h2>
 
-          {/* Gate badge + progress */}
+          {/* 게이트 배지 — 밑줄 수·진행바는 위 진행 카드와 겹쳐서 뺐습니다 */}
           <div className="flex items-center gap-2 mb-3">
             <span className={`px-3 py-1 text-[11px] font-semibold rounded-full ${
               gateLevel === 'reader'
@@ -63,28 +69,7 @@ export default function MyLibrary() {
                 <span className="ml-1 font-normal opacity-80">· 초대로 승급</span>
               )}
             </span>
-            {gates.gate1At ? (
-              <span className="text-[12px] text-sub">
-                {highlightStats.bookCount}권에서 {highlightStats.totalCount}개의 밑줄
-              </span>
-            ) : (
-              <span className="text-[12px] text-sub">
-                밑줄 {highlightStats.totalCount}/30 · {highlightStats.bookCount}권에서
-              </span>
-            )}
           </div>
-
-          {/* Gate 1 progress bar (미달성 시만) */}
-          {!gates.gate1At && (
-            <div className="w-full max-w-[200px] mb-3">
-              <div className="w-full h-[4px] bg-canvas rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-action rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(highlightStats.totalCount / 30, 1) * 100}%` }}
-                />
-              </div>
-            </div>
-          )}
 
           {profile.readingBadges.length > 0 && (
             <div className="flex flex-wrap justify-center gap-1.5 mb-4">
