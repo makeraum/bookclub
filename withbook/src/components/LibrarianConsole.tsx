@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOCK_SEOJAE } from '../lib/mock-data';
+import { MOCK_SEOJAE, DEFAULT_PROMISES } from '../lib/mock-data';
 import { DISCUSSION_QUESTIONS } from '../lib/resource-data';
-import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember } from '../lib/types';
+import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType } from '../lib/types';
 
-type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo';
+type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo' | 'promises';
 
 const TAB_LABELS: { key: ConsoleTab; label: string }[] = [
   { key: 'attendance', label: '출석' },
@@ -14,6 +14,7 @@ const TAB_LABELS: { key: ConsoleTab; label: string }[] = [
   { key: 'noshow', label: '노쇼' },
   { key: 'quiet', label: '조용한 회원' },
   { key: 'memo', label: '메모' },
+  { key: 'promises', label: '약속' },
 ];
 
 // ── 데모 데이터 (서재지기 콘솔용) ──
@@ -58,6 +59,16 @@ const DEMO_QUIET: Record<string, QuietMember[]> = {
   ],
 };
 
+// ── 서재의 EventType 추정 (약속 기본값 로드용) ──
+function guessEventType(seojaeId: string): EventType {
+  // 서재는 기본적으로 bookclub 유형
+  const seojae = MOCK_SEOJAE.find(s => s.id === seojaeId);
+  if (!seojae) return 'bookclub';
+  const name = seojae.name;
+  if (name.includes('과학') || name.includes('산책')) return 'bookclub';
+  return 'bookclub';
+}
+
 // ── 장르 추정 (현재 책 기반) ──
 function guessCategory(seojaeId: string): string {
   const seojae = MOCK_SEOJAE.find(s => s.id === seojaeId);
@@ -94,6 +105,13 @@ export default function LibrarianConsole() {
   );
   const [memo, setMemo] = useState('');
   const [memoSaved, setMemoSaved] = useState(false);
+  const [promiseItems, setPromiseItems] = useState<string[]>(() =>
+    [...DEFAULT_PROMISES[guessEventType(targetSeojaeId || '')]]
+  );
+  const [newPromise, setNewPromise] = useState('');
+  const [editingPromiseIdx, setEditingPromiseIdx] = useState<number | null>(null);
+  const [editingPromiseText, setEditingPromiseText] = useState('');
+  const [promiseSaved, setPromiseSaved] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -144,6 +162,37 @@ export default function LibrarianConsole() {
     setMemoSaved(true);
     setTimeout(() => setMemoSaved(false), 2000);
     // TODO: Supabase session_notes 테이블에 upsert
+  }
+
+  // ── 약속 관리 ──
+  function handleAddPromise() {
+    if (!newPromise.trim()) return;
+    setPromiseItems(prev => [...prev, newPromise.trim()]);
+    setNewPromise('');
+  }
+
+  function handleDeletePromise(idx: number) {
+    setPromiseItems(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  function handleStartEditPromise(idx: number) {
+    setEditingPromiseIdx(idx);
+    setEditingPromiseText(promiseItems[idx]);
+  }
+
+  function handleFinishEditPromise() {
+    if (editingPromiseIdx === null) return;
+    if (editingPromiseText.trim()) {
+      setPromiseItems(prev => prev.map((p, i) => i === editingPromiseIdx ? editingPromiseText.trim() : p));
+    }
+    setEditingPromiseIdx(null);
+    setEditingPromiseText('');
+  }
+
+  function handleSavePromises() {
+    setPromiseSaved(true);
+    setTimeout(() => setPromiseSaved(false), 2000);
+    // TODO: Supabase meeting_promises 테이블에 upsert
   }
 
   const attendedCount = attendances.filter(a => a.attended).length;
@@ -427,6 +476,101 @@ export default function LibrarianConsole() {
                 <p className="text-[12px] text-sub leading-[1.6]">
                   메모는 서재지기 본인만 볼 수 있습니다.
                   멤버에게 공유할 내용은 서재 채팅방에 올려주세요.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── 6. 약속 관리 ── */}
+          {activeTab === 'promises' && (
+            <div className="px-5 py-5">
+              <div className="mb-4">
+                <h2 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+                  모임 약속 관리
+                </h2>
+                <p className="text-[12px] text-sub mt-0.5">
+                  여기서 정한 약속이 모임 상세에 표시됩니다
+                </p>
+              </div>
+
+              <ul className="space-y-2 mb-4">
+                {promiseItems.map((item, idx) => (
+                  <li key={idx} className="bg-surface border border-border rounded-[11px]">
+                    {editingPromiseIdx === idx ? (
+                      <div className="p-3">
+                        <textarea
+                          value={editingPromiseText}
+                          onChange={(e) => setEditingPromiseText(e.target.value)}
+                          onBlur={handleFinishEditPromise}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleFinishEditPromise();
+                            }
+                          }}
+                          autoFocus
+                          className="w-full bg-canvas border border-border rounded-[8px] p-2.5 text-[13.5px] text-ink leading-[1.7] resize-none focus:outline-none focus:border-action/50"
+                          rows={2}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 p-3">
+                        <button
+                          onClick={() => handleStartEditPromise(idx)}
+                          className="flex-1 text-left text-[13.5px] text-ink leading-[1.7]"
+                        >
+                          · {item}
+                        </button>
+                        <button
+                          onClick={() => handleDeletePromise(idx)}
+                          className="flex-shrink-0 w-[28px] h-[28px] rounded-full bg-canvas flex items-center justify-center text-sub press-scale"
+                        >
+                          <span className="text-[16px] leading-none">&times;</span>
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              {/* 항목 추가 */}
+              <div className="flex gap-2 mb-4">
+                <input
+                  value={newPromise}
+                  onChange={(e) => setNewPromise(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddPromise();
+                    }
+                  }}
+                  placeholder="새 약속 항목을 입력하세요"
+                  className="flex-1 px-3.5 py-2.5 bg-surface border border-border rounded-[11px] text-[13.5px] text-ink placeholder:text-inactive focus:outline-none focus:border-action/50"
+                />
+                <button
+                  onClick={handleAddPromise}
+                  disabled={!newPromise.trim()}
+                  className="flex-shrink-0 px-4 py-2.5 rounded-[11px] bg-action text-white text-[13px] font-semibold disabled:opacity-40 press-scale"
+                >
+                  추가
+                </button>
+              </div>
+
+              {/* 저장 버튼 */}
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSavePromises}
+                  disabled={promiseItems.length === 0}
+                  className="px-5 py-2.5 rounded-full bg-action text-white text-[13px] font-semibold disabled:opacity-40 press-scale"
+                >
+                  {promiseSaved ? '저장됨' : '저장'}
+                </button>
+              </div>
+
+              <div className="mt-6 p-3 bg-canvas rounded-[11px]">
+                <p className="text-[12px] text-sub leading-[1.6]">
+                  약속은 모임 상세 화면에서 참가자에게 표시됩니다.
+                  항목을 탭하면 수정할 수 있고, &times; 버튼으로 삭제할 수 있습니다.
                 </p>
               </div>
             </div>

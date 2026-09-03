@@ -355,6 +355,13 @@ export interface CoAttendanceDetail extends CoAttendance {
   sharedHighlight?: SharedHighlight;
 }
 
+// ── 모임 약속 ──
+
+export interface MeetingPromise {
+  id: string;
+  text: string;
+}
+
 export interface HighlightPair {
   id: string;
   seojaeId: string;

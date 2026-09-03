@@ -11,6 +11,7 @@ import {
   EVENT_TYPE_COLORS,
   REGIONS,
   PLACEHOLDER_COLORS,
+  DEFAULT_PROMISES,
 } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
 import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
@@ -386,6 +387,12 @@ function EventDetail({
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState(profile.name || '');
   const [phone, setPhone] = useState('');
+  const [showPromiseModal, setShowPromiseModal] = useState(false);
+  const [promiseChecked, setPromiseChecked] = useState(false);
+
+  const promises = DEFAULT_PROMISES[event.type];
+  const promiseStorageKey = `withbook-promise-confirmed-${event.id}`;
+  const isPromiseConfirmed = typeof window !== 'undefined' && localStorage.getItem(promiseStorageKey) === 'true';
 
   const isFull = event.currentParticipants >= event.maxParticipants && !applied;
   const dateObj = new Date(event.date);
@@ -396,6 +403,11 @@ function EventDetail({
     : undefined;
 
   function handleApply() {
+    // 약속 확인 안 했으면 모달 먼저
+    if (!isPromiseConfirmed && !showForm) {
+      setShowPromiseModal(true);
+      return;
+    }
     if (!showForm) {
       setShowForm(true);
       return;
@@ -403,6 +415,13 @@ function EventDetail({
     if (!name.trim() || !phone.trim()) return;
     applyEvent(event.id);
     setShowForm(false);
+  }
+
+  function handlePromiseConfirm() {
+    localStorage.setItem(promiseStorageKey, 'true');
+    setShowPromiseModal(false);
+    setPromiseChecked(false);
+    setShowForm(true);
   }
 
   function handleCancel() {
@@ -533,6 +552,26 @@ function EventDetail({
           book={event.book}
         />
 
+        {/* 이 모임의 약속 */}
+        <div className="bg-surface mt-3 px-5 py-5 border-b border-border">
+          <h3
+            className="text-[15px] font-semibold text-ink mb-3"
+            style={{ letterSpacing: '-0.3px' }}
+          >
+            이 모임의 약속
+          </h3>
+          <div className="bg-canvas rounded-[14px] p-4">
+            <ul className="space-y-1.5">
+              {promises.map((p, i) => (
+                <li key={i} className="text-[13.5px] text-ink leading-[1.7]">
+                  · {p}
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11.5px] text-caption mt-3">약속은 서재지기가 정합니다</p>
+          </div>
+        </div>
+
         {/* Application form */}
         {showForm && !applied && (
           <div className="bg-surface mt-3 px-5 py-5 border-b border-border animate-slide-up">
@@ -575,6 +614,55 @@ function EventDetail({
           </Button>
         )}
       </div>
+
+      {/* 약속 확인 바텀시트 */}
+      {showPromiseModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => { setShowPromiseModal(false); setPromiseChecked(false); }}
+          />
+          <div className="relative w-full max-w-[430px] bg-surface rounded-t-[20px] px-5 pt-6 pb-8 safe-bottom animate-slide-up">
+            <h3
+              className="text-[17px] font-semibold text-ink mb-4"
+              style={{ letterSpacing: '-0.3px' }}
+            >
+              이 모임의 약속
+            </h3>
+            <div className="bg-canvas rounded-[14px] p-4 mb-5">
+              <ul className="space-y-1.5">
+                {promises.map((p, i) => (
+                  <li key={i} className="text-[13.5px] text-ink leading-[1.7]">
+                    · {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              onClick={() => setPromiseChecked(!promiseChecked)}
+              className="flex items-center gap-3 mb-5 w-full"
+            >
+              <div className={`w-[22px] h-[22px] rounded-[6px] flex items-center justify-center flex-shrink-0 transition-colors ${
+                promiseChecked ? 'bg-action' : 'bg-canvas border border-border'
+              }`}>
+                {promiseChecked && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+              <span className="text-[14px] text-ink font-medium">읽었습니다</span>
+            </button>
+            <button
+              onClick={handlePromiseConfirm}
+              disabled={!promiseChecked}
+              className="w-full py-3.5 rounded-[12px] bg-action text-white text-[15px] font-semibold disabled:opacity-40 transition-opacity press-scale"
+            >
+              참가 확정
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -916,3 +916,30 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     createdAt: '3일 전',
   },
 ];
+
+// ── 모임 약속 기본값 ──
+
+export const DEFAULT_PROMISES: Record<EventType, string[]> = {
+  bookclub: [
+    '지정 분량을 읽고 옵니다',
+    '무단 불참 2회면 다음 모임 참가가 제한됩니다',
+    '홍보·영업·포교 목적의 참여는 받지 않습니다',
+    '다른 해석을 반박할 수 있고, 반박당할 수 있습니다',
+  ],
+  rotation: [
+    '대화의 중심은 책입니다',
+    '연락처 교환은 강요하지 않습니다',
+    '홍보·영업·포교 목적의 참여는 받지 않습니다',
+    '다른 해석을 반박할 수 있고, 반박당할 수 있습니다',
+  ],
+  gathering: [
+    '주최자가 안내한 준비물을 가져옵니다',
+    '무단 불참 2회면 다음 모임 참가가 제한됩니다',
+    '홍보·영업·포교 목적의 참여는 받지 않습니다',
+  ],
+  quarterly: [
+    '지정 분량을 읽고 옵니다',
+    '홍보·영업·포교 목적의 참여는 받지 않습니다',
+    '다른 해석을 반박할 수 있고, 반박당할 수 있습니다',
+  ],
+};
