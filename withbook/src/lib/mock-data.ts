@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard, EventFee, FeePayment, Expense } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -1116,3 +1116,69 @@ export const DEMO_DIFFERENT_PERSPECTIVE: Highlight =
 
 /** 다른 시선 카드를 붙일 기준 책 — 《싯다르타》 밑줄 카드 다음에 삽입 */
 export const DEMO_DIFFERENT_PERSPECTIVE_ISBN = BOOKS[0].isbn;
+
+// ── 회비 · 회계 데모 데이터 ──
+
+/** 데모 입금 계좌 — 실제 운영 시 서재지기가 직접 입력한 값으로 대체됩니다 */
+export const DEMO_BANK_ACCOUNT = {
+  bankName: '카카오뱅크',
+  bankAccount: '3333-01-1234567',
+  accountHolder: '위드북',
+};
+
+/** 모임 유형별 회비 포함 내역 */
+const FEE_INCLUDES_BY_TYPE: Record<EventType, string[]> = {
+  rotation: ['공간 대여료', '음료 1잔', '진행 자료'],
+  bookclub: ['공간 대여료', '음료 1잔'],
+  gathering: ['음료 1잔'],
+  quarterly: ['공간 대여료', '음료 1잔', '다과'],
+};
+
+/** 납부 기한 — 모임 3일 전 */
+function dueDateFor(eventDate: string): string {
+  const d = new Date(eventDate);
+  d.setDate(d.getDate() - 3);
+  return d.toISOString().split('T')[0];
+}
+
+/** 모임의 회비 설정. 참가비가 없으면 null */
+export function getEventFee(event: OfflineEvent): EventFee | null {
+  if (event.fee <= 0) return null;
+  return {
+    eventId: event.id,
+    amount: event.fee,
+    includes: FEE_INCLUDES_BY_TYPE[event.type],
+    dueDate: dueDateFor(event.date),
+    bankName: DEMO_BANK_ACCOUNT.bankName,
+    bankAccount: DEMO_BANK_ACCOUNT.bankAccount,
+    accountHolder: DEMO_BANK_ACCOUNT.accountHolder,
+    targetAmount: event.fee * event.maxParticipants,
+  };
+}
+
+/**
+ * 회계 화면 데모 — ev1(9월 강남 북 라운지, 15,000원) 참가자 8명.
+ * 5명 완료 · 1명 확인 중 · 2명 미납(그중 한 명이 '나')으로 채워
+ * 테스터가 상태 필터와 입금 확인 흐름을 바로 볼 수 있게 했습니다.
+ */
+export const DEMO_ACCOUNTING_EVENT_ID = 'ev1';
+
+export const DEMO_FEE_PAYMENTS: FeePayment[] = [
+  { id: 'fp1', eventId: 'ev1', userId: 'u1', userName: '이서연', userAvatar: '/assets/avatar-seoyeon.png', amount: 15000, status: 'paid', method: 'transfer', paidAt: '2026-09-05T10:20:00+09:00', reportedAt: '2026-09-05T09:58:00+09:00', confirmedBy: '나', confirmedAt: '2026-09-05T10:20:00+09:00' },
+  { id: 'fp2', eventId: 'ev1', userId: 'u2', userName: '박도윤', userAvatar: '/assets/avatar-doyoon.png', amount: 15000, status: 'paid', method: 'transfer', paidAt: '2026-09-05T14:40:00+09:00', reportedAt: '2026-09-05T14:12:00+09:00', confirmedBy: '나', confirmedAt: '2026-09-05T14:40:00+09:00' },
+  { id: 'fp3', eventId: 'ev1', userId: 'u3', userName: '한소율', userAvatar: '/assets/avatar-soyul.png', amount: 15000, status: 'paid', method: 'transfer', paidAt: '2026-09-06T09:05:00+09:00', reportedAt: '2026-09-06T08:47:00+09:00', confirmedBy: '나', confirmedAt: '2026-09-06T09:05:00+09:00' },
+  { id: 'fp4', eventId: 'ev1', userId: 'u4', userName: '오지환', userAvatar: '/assets/avatar-jihwan.png', amount: 15000, status: 'paid', method: 'transfer', paidAt: '2026-09-06T19:30:00+09:00', reportedAt: '2026-09-06T19:11:00+09:00', confirmedBy: '나', confirmedAt: '2026-09-06T19:30:00+09:00' },
+  { id: 'fp5', eventId: 'ev1', userId: 'u-diff1', userName: '윤채린', userAvatar: '/assets/avatar-soyul.png', amount: 15000, status: 'paid', method: 'transfer', paidAt: '2026-09-07T11:15:00+09:00', reportedAt: '2026-09-07T10:52:00+09:00', confirmedBy: '나', confirmedAt: '2026-09-07T11:15:00+09:00' },
+  { id: 'fp6', eventId: 'ev1', userId: 'u-diff2', userName: '임하준', userAvatar: '/assets/avatar-doyoon.png', amount: 15000, status: 'pending', method: 'transfer', paidAt: null, reportedAt: '2026-09-08T08:30:00+09:00', confirmedBy: null, confirmedAt: null },
+  { id: 'fp7', eventId: 'ev1', userId: 'me', userName: '나', userAvatar: '/assets/avatar-me.png', amount: 15000, status: 'unpaid', method: null, paidAt: null, reportedAt: null, confirmedBy: null, confirmedAt: null },
+  { id: 'fp8', eventId: 'ev1', userId: 'u-diff3', userName: '강예은', userAvatar: '/assets/avatar-seoyeon.png', amount: 15000, status: 'unpaid', method: null, paidAt: null, reportedAt: null, confirmedBy: null, confirmedAt: null },
+];
+
+export const DEMO_EXPENSES: Expense[] = [
+  { id: 'ex1', eventId: 'ev1', title: '공간 대여료 (북티크 3시간)', amount: 45000, createdAt: '2026-09-06T12:00:00+09:00' },
+  { id: 'ex2', eventId: 'ev1', title: '음료 8잔', amount: 32000, createdAt: '2026-09-06T12:05:00+09:00' },
+];
+
+/** 미납 리마인드 기본 문구 — 압박하지 않는 담백한 안내 */
+export const FEE_REMINDER_MESSAGE =
+  '모임 회비 안내드립니다. 아직 입금이 확인되지 않았어요. 사정이 있으시면 편하게 말씀 주세요.';

@@ -1,4 +1,5 @@
 import type { District, ProvinceLabel } from './regions';
+import type { PaymentMethod } from './payment';
 
 export type Route = 'splash' | 'login' | 'consent' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
@@ -409,4 +410,61 @@ export interface RemainingSentenceCard {
   participants: string[];
   savedToLibrary: boolean;
   sharedToFeed: boolean;
+}
+
+// ── 회비 · 회계 ──
+
+/** 납부 상태 3단계 */
+export type FeeStatus = 'unpaid' | 'pending' | 'paid';
+
+/** 모임별 회비 설정 */
+export interface EventFee {
+  eventId: string;
+  amount: number;
+  /** 회비에 포함된 내역 (음료, 대여료 등) */
+  includes: string[];
+  /** 납부 기한 (YYYY-MM-DD) */
+  dueDate: string;
+  bankName: string;
+  bankAccount: string;
+  accountHolder: string;
+  /** 목표 금액 = 회비 × 정원 */
+  targetAmount: number;
+}
+
+/** 참가자 한 명의 납부 기록 */
+export interface FeePayment {
+  id: string;
+  eventId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  amount: number;
+  status: FeeStatus;
+  method: PaymentMethod | null;
+  /** 납부 완료 일시 (ISO) */
+  paidAt: string | null;
+  /** 이체 완료를 알린 일시 (ISO) */
+  reportedAt: string | null;
+  /** 입금을 확인한 서재지기 */
+  confirmedBy: string | null;
+  confirmedAt: string | null;
+}
+
+/** 모임 지출 항목 */
+export interface Expense {
+  id: string;
+  eventId: string;
+  title: string;
+  amount: number;
+  createdAt: string;
+}
+
+/** 미납 리마인드 발송 내역 */
+export interface FeeReminder {
+  id: string;
+  eventId: string;
+  recipientNames: string[];
+  message: string;
+  sentAt: string;
 }

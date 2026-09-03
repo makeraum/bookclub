@@ -1,9 +1,10 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent } from '../lib/types';
+import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent, FeePayment, Expense, FeeReminder } from '../lib/types';
 import { needsReconsent, isConsentActive, type ConsentDraft, type ConsentRecord, type ConsentType } from '../lib/consent';
-import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS, DEMO_RETROSPECTIVE_EVENT_ID } from '../lib/mock-data';
+import type { PaymentMethod } from '../lib/payment';
+import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS, DEMO_RETROSPECTIVE_EVENT_ID, DEMO_FEE_PAYMENTS, DEMO_EXPENSES, FEE_REMINDER_MESSAGE } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
@@ -65,6 +66,19 @@ interface AppContextType extends AppState {
   cancelEvent: (eventId: string) => Promise<void>;
   completeOnboarding: () => void;
   handleSignUp: (email: string, password: string, name: string, consents: ConsentDraft) => Promise<string | null>;
+  // 회비 · 회계
+  feePayments: FeePayment[];
+  expenses: Expense[];
+  feeReminders: FeeReminder[];
+  settlementPublicEvents: Set<string>;
+  myFeePayment: (eventId: string) => FeePayment | null;
+  reportFeeTransfer: (eventId: string, amount: number, method: PaymentMethod) => void;
+  confirmFeePayment: (paymentId: string) => void;
+  addExpense: (eventId: string, title: string, amount: number) => void;
+  removeExpense: (expenseId: string) => void;
+  sendFeeReminder: (eventId: string, recipients: FeePayment[]) => void;
+  toggleSettlementPublic: (eventId: string) => void;
+
   // 개인정보 동의
   consents: ConsentRecord[];
   sensitiveConsentGiven: boolean;
@@ -166,6 +180,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 개인정보 동의 상태
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
+  // 회비 · 회계 상태 — 데모 모드에서는 이 상태가 진짜이고, DB 반영은 best-effort입니다
+  const [feePayments, setFeePayments] = useState<FeePayment[]>(DEMO_FEE_PAYMENTS);
+  const [expenses, setExpenses] = useState<Expense[]>(DEMO_EXPENSES);
+  const [feeReminders, setFeeReminders] = useState<FeeReminder[]>([]);
+  const [settlementPublicEvents, setSettlementPublicEvents] = useState<Set<string>>(new Set());
+
   const sensitiveConsentGiven = useMemo(
     () => isConsentActive(consents, 'sensitive'),
     [consents],
@@ -421,6 +441,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setGates(DEFAULT_GATES);
     setHighlightStats(DEFAULT_STATS);
     setConsents([]);
+    setFeePayments(DEMO_FEE_PAYMENTS);
+    setExpenses(DEMO_EXPENSES);
+    setFeeReminders([]);
+    setSettlementPublicEvents(new Set());
     setOnboardingComplete(false);
     setOnboardingAnswers(null);
     setShellMetrics(DEFAULT_SHELL_METRICS);
@@ -843,6 +867,112 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // TODO: Supabase meeting_retrospectives 테이블에 insert
   }, [highlights, remainingCards]);
 
+  // ── 회비 · 회계 ──
+  const myFeePayment = useCallback((eventId: string): FeePayment | null => {
+    return feePayments.find(p => p.eventId === eventId && p.userId === 'me') ?? null;
+  }, [feePayments]);
+
+  /** 참가자: "이체 완료했어요" → 확인 중 */
+  const reportFeeTransfer = useCallback((eventId: string, amount: number, method: PaymentMethod) => {
+    const now = new Date().toISOString();
+    setFeePayments(prev => {
+      const existing = prev.find(p => p.eventId === eventId && p.userId === 'me');
+      if (existing) {
+        return prev.map(p =>
+          p.id === existing.id
+            ? { ...p, status: 'pending' as const, method, reportedAt: now }
+            : p,
+        );
+      }
+      return [...prev, {
+        id: `fp-me-${eventId}`,
+        eventId,
+        userId: 'me',
+        userName: profile.name || '나',
+        userAvatar: profile.avatarUrl,
+        amount,
+        status: 'pending' as const,
+        method,
+        paidAt: null,
+        reportedAt: now,
+        confirmedBy: null,
+        confirmedAt: null,
+      }];
+    });
+    if (authUserId) {
+      db.reportFeeTransfer(eventId, authUserId, amount, method).catch(() => { /* 데모에서는 무시 */ });
+    }
+  }, [authUserId, profile.name, profile.avatarUrl]);
+
+  /** 서재지기: 입금 확인 → 납부 완료 */
+  const confirmFeePayment = useCallback((paymentId: string) => {
+    const target = feePayments.find(p => p.id === paymentId);
+    if (!target) return;
+    const now = new Date().toISOString();
+    setFeePayments(prev => prev.map(p =>
+      p.id === paymentId
+        ? {
+            ...p,
+            status: 'paid' as const,
+            method: p.method ?? 'transfer',
+            paidAt: now,
+            confirmedBy: profile.name || '서재지기',
+            confirmedAt: now,
+          }
+        : p,
+    ));
+    if (authUserId) {
+      db.confirmFeePayment(target.eventId, target.userId, authUserId).catch(() => { /* 데모에서는 무시 */ });
+    }
+  }, [authUserId, profile.name, feePayments]);
+
+  const addExpense = useCallback((eventId: string, title: string, amount: number) => {
+    const expense: Expense = {
+      id: `ex-${Date.now()}`,
+      eventId,
+      title,
+      amount,
+      createdAt: new Date().toISOString(),
+    };
+    setExpenses(prev => [...prev, expense]);
+    if (authUserId) {
+      db.insertExpense(eventId, title, amount, authUserId).catch(() => { /* 데모에서는 무시 */ });
+    }
+  }, [authUserId]);
+
+  const removeExpense = useCallback((expenseId: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== expenseId));
+    db.deleteExpense(expenseId).catch(() => { /* 데모에서는 무시 */ });
+  }, []);
+
+  /** 미납자 리마인드 — 발송 내역이 남습니다 */
+  const sendFeeReminder = useCallback((eventId: string, recipients: FeePayment[]) => {
+    if (recipients.length === 0) return;
+    const reminder: FeeReminder = {
+      id: `rm-${Date.now()}`,
+      eventId,
+      recipientNames: recipients.map(r => r.userName),
+      message: FEE_REMINDER_MESSAGE,
+      sentAt: new Date().toISOString(),
+    };
+    setFeeReminders(prev => [reminder, ...prev]);
+    if (authUserId) {
+      db.insertFeeReminder(eventId, authUserId, recipients.map(r => r.userId), FEE_REMINDER_MESSAGE)
+        .catch(() => { /* 데모에서는 무시 */ });
+    }
+  }, [authUserId]);
+
+  const toggleSettlementPublic = useCallback((eventId: string) => {
+    const willPublish = !settlementPublicEvents.has(eventId);
+    setSettlementPublicEvents(prev => {
+      const next = new Set(prev);
+      if (willPublish) next.add(eventId);
+      else next.delete(eventId);
+      return next;
+    });
+    db.setSettlementPublic(eventId, willPublish).catch(() => { /* 데모에서는 무시 */ });
+  }, [settlementPublicEvents]);
+
   // ── 개인정보 동의 ──
   const saveConsents = useCallback(async (draft: ConsentDraft): Promise<string | null> => {
     if (!authUserId) return '로그인이 필요합니다';
@@ -930,6 +1060,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         myCoAttendances, selectedCoAttendeeId, coAttendanceVisible,
         selectCoAttendee, toggleCoAttendanceVisible,
         // 30초 회고
+        feePayments, expenses, feeReminders, settlementPublicEvents,
+        myFeePayment, reportFeeTransfer, confirmFeePayment,
+        addExpense, removeExpense, sendFeeReminder, toggleSettlementPublic,
         consents, sensitiveConsentGiven, saveConsents, updateConsent, deleteMyAccount, exportMyData,
         retrospectives, remainingCards, pendingRetrospectiveEventId, notificationOptIn,
         openRetrospective, submitRetrospective, saveCardToLibrary, shareCardToFeed, setNotificationOptIn,

@@ -183,12 +183,24 @@ begin
     update public.seojae set owner_id = null, is_active = false where owner_id = uid;
   end if;
 
-  -- 7) 피드백은 익명화해서 남김 (서비스 개선 목적, 개인 식별 불가)
+  -- 7) 회비·회계 (supabase-fees.sql)
+  if to_regclass('public.fee_payments') is not null then
+    delete from public.fee_payments where user_id = uid;
+  end if;
+  if to_regclass('public.fee_reminders') is not null then
+    delete from public.fee_reminders where sent_by = uid;
+  end if;
+  if to_regclass('public.expenses') is not null then
+    -- 지출 기록은 모임 정산을 위해 남기고 작성자 연결만 끊습니다
+    update public.expenses set created_by = null where created_by = uid;
+  end if;
+
+  -- 8) 피드백은 익명화해서 남김 (서비스 개선 목적, 개인 식별 불가)
   if to_regclass('public.feedback') is not null then
     update public.feedback set user_id = null where user_id = uid;
   end if;
 
-  -- 8) 프로필과 게시물
+  -- 9) 프로필과 게시물
   if to_regclass('public.likes') is not null then
     delete from public.likes where user_id = uid;
   end if;
@@ -205,7 +217,7 @@ begin
     delete from public.users where id = uid;
   end if;
 
-  -- 9) 동의 이력과 계정
+  -- 10) 동의 이력과 계정
   delete from public.user_consents where user_id = uid;
   delete from auth.users where id = uid;
 end;

@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity, OnboardingAnswers, ShellMetrics, LibrarianInvitation } from './types';
 import { POLICY_VERSIONS, type ConsentDraft, type ConsentRecord, type ConsentType } from './consent';
+import type { PaymentMethod as PaymentMethodType } from './payment';
 
 // ── Auth ──
 
@@ -961,6 +962,89 @@ export async function exportMyData(userId: string) {
 /** 회원 탈퇴 — supabase-privacy.sql의 delete_my_account() 호출 */
 export async function deleteMyAccount(): Promise<void> {
   const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+}
+
+// ── 회비 · 회계 ──
+// 데모 모드에서는 앱 상태가 진짜이고, 아래 함수들은 best-effort로 DB에 반영합니다.
+// 테이블이 아직 없거나 권한이 없으면 조용히 실패하고 화면은 그대로 동작합니다.
+
+/** 참가자가 "이체 완료했어요"를 눌렀을 때 — status를 pending으로 */
+export async function reportFeeTransfer(
+  eventId: string,
+  userId: string,
+  amount: number,
+  method: PaymentMethodType,
+): Promise<void> {
+  const { error } = await supabase.from('fee_payments').upsert(
+    {
+      event_id: eventId,
+      user_id: userId,
+      amount,
+      status: 'pending',
+      method,
+      reported_at: new Date().toISOString(),
+    },
+    { onConflict: 'event_id,user_id' },
+  );
+  if (error) throw error;
+}
+
+/** 서재지기가 입금을 확인했을 때 — status를 paid로 */
+export async function confirmFeePayment(
+  eventId: string,
+  userId: string,
+  confirmedBy: string,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('fee_payments')
+    .update({ status: 'paid', paid_at: now, confirmed_by: confirmedBy, confirmed_at: now })
+    .eq('event_id', eventId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function insertExpense(
+  eventId: string,
+  title: string,
+  amount: number,
+  createdBy: string,
+): Promise<void> {
+  const { error } = await supabase.from('expenses').insert({
+    event_id: eventId,
+    title,
+    amount,
+    created_by: createdBy,
+  });
+  if (error) throw error;
+}
+
+export async function deleteExpense(id: string): Promise<void> {
+  const { error } = await supabase.from('expenses').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function insertFeeReminder(
+  eventId: string,
+  sentBy: string,
+  recipientIds: string[],
+  message: string,
+): Promise<void> {
+  const { error } = await supabase.from('fee_reminders').insert({
+    event_id: eventId,
+    sent_by: sentBy,
+    recipient_ids: recipientIds,
+    message,
+  });
+  if (error) throw error;
+}
+
+export async function setSettlementPublic(eventId: string, isPublic: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('fees')
+    .update({ settlement_public: isPublic, updated_at: new Date().toISOString() })
+    .eq('event_id', eventId);
   if (error) throw error;
 }
 

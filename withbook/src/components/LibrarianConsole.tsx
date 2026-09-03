@@ -4,13 +4,16 @@ import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE, MOCK_HIGHLIGHTS, DEFAULT_PROMISES, DEMO_RETROSPECTIVES, MOCK_OFFLINE_EVENTS } from '../lib/mock-data';
 import { DISCUSSION_QUESTIONS } from '../lib/resource-data';
+import AccountingTab from './AccountingTab';
+import { DEMO_ACCOUNTING_EVENT_ID } from '../lib/mock-data';
 import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType, Highlight, HighlightSentiment } from '../lib/types';
 
-type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo' | 'promises' | 'retrospective';
+type ConsoleTab = 'attendance' | 'questions' | 'accounting' | 'noshow' | 'quiet' | 'memo' | 'promises' | 'retrospective';
 
 const TAB_LABELS: { key: ConsoleTab; label: string }[] = [
   { key: 'attendance', label: '출석' },
   { key: 'questions', label: '발제 질문' },
+  { key: 'accounting', label: '회계' },
   { key: 'noshow', label: '노쇼' },
   { key: 'quiet', label: '조용한 회원' },
   { key: 'memo', label: '메모' },
@@ -59,6 +62,18 @@ const DEMO_QUIET: Record<string, QuietMember[]> = {
     { userId: 'u-quiet2', userName: '이채원', userAvatar: '/assets/avatar-soyul.png', weeksSilent: 4 },
   ],
 };
+
+// ── 서재의 회계 대상 모임 (데모 매핑) ──
+// 모임(event)이 아직 DB 테이블이 아니라, 서재별로 대표 모임 하나를 연결해 둡니다.
+const SEOJAE_EVENT_MAP: Record<string, string> = {
+  sj1: 'ev1',
+  sj2: 'ev5',
+  sj3: 'ev2',
+};
+
+function accountingEventId(seojaeId: string): string {
+  return SEOJAE_EVENT_MAP[seojaeId] || DEMO_ACCOUNTING_EVENT_ID;
+}
 
 // ── 서재의 EventType 추정 (약속 기본값 로드용) ──
 function guessEventType(seojaeId: string): EventType {
@@ -354,6 +369,11 @@ export default function LibrarianConsole() {
           )}
 
           {/* ── 3. 노쇼 집계 ── */}
+          {/* ── 3. 회계 ── */}
+          {activeTab === 'accounting' && (
+            <AccountingTab eventId={accountingEventId(targetSeojaeId || '')} />
+          )}
+
           {activeTab === 'noshow' && (
             <div className="px-5 py-5">
               <div className="mb-4">

@@ -13,6 +13,7 @@ import {
   DEFAULT_PROMISES,
 } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
+import FeeSection from './FeeSection';
 import RegionSelector from './ui/RegionSelector';
 import { ChipRow, FilterChip, FilterDivider, FilterLabel } from './ui/FilterChips';
 import { ALL_REGIONS, matchesRegion, regionSummaryParts, type RegionSelection } from '../lib/regions';
@@ -562,6 +563,9 @@ function EventDetail({
             </div>
           </div>
         )}
+
+        {/* 회비 */}
+        <FeeSection event={event} />
 
         {/* Host */}
         <HostProfileCard
