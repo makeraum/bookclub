@@ -1,6 +1,6 @@
 export type Route = 'splash' | 'login' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
-export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | null;
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | 'meetingRetrospective' | null;
 
 export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
 
@@ -377,4 +377,33 @@ export interface HighlightPair {
   lastInteractionDate: string | null;
   periodStart: string;
   isActive: boolean;
+}
+
+// ── 30초 회고 ──
+
+export type BookRating = 'good' | 'okay' | 'disappointing';
+export type OpinionDivergence = 'a_lot' | 'some' | 'similar';
+export type ReturnIntent = 'yes' | 'undecided' | 'no';
+
+export interface MeetingRetrospective {
+  id: string;
+  eventId: string;
+  userId: string;
+  bookRating: BookRating;
+  opinionDivergence: OpinionDivergence;
+  returnIntent: ReturnIntent;
+  freeText: string;
+  createdAt: string;
+}
+
+export interface RemainingSentenceCard {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  book: Book;
+  date: string;
+  sentences: { sentence: string; userName: string }[];
+  participants: string[];
+  savedToLibrary: boolean;
+  sharedToFeed: boolean;
 }

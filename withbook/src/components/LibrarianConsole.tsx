@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOCK_SEOJAE, MOCK_HIGHLIGHTS, DEFAULT_PROMISES } from '../lib/mock-data';
+import { MOCK_SEOJAE, MOCK_HIGHLIGHTS, DEFAULT_PROMISES, DEMO_RETROSPECTIVES, MOCK_OFFLINE_EVENTS } from '../lib/mock-data';
 import { DISCUSSION_QUESTIONS } from '../lib/resource-data';
 import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType, Highlight, HighlightSentiment } from '../lib/types';
 
-type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo' | 'promises';
+type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo' | 'promises' | 'retrospective';
 
 const TAB_LABELS: { key: ConsoleTab; label: string }[] = [
   { key: 'attendance', label: '출석' },
@@ -15,6 +15,7 @@ const TAB_LABELS: { key: ConsoleTab; label: string }[] = [
   { key: 'quiet', label: '조용한 회원' },
   { key: 'memo', label: '메모' },
   { key: 'promises', label: '약속' },
+  { key: 'retrospective', label: '회고' },
 ];
 
 // ── 데모 데이터 (서재지기 콘솔용) ──
@@ -484,7 +485,12 @@ export default function LibrarianConsole() {
             </div>
           )}
 
-          {/* ── 6. 약속 관리 ── */}
+          {/* ── 6. 회고 ── */}
+          {activeTab === 'retrospective' && (
+            <RetrospectiveTab />
+          )}
+
+          {/* ── 7. 약속 관리 ── */}
           {activeTab === 'promises' && (
             <div className="px-5 py-5">
               <div className="mb-4">
@@ -580,6 +586,145 @@ export default function LibrarianConsole() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── 회고 탭 ── */
+
+function RetrospectiveTab() {
+  const retros = DEMO_RETROSPECTIVES;
+
+  if (retros.length === 0) {
+    return (
+      <div className="px-5 py-5">
+        <div className="py-12 text-center">
+          <div className="w-14 h-14 rounded-full bg-canvas flex items-center justify-center mx-auto mb-3">
+            <span className="text-[24px]">&#9998;</span>
+          </div>
+          <p className="text-[14px] text-sub">아직 회고가 없어요</p>
+          <p className="text-[12px] text-caption mt-1">모임 후 참가자들이 회고를 남기면 여기에 표시됩니다</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 이벤트별 그룹
+  const eventIds = [...new Set(retros.map(r => r.eventId))];
+
+  return (
+    <div className="px-5 py-5">
+      {eventIds.map(eventId => {
+        const event = MOCK_OFFLINE_EVENTS.find(ev => ev.id === eventId);
+        const group = retros.filter(r => r.eventId === eventId);
+        const total = group.length;
+        const bookTitle = event?.book?.title || '모임';
+
+        // 사실 기반 요약
+        const goodCount = group.filter(r => r.bookRating === 'good').length;
+        const okayCount = group.filter(r => r.bookRating === 'okay').length;
+        const disappointingCount = group.filter(r => r.bookRating === 'disappointing').length;
+
+        const divergeALot = group.filter(r => r.opinionDivergence === 'a_lot').length;
+        const divergeSome = group.filter(r => r.opinionDivergence === 'some').length;
+
+        const returnYes = group.filter(r => r.returnIntent === 'yes').length;
+        const returnUndecided = group.filter(r => r.returnIntent === 'undecided').length;
+
+        const freeTexts = group.filter(r => r.freeText.trim());
+
+        return (
+          <div key={eventId}>
+            <div className="mb-4">
+              <h2 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+                《{bookTitle}》 회고 요약
+              </h2>
+              <p className="text-[12px] text-sub mt-0.5">{total}명이 회고를 남겼어요</p>
+            </div>
+
+            {/* 책 평가 */}
+            <div className="bg-surface border border-border rounded-[14px] p-4 mb-3">
+              <p className="text-[13px] font-semibold text-ink mb-2">책은 어땠나요</p>
+              <div className="space-y-1.5">
+                {goodCount > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {total}명 중 {goodCount}명이 &ldquo;좋았다&rdquo;고 답했어요
+                  </p>
+                )}
+                {okayCount > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {okayCount}명이 &ldquo;보통&rdquo;이라고 답했어요
+                  </p>
+                )}
+                {disappointingCount > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {disappointingCount}명이 &ldquo;아쉽다&rdquo;고 답했어요
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 의견 갈림 */}
+            <div className="bg-surface border border-border rounded-[14px] p-4 mb-3">
+              <p className="text-[13px] font-semibold text-ink mb-2">의견이 갈렸나요</p>
+              <div className="space-y-1.5">
+                {divergeALot > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {divergeALot}명이 &ldquo;많이 갈렸다&rdquo;고 답했어요
+                  </p>
+                )}
+                {divergeSome > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {divergeSome}명이 &ldquo;조금&rdquo;이라고 답했어요
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 다음 참여 의향 */}
+            <div className="bg-surface border border-border rounded-[14px] p-4 mb-3">
+              <p className="text-[13px] font-semibold text-ink mb-2">다음에도 오시겠어요</p>
+              <div className="space-y-1.5">
+                {returnYes > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {returnYes}명이 &ldquo;네&rdquo;라고 답했어요
+                  </p>
+                )}
+                {returnUndecided > 0 && (
+                  <p className="text-[13px] text-ink/80 leading-[1.65]">
+                    {returnUndecided}명이 &ldquo;미정&rdquo;이라고 답했어요
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 자유 텍스트 응답 */}
+            {freeTexts.length > 0 && (
+              <div className="bg-surface border border-border rounded-[14px] p-4 mb-3">
+                <p className="text-[13px] font-semibold text-ink mb-3">참가자 한 줄</p>
+                <div className="space-y-2.5">
+                  {freeTexts.map(r => {
+                    const userName = r.userId === 'u1' ? '이도윤' : r.userId === 'u2' ? '한소율' : r.userId === 'u3' ? '장서연' : r.userId === 'u4' ? '박지환' : '참가자';
+                    return (
+                      <div key={r.id} className="border-l-[2px] border-border pl-3">
+                        <p className="text-[13px] text-ink/80 leading-[1.65]">{r.freeText}</p>
+                        <p className="text-[11px] text-sub mt-0.5">— {userName}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 p-3 bg-canvas rounded-[11px]">
+              <p className="text-[12px] text-sub leading-[1.6]">
+                회고 데이터는 서재지기에게만 공개됩니다.
+                참가자의 답변은 익명으로 집계되며, 사실만 표시합니다.
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

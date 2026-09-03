@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance } from '../lib/types';
-import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES } from '../lib/mock-data';
+import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent } from '../lib/types';
+import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
 
@@ -44,6 +44,11 @@ interface AppState {
   myCoAttendances: CoAttendance[];
   selectedCoAttendeeId: string | null;
   coAttendanceVisible: boolean;
+  // 30초 회고
+  retrospectives: MeetingRetrospective[];
+  remainingCards: RemainingSentenceCard[];
+  pendingRetrospectiveEventId: string | null;
+  notificationOptIn: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -75,6 +80,12 @@ interface AppContextType extends AppState {
   reactToPairHighlight: (pairId: string, highlightId: string) => Promise<void>;
   selectCoAttendee: (id: string | null) => void;
   toggleCoAttendanceVisible: () => void;
+  // 30초 회고
+  openRetrospective: (eventId: string) => void;
+  submitRetrospective: (eventId: string, data: { bookRating: BookRating; opinionDivergence: OpinionDivergence; returnIntent: ReturnIntent; freeText: string }) => void;
+  saveCardToLibrary: (cardId: string) => void;
+  shareCardToFeed: (cardId: string) => void;
+  setNotificationOptIn: (value: boolean) => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -138,6 +149,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   });
 
+  // 30초 회고 상태
+  const [retrospectives, setRetrospectives] = useState<MeetingRetrospective[]>([]);
+  const [remainingCards, setRemainingCards] = useState<RemainingSentenceCard[]>(DEMO_REMAINING_CARDS);
+  const [pendingRetrospectiveEventId, setPendingRetrospectiveEventId] = useState<string | null>(null);
+  const [notificationOptIn, setNotificationOptIn] = useState(false);
+
   // ── 게이트 레벨 계산 ──
   const gateLevel: GateLevel = useMemo(() => {
     if (isTestMode) return 'librarian';
@@ -145,6 +162,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (gates.gate1At) return 'recorder';
     return 'reader';
   }, [gates]);
+
+  // ── 회고 대상 이벤트 계산 ──
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const retroEventIds = new Set(retrospectives.map(r => r.eventId));
+    const pending = MOCK_OFFLINE_EVENTS.find(ev =>
+      appliedEvents.has(ev.id) && ev.date < today && !retroEventIds.has(ev.id)
+    );
+    setPendingRetrospectiveEventId(pending?.id || null);
+  }, [appliedEvents, retrospectives]);
 
   // ── 앱 시작 시 세션 확인 ──
   useEffect(() => {
@@ -359,6 +386,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       setMySeojae(demoSeojae);
       setJoinedSeojaeIds(new Set(['sj1', 'sj2', 'sj3']));
+      setAppliedEvents(new Set(['ev2']));
       setOnboardingComplete(true);
       setRoute('main');
     };
@@ -696,6 +724,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // ── 30초 회고 ──
+  const openRetrospective = useCallback((eventId: string) => {
+    setPendingRetrospectiveEventId(eventId);
+    setSubView('meetingRetrospective');
+  }, []);
+
+  const submitRetrospective = useCallback((
+    eventId: string,
+    data: { bookRating: BookRating; opinionDivergence: OpinionDivergence; returnIntent: ReturnIntent; freeText: string }
+  ) => {
+    const retro: MeetingRetrospective = {
+      id: `retro-me-${eventId}`,
+      eventId,
+      userId: 'me',
+      ...data,
+      createdAt: new Date().toISOString(),
+    };
+    setRetrospectives(prev => [...prev, retro]);
+
+    // "남은 문장" 카드 자동 생성
+    const event = MOCK_OFFLINE_EVENTS.find(ev => ev.id === eventId);
+    if (event?.book) {
+      const bookHighlights = highlights.filter(h => h.book.isbn === event.book!.isbn);
+      const sentences = bookHighlights.slice(0, 3).map(h => ({
+        sentence: h.sentence.length > 80 ? h.sentence.slice(0, 80) + '…' : h.sentence,
+        userName: h.userName,
+      }));
+      if (sentences.length > 0) {
+        const card: RemainingSentenceCard = {
+          id: `rc-me-${eventId}`,
+          eventId,
+          eventTitle: event.title,
+          book: event.book,
+          date: event.date,
+          sentences,
+          participants: ['이서연', '박도윤', '한소율', '오지환'],
+          savedToLibrary: false,
+          sharedToFeed: false,
+        };
+        setRemainingCards(prev => [...prev, card]);
+      }
+    }
+    // TODO: Supabase meeting_retrospectives 테이블에 insert
+  }, [highlights]);
+
+  const saveCardToLibrary = useCallback((cardId: string) => {
+    setRemainingCards(prev => prev.map(c =>
+      c.id === cardId ? { ...c, savedToLibrary: true } : c
+    ));
+  }, []);
+
+  const shareCardToFeed = useCallback((cardId: string) => {
+    setRemainingCards(prev => prev.map(c =>
+      c.id === cardId ? { ...c, sharedToFeed: true } : c
+    ));
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -725,6 +810,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // 동석 기록
         myCoAttendances, selectedCoAttendeeId, coAttendanceVisible,
         selectCoAttendee, toggleCoAttendanceVisible,
+        // 30초 회고
+        retrospectives, remainingCards, pendingRetrospectiveEventId, notificationOptIn,
+        openRetrospective, submitRetrospective, saveCardToLibrary, shareCardToFeed, setNotificationOptIn,
       }}
     >
       {children}

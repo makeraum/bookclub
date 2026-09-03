@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -1027,3 +1027,66 @@ export const DEFAULT_PROMISES: Record<EventType, string[]> = {
     '다른 해석을 반박할 수 있고, 반박당할 수 있습니다',
   ],
 };
+
+// ── 30초 회고 데모 데이터 ──
+
+export const DEMO_RETROSPECTIVES: MeetingRetrospective[] = [
+  {
+    id: 'retro-1',
+    eventId: 'ev2',
+    userId: 'u1',
+    bookRating: 'good',
+    opinionDivergence: 'a_lot',
+    returnIntent: 'yes',
+    freeText: '강물 비유에서 한참 이야기가 갈렸는데, 그게 오히려 좋았어요.',
+    createdAt: '2026-09-14T10:00:00Z',
+  },
+  {
+    id: 'retro-2',
+    eventId: 'ev2',
+    userId: 'u3',
+    bookRating: 'good',
+    opinionDivergence: 'a_lot',
+    returnIntent: 'yes',
+    freeText: '다음엔 데미안도 같이 읽어보고 싶어요.',
+    createdAt: '2026-09-14T11:30:00Z',
+  },
+  {
+    id: 'retro-3',
+    eventId: 'ev2',
+    userId: 'u4',
+    bookRating: 'okay',
+    opinionDivergence: 'some',
+    returnIntent: 'yes',
+    freeText: '',
+    createdAt: '2026-09-14T14:00:00Z',
+  },
+  {
+    id: 'retro-4',
+    eventId: 'ev2',
+    userId: 'u2',
+    bookRating: 'good',
+    opinionDivergence: 'a_lot',
+    returnIntent: 'undecided',
+    freeText: '시간이 부족했어요. 좀 더 이야기하고 싶었습니다.',
+    createdAt: '2026-09-14T15:20:00Z',
+  },
+];
+
+export const DEMO_REMAINING_CARDS: RemainingSentenceCard[] = [
+  {
+    id: 'rc-1',
+    eventId: 'ev2',
+    eventTitle: '《싯다르타》 깊이 읽기 모임',
+    book: BOOKS[0],
+    date: '2026-09-13',
+    sentences: [
+      { sentence: '강물은 어디서나 동시에 존재한다. 발원지에서도, 하구에서도, 폭포에서도.', userName: '이서연' },
+      { sentence: '탐구하는 사람은 목표만 보는 것이 아니라, 언제나 찾는 행위 그 자체에 빠져 있다.', userName: '박도윤' },
+      { sentence: '지혜는 전달할 수 없다. 현자가 전달하려 하면 언제나 어리석음처럼 들린다.', userName: '한소율' },
+    ],
+    participants: ['이서연', '박도윤', '한소율', '오지환'],
+    savedToLibrary: false,
+    sharedToFeed: false,
+  },
+];

@@ -17,7 +17,7 @@ import HostProfileCard from './HostProfileCard';
 import type { OfflineEvent, EventType, Region, HighlightStats } from '../lib/types';
 
 export default function OfflineEvents() {
-  const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView, isTestMode } = useApp();
+  const { appliedEvents, profile, gates, highlightStats, myCityRegion, setSubView, isTestMode, pendingRetrospectiveEventId, openRetrospective } = useApp();
   const myCommunity = MOCK_CITY_COMMUNITIES.find(c => c.region === myCityRegion);
   const [selectedEvent, setSelectedEvent] = useState<OfflineEvent | null>(null);
   const [showGateLock, setShowGateLock] = useState(false);
@@ -99,6 +99,30 @@ export default function OfflineEvents() {
             </div>
           </div>
         )}
+
+        {/* Retrospective prompt */}
+        {pendingRetrospectiveEventId && (() => {
+          const retroEvent = MOCK_OFFLINE_EVENTS.find(ev => ev.id === pendingRetrospectiveEventId);
+          if (!retroEvent) return null;
+          const bookTitle = retroEvent.book?.title || '모임';
+          return (
+            <div className="px-5 pt-4">
+              <div className="bg-surface rounded-[18px] border border-border p-5">
+                <p className="text-[11px] font-semibold text-action tracking-[0.3px] uppercase mb-2">30초 회고</p>
+                <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+                  《{bookTitle}》 모임은 어땠나요?
+                </h3>
+                <p className="text-[12.5px] text-sub mt-1">30초면 됩니다</p>
+                <button
+                  onClick={() => openRetrospective(pendingRetrospectiveEventId)}
+                  className="press-scale mt-3 px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
+                >
+                  회고 남기기
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Type filter */}
         <div className="px-5 pt-4 pb-1">
