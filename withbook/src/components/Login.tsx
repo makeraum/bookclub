@@ -4,10 +4,14 @@ import { useState } from 'react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import { useApp } from '../context/AppContext';
+import ConsentForm from './ConsentForm';
+import type { ConsentDraft } from '../lib/consent';
 
 export default function Login() {
   const { handleSignUp, handleSignIn, handleGoogleSignIn, handleDemoLogin, isTestMode } = useApp();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  // 회원가입은 2단계: 이메일·비밀번호 입력 → 약관 동의
+  const [signupStep, setSignupStep] = useState<'form' | 'consent'>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -24,6 +28,13 @@ export default function Login() {
   const signupReady = mode === 'signup'
     ? !!(email.trim() && name.trim() && passwordLongEnough && passwordConfirm && passwordsMatch)
     : !!(email.trim() && password.trim());
+
+  const showError = (errMsg: string) => {
+    if (errMsg.includes('Invalid login')) setError('이메일 또는 비밀번호가 맞지 않아요.');
+    else if (errMsg.includes('already registered')) setError('이미 가입된 이메일이에요.');
+    else if (errMsg.includes('invalid_email') || errMsg.includes('valid email')) setError('올바른 이메일 주소를 입력해주세요.');
+    else setError(errMsg);
+  };
 
   const handleSubmit = async () => {
     setError('');
@@ -44,19 +55,25 @@ export default function Login() {
       return;
     }
 
-    setLoading(true);
-    let errMsg: string | null;
+    // 가입은 동의 단계를 거친 뒤에 계정을 만듭니다
     if (mode === 'signup') {
-      errMsg = await handleSignUp(email.trim(), password, name.trim());
-    } else {
-      errMsg = await handleSignIn(email.trim(), password);
+      setSignupStep('consent');
+      return;
     }
 
+    setLoading(true);
+    const errMsg = await handleSignIn(email.trim(), password);
+    if (errMsg) showError(errMsg);
+    setLoading(false);
+  };
+
+  const handleConsentSubmit = async (consents: ConsentDraft) => {
+    setError('');
+    setLoading(true);
+    const errMsg = await handleSignUp(email.trim(), password, name.trim(), consents);
     if (errMsg) {
-      if (errMsg.includes('Invalid login')) setError('이메일 또는 비밀번호가 맞지 않아요.');
-      else if (errMsg.includes('already registered')) setError('이미 가입된 이메일이에요.');
-      else if (errMsg.includes('invalid_email') || errMsg.includes('valid email')) setError('올바른 이메일 주소를 입력해주세요.');
-      else setError(errMsg);
+      showError(errMsg);
+      setSignupStep('form');
     }
     setLoading(false);
   };
@@ -79,6 +96,18 @@ export default function Login() {
     if (errMsg) setError(errMsg);
     setLoading(false);
   };
+
+  // 회원가입 2단계 — 약관 동의
+  if (mode === 'signup' && signupStep === 'consent') {
+    return (
+      <ConsentForm
+        loading={loading}
+        error={error}
+        onBack={() => { setSignupStep('form'); setError(''); }}
+        onSubmit={handleConsentSubmit}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-dvh px-5 pt-[80px] pb-10 bg-surface animate-slide-up">
@@ -218,12 +247,12 @@ export default function Login() {
 
       {/* Submit */}
       <Button onClick={handleSubmit} disabled={loading || !signupReady}>
-        {loading ? '잠시만요...' : mode === 'login' ? '로그인' : '회원가입'}
+        {loading ? '잠시만요...' : mode === 'login' ? '로그인' : '다음'}
       </Button>
 
       {/* Toggle mode */}
       <button
-        onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setPasswordConfirm(''); setShowPassword(false); setShowPasswordConfirm(false); }}
+        onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setSignupStep('form'); setError(''); setPasswordConfirm(''); setShowPassword(false); setShowPasswordConfirm(false); }}
         className="mt-4 text-[13px] text-sub text-center"
       >
         {mode === 'login' ? (
@@ -297,11 +326,11 @@ export default function Login() {
 
       {/* Terms */}
       <p className="text-[11px] text-caption text-center mt-8 leading-relaxed">
-        계속하면{' '}
-        <span className="underline">이용약관</span> 및{' '}
-        <span className="underline">개인정보처리방침</span>에
+        회원가입 시 다음 단계에서 항목별로 동의를 받습니다.
         <br />
-        동의하는 것으로 간주됩니다.
+        <a href="/terms" target="_blank" rel="noreferrer" className="underline">이용약관</a>
+        {' · '}
+        <a href="/privacy" target="_blank" rel="noreferrer" className="underline">개인정보처리방침</a>
       </p>
     </div>
   );

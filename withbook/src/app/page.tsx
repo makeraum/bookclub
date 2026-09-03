@@ -18,6 +18,8 @@ import ResourceLibrary from '../components/ResourceLibrary';
 import LibrarianConsole from '../components/LibrarianConsole';
 import CoAttendeeProfile from '../components/CoAttendeeProfile';
 import MeetingRetrospective from '../components/MeetingRetrospective';
+import ConsentGate from '../components/ConsentGate';
+import PrivacySettings from '../components/PrivacySettings';
 import BottomNav from '../components/BottomNav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FeedbackButton from '../components/FeedbackButton';
@@ -47,6 +49,7 @@ function AppShell() {
   if (subView === 'resourceLibrary') return <ResourceLibrary />;
   if (route === 'splash') return <Splash />;
   if (route === 'login') return <Login />;
+  if (route === 'consent') return <ConsentGate />;
   if (route === 'onboarding') return <OnboardingSlides />;
   if (route === 'booksetup') return <BookProfileSetup />;
 
@@ -78,6 +81,7 @@ function AppShell() {
       {subView === 'librarianConsole' && <LibrarianConsole />}
       {subView === 'coAttendeeProfile' && <CoAttendeeProfile />}
       {subView === 'meetingRetrospective' && <MeetingRetrospective />}
+      {subView === 'privacySettings' && <PrivacySettings />}
 
       {/* Feedback floating button */}
       <FeedbackButton />

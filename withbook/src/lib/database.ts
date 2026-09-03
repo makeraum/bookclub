@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity, OnboardingAnswers, ShellMetrics, LibrarianInvitation } from './types';
+import { POLICY_VERSIONS, type ConsentDraft, type ConsentRecord, type ConsentType } from './consent';
 
 // ── Auth ──
 
@@ -864,6 +865,103 @@ export async function fetchMyCoAttendances(_userId: string) {
   // TODO: co_attendances 테이블에서 user_id 기준 조회
   // 현재는 목업 데이터 사용, DB 연동 시 구현 예정
   return [];
+}
+
+// ── 개인정보 동의 (user_consents) ──
+
+/** 동의 시점의 접속 IP — 실패해도 동의 저장을 막지 않습니다 */
+async function fetchClientIp(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/client-ip');
+    if (!res.ok) return null;
+    const json = await res.json();
+    return typeof json.ip === 'string' ? json.ip : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 동의 상태를 기록합니다. 이력은 append-only로 쌓이며 기존 행은 수정하지 않습니다.
+ * 동의도 철회도 모두 새 행으로 남습니다.
+ */
+export async function saveConsents(userId: string, draft: ConsentDraft): Promise<void> {
+  const ip = await fetchClientIp();
+  const agreedAt = new Date().toISOString();
+  const rows = (Object.keys(draft) as ConsentType[]).map(type => ({
+    user_id: userId,
+    consent_type: type,
+    agreed: draft[type],
+    policy_version: POLICY_VERSIONS[type],
+    agreed_at: agreedAt,
+    ip_address: ip,
+  }));
+  const { error } = await supabase.from('user_consents').insert(rows);
+  if (error) throw error;
+}
+
+/** 선택 항목 하나만 동의·철회 (새 행으로 기록) */
+export async function recordConsent(
+  userId: string,
+  type: ConsentType,
+  agreed: boolean,
+): Promise<void> {
+  const ip = await fetchClientIp();
+  const { error } = await supabase.from('user_consents').insert({
+    user_id: userId,
+    consent_type: type,
+    agreed,
+    policy_version: POLICY_VERSIONS[type],
+    agreed_at: new Date().toISOString(),
+    ip_address: ip,
+  });
+  if (error) throw error;
+}
+
+export async function fetchConsents(userId: string): Promise<ConsentRecord[]> {
+  const { data, error } = await supabase
+    .from('user_consents')
+    .select('consent_type, agreed, policy_version, agreed_at')
+    .eq('user_id', userId)
+    .order('agreed_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(row => ({
+    consentType: row.consent_type as ConsentType,
+    agreed: row.agreed,
+    policyVersion: row.policy_version,
+    agreedAt: row.agreed_at,
+  }));
+}
+
+// ── 내 데이터 내려받기 / 회원 탈퇴 ──
+
+/** 내 밑줄·회고·프로필·동의 이력을 한 덩어리로 모읍니다 */
+export async function exportMyData(userId: string) {
+  const [highlights, retrospectives, cards, posts, consents] = await Promise.all([
+    supabase.from('highlights').select('*').eq('user_id', userId),
+    supabase.from('meeting_retrospectives').select('*').eq('user_id', userId),
+    supabase.from('remaining_sentence_cards').select('*').eq('user_id', userId),
+    supabase.from('posts').select('*').eq('user_id', userId),
+    supabase.from('user_consents').select('*').eq('user_id', userId),
+  ]);
+
+  const { data: profile } = await supabase.from('users').select('*').eq('id', userId).single();
+
+  return {
+    exportedAt: new Date().toISOString(),
+    profile: profile ?? null,
+    highlights: highlights.data ?? [],
+    retrospectives: retrospectives.data ?? [],
+    remainingCards: cards.data ?? [],
+    posts: posts.data ?? [],
+    consents: consents.data ?? [],
+  };
+}
+
+/** 회원 탈퇴 — supabase-privacy.sql의 delete_my_account() 호출 */
+export async function deleteMyAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
 }
 
 // ── Utils ──

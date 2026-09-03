@@ -14,6 +14,7 @@ import {
   DEMO_RETROSPECTIVE_EVENT_ID,
 } from '../lib/mock-data';
 import StoryViewer from './StoryViewer';
+import MatchingDisabledNotice from './MatchingDisabledNotice';
 import type { Highlight, HighlightReactionType, GateLevel } from '../lib/types';
 
 /** 피드용 하이라이트와 "다른 시선" 후보를 분리 */
@@ -59,7 +60,7 @@ function getDifferentPerspective(
 }
 
 export default function HomeFeed() {
-  const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates, pendingRetrospectiveEventId, openRetrospective, retrospectives, selectCoAttendee } = useApp();
+  const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates, pendingRetrospectiveEventId, openRetrospective, retrospectives, selectCoAttendee, consents, sensitiveConsentGiven } = useApp();
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
 
@@ -76,6 +77,10 @@ export default function HomeFeed() {
     const idx = feedHighlights.findIndex(h => h.book.isbn === DEMO_DIFFERENT_PERSPECTIVE_ISBN);
     return (idx >= 0 ? idx : 0) + 1;
   }, [feedHighlights]);
+
+  // 민감정보 동의를 철회했으면 매칭 카드 대신 안내를 보여줍니다.
+  // 동의 기록 자체가 없는 상태(체험 계정·로컬 모드)에서는 기존대로 카드를 노출합니다.
+  const matchingBlocked = consents.length > 0 && !sensitiveConsentGiven;
 
   // 회고 유도 카드 — 대상이 없으면 데모 모임으로 항상 노출
   const retroEventId = pendingRetrospectiveEventId ?? DEMO_RETROSPECTIVE_EVENT_ID;
@@ -237,10 +242,14 @@ export default function HomeFeed() {
                   {/* '같은 책, 다르게 읽었어요' 카드 — 기준 책 밑줄 카드 바로 다음 */}
                   {idx + 1 === insertIndex && (
                     <div className="mt-3">
-                      <DifferentPerspectiveCard
-                        highlight={differentPerspective}
-                        onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
-                      />
+                      {matchingBlocked ? (
+                        <MatchingDisabledNotice feature="같은 책, 다르게 읽었어요" />
+                      ) : (
+                        <DifferentPerspectiveCard
+                          highlight={differentPerspective}
+                          onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -263,10 +272,14 @@ export default function HomeFeed() {
                 </button>
               </div>
               {/* 밑줄이 없어도 다른 시선 카드는 유지 */}
-              <DifferentPerspectiveCard
-                highlight={differentPerspective}
-                onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
-              />
+              {matchingBlocked ? (
+                <MatchingDisabledNotice feature="같은 책, 다르게 읽었어요" />
+              ) : (
+                <DifferentPerspectiveCard
+                  highlight={differentPerspective}
+                  onViewProfile={() => selectCoAttendee(differentPerspective.userId)}
+                />
+              )}
             </>
           )}
         </div>

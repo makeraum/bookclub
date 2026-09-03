@@ -18,6 +18,7 @@ export default function MeetingRetrospective() {
     shareCardToFeed,
     notificationOptIn,
     setNotificationOptIn,
+    updateConsent,
   } = useApp();
 
   // 열린 시점의 대상 모임을 고정 — 제출 후 pending이 바뀌어도 화면이 흔들리지 않게
@@ -245,7 +246,12 @@ export default function MeetingRetrospective() {
               {/* 알림 동의 체크박스 */}
               <div className="bg-surface border border-border rounded-[14px] p-4 mb-8">
                 <button
-                  onClick={() => setNotificationOptIn(!notificationOptIn)}
+                  onClick={() => {
+                    const next = !notificationOptIn;
+                    setNotificationOptIn(next);
+                    // 이메일 수신은 선택 동의 항목이라 동의 이력으로도 남깁니다
+                    void updateConsent('marketing_email', next);
+                  }}
                   className="flex items-center gap-3 w-full"
                 >
                   <div className={`w-[22px] h-[22px] rounded-[6px] flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -262,7 +268,7 @@ export default function MeetingRetrospective() {
                   </span>
                 </button>
                 <p className="text-[11.5px] text-sub mt-2 ml-[34px]">
-                  언제든 설정에서 해제할 수 있어요
+                  마이 → 설정 → 개인정보 관리에서 언제든 철회할 수 있어요
                 </p>
               </div>
 

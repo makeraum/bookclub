@@ -2,10 +2,13 @@
 
 import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE, MOCK_CITY_COMMUNITIES, PLACEHOLDER_COLORS } from '../lib/mock-data';
+import MatchingDisabledNotice from './MatchingDisabledNotice';
 import type { Seojae, HighlightPair } from '../lib/types';
 
 export default function SeojaeDashboard() {
-  const { mySeojae, myHighlightPairs, joinedSeojaeIds, gates, joinSeojae, selectSeojae, selectPair, isTestMode } = useApp();
+  const { mySeojae, myHighlightPairs, joinedSeojaeIds, gates, joinSeojae, selectSeojae, selectPair, isTestMode, consents, sensitiveConsentGiven } = useApp();
+  // 민감정보 동의를 철회하면 추천(취향 매칭)에서 제외됩니다
+  const matchingBlocked = consents.length > 0 && !sensitiveConsentGiven;
 
   // 추천 서재: 내가 참여하지 않은 서재 (지역 무관)
   const recommendedSeojae = MOCK_SEOJAE.filter(s => !mySeojae.some(ms => ms.id === s.id));
@@ -68,8 +71,13 @@ export default function SeojaeDashboard() {
           </section>
         )}
 
-        {/* 섹션: 추천 서재 */}
-        {recommendedSeojae.length > 0 && (
+        {/* 섹션: 추천 서재 — 취향 매칭 기반 */}
+        {matchingBlocked && (
+          <section className="px-5 pt-5 pb-4">
+            <MatchingDisabledNotice feature="서재 추천" />
+          </section>
+        )}
+        {!matchingBlocked && recommendedSeojae.length > 0 && (
           <section className="px-5 pt-5 pb-4">
             <h2 className="text-[15px] font-semibold text-ink mb-1" style={{ letterSpacing: '-0.3px' }}>
               추천 서재

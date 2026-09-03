@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent } from '../lib/types';
+import { needsReconsent, isConsentActive, type ConsentDraft, type ConsentRecord, type ConsentType } from '../lib/consent';
 import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS, DEMO_RETROSPECTIVE_EVENT_ID } from '../lib/mock-data';
 import { supabase } from '../lib/supabase';
 import * as db from '../lib/database';
@@ -63,7 +64,14 @@ interface AppContextType extends AppState {
   applyEvent: (eventId: string) => Promise<void>;
   cancelEvent: (eventId: string) => Promise<void>;
   completeOnboarding: () => void;
-  handleSignUp: (email: string, password: string, name: string) => Promise<string | null>;
+  handleSignUp: (email: string, password: string, name: string, consents: ConsentDraft) => Promise<string | null>;
+  // 개인정보 동의
+  consents: ConsentRecord[];
+  sensitiveConsentGiven: boolean;
+  saveConsents: (draft: ConsentDraft) => Promise<string | null>;
+  updateConsent: (type: ConsentType, agreed: boolean) => Promise<string | null>;
+  deleteMyAccount: () => Promise<string | null>;
+  exportMyData: () => Promise<Blob | null>;
   handleSignIn: (email: string, password: string) => Promise<string | null>;
   handleGoogleSignIn: () => Promise<string | null>;
   handleSignOut: () => void;
@@ -156,6 +164,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [openedRetrospectiveEventId, setOpenedRetrospectiveEventId] = useState<string | null>(null);
   const [notificationOptIn, setNotificationOptIn] = useState(false);
 
+  // 개인정보 동의 상태
+  const [consents, setConsents] = useState<ConsentRecord[]>([]);
+  const sensitiveConsentGiven = useMemo(
+    () => isConsentActive(consents, 'sensitive'),
+    [consents],
+  );
+
   // ── 게이트 레벨 계산 ──
   const gateLevel: GateLevel = useMemo(() => {
     if (isTestMode) return 'librarian';
@@ -234,6 +249,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
             // 답변 없으면 null 유지
           }
 
+          // 개인정보 동의 이력 로드 — 필수 항목이 없거나 방침 버전이 올라갔으면 재동의
+          let consentRecords: ConsentRecord[] = [];
+          try {
+            consentRecords = await db.fetchConsents(session.user.id);
+            setConsents(consentRecords);
+            setNotificationOptIn(isConsentActive(consentRecords, 'marketing_email'));
+          } catch {
+            // 테이블 미생성 등으로 조회에 실패하면 재동의를 강제하지 않습니다
+            setConsents([]);
+            consentRecords = [];
+            setRoute(userGates.gate0At ? 'main' : 'onboarding');
+            setOnboardingComplete(!!userGates.gate0At);
+            await loadPosts();
+            await loadHighlights();
+            return;
+          }
+          if (needsReconsent(consentRecords)) {
+            setRoute('consent');
+            await loadPosts();
+            await loadHighlights();
+            return;
+          }
+
           // Gate 0 통과 여부로 라우팅 결정
           if (userGates.gate0At) {
             setOnboardingComplete(true);
@@ -284,12 +322,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   // ── 인증 ──
-  const handleSignUp = useCallback(async (email: string, password: string, name: string): Promise<string | null> => {
+  const handleSignUp = useCallback(async (
+    email: string,
+    password: string,
+    name: string,
+    consentDraft: ConsentDraft,
+  ): Promise<string | null> => {
     try {
       const data = await db.signUp(email, password, name);
       if (data.user) {
         setAuthUserId(data.user.id);
         setProfile(prev => ({ ...prev, id: data.user!.id, name }));
+        // 계정 생성 직후 동의 이력을 남깁니다. 실패해도 가입은 유지하되
+        // 다음 진입 시 재동의를 받도록 consents를 비워 둡니다.
+        try {
+          await db.saveConsents(data.user.id, consentDraft);
+          setConsents(await db.fetchConsents(data.user.id));
+          setNotificationOptIn(consentDraft.marketing_email);
+        } catch {
+          setConsents([]);
+        }
         setRoute('onboarding');
       }
       return null;
@@ -313,6 +365,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setGates(userGates);
         const stats = await db.fetchHighlightStats(data.user.id);
         setHighlightStats(stats);
+
+        // 개인정보 동의 이력 — 방침이 개정됐으면 재동의 화면으로
+        try {
+          const consentRecords = await db.fetchConsents(data.user.id);
+          setConsents(consentRecords);
+          setNotificationOptIn(isConsentActive(consentRecords, 'marketing_email'));
+          if (needsReconsent(consentRecords)) {
+            setRoute('consent');
+            await loadPosts();
+            await loadHighlights();
+            return null;
+          }
+        } catch {
+          setConsents([]);
+        }
 
         if (userGates.gate0At) {
           setOnboardingComplete(true);
@@ -353,6 +420,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHighlights(MOCK_HIGHLIGHTS);
     setGates(DEFAULT_GATES);
     setHighlightStats(DEFAULT_STATS);
+    setConsents([]);
     setOnboardingComplete(false);
     setOnboardingAnswers(null);
     setShellMetrics(DEFAULT_SHELL_METRICS);
@@ -775,6 +843,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // TODO: Supabase meeting_retrospectives 테이블에 insert
   }, [highlights, remainingCards]);
 
+  // ── 개인정보 동의 ──
+  const saveConsents = useCallback(async (draft: ConsentDraft): Promise<string | null> => {
+    if (!authUserId) return '로그인이 필요합니다';
+    try {
+      await db.saveConsents(authUserId, draft);
+      setConsents(await db.fetchConsents(authUserId));
+      return null;
+    } catch (err: unknown) {
+      return err instanceof Error ? err.message : '동의 저장에 실패했어요';
+    }
+  }, [authUserId]);
+
+  /** 선택 항목 동의·철회 — 이력은 새 행으로 쌓입니다 */
+  const updateConsent = useCallback(async (type: ConsentType, agreed: boolean): Promise<string | null> => {
+    if (!authUserId) return '로그인이 필요합니다';
+    try {
+      await db.recordConsent(authUserId, type, agreed);
+      setConsents(await db.fetchConsents(authUserId));
+      if (type === 'marketing_email') setNotificationOptIn(agreed);
+      return null;
+    } catch (err: unknown) {
+      return err instanceof Error ? err.message : '변경에 실패했어요';
+    }
+  }, [authUserId]);
+
+  const exportMyData = useCallback(async (): Promise<Blob | null> => {
+    if (!authUserId) return null;
+    try {
+      const data = await db.exportMyData(authUserId);
+      return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    } catch {
+      return null;
+    }
+  }, [authUserId]);
+
+  const deleteMyAccount = useCallback(async (): Promise<string | null> => {
+    try {
+      await db.deleteMyAccount();
+      await handleSignOut();
+      return null;
+    } catch (err: unknown) {
+      return err instanceof Error ? err.message : '탈퇴 처리에 실패했어요';
+    }
+  }, [handleSignOut]);
+
   const saveCardToLibrary = useCallback((cardId: string) => {
     setRemainingCards(prev => prev.map(c =>
       c.id === cardId ? { ...c, savedToLibrary: true } : c
@@ -817,6 +930,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         myCoAttendances, selectedCoAttendeeId, coAttendanceVisible,
         selectCoAttendee, toggleCoAttendanceVisible,
         // 30초 회고
+        consents, sensitiveConsentGiven, saveConsents, updateConsent, deleteMyAccount, exportMyData,
         retrospectives, remainingCards, pendingRetrospectiveEventId, notificationOptIn,
         openRetrospective, submitRetrospective, saveCardToLibrary, shareCardToFeed, setNotificationOptIn,
       }}

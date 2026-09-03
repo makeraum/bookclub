@@ -295,6 +295,21 @@ export default function MyLibrary() {
           </div>
         )}
 
+        {/* 설정 */}
+        <div className="bg-surface mt-3 border-b border-border">
+          <h3 className="text-[15px] font-semibold text-ink px-5 pt-5 pb-1" style={{ letterSpacing: '-0.3px' }}>설정</h3>
+          <button
+            onClick={() => setSubView('privacySettings')}
+            className="press-scale focus-ring w-full px-5 py-4 text-left flex items-center gap-3"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] text-ink">개인정보 관리</p>
+              <p className="text-[12px] text-sub mt-0.5">동의 내역, 데이터 내려받기, 회원 탈퇴</p>
+            </div>
+            <span className="text-[16px] text-sub flex-shrink-0">›</span>
+          </button>
+        </div>
+
         {/* Reading timeline */}
         <div className="bg-surface mt-3 px-5 py-5">
           <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>독서 기록</h3>
@@ -325,6 +340,16 @@ export default function MyLibrary() {
               <p className="text-[12.5px] text-caption mt-1">홈에서 ＋ 밑줄 버튼을 눌러 시작해보세요</p>
             </div>
           )}
+        </div>
+
+        {/* 방침 링크 */}
+        <div className="px-5 py-8 flex items-center justify-center gap-4">
+          <a href="/privacy" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
+            개인정보처리방침
+          </a>
+          <a href="/terms" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
+            이용약관
+          </a>
         </div>
       </div>
     </div>
