@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Button from './ui/Button';
 import Chip from './ui/Chip';
 import Input from './ui/Input';
 import { useApp } from '../context/AppContext';
 import { GENRES, AUTHORS, READING_BADGES, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import * as database from '../lib/database';
+import FullScreenSheet from './ui/Overlay';
 import type { Book } from '../lib/types';
 
 interface SearchBook extends Book {
@@ -14,7 +15,7 @@ interface SearchBook extends Book {
 }
 
 export default function BookProfileSetup() {
-  const { setRoute, setSubView, profile, updateProfile, authUserId, subView } = useApp();
+  const { setRoute, setSubView, profile, updateProfile, authUserId, subView, showToast } = useApp();
   const isEdit = subView === 'bookEdit';
 
   const [slots, setSlots] = useState<(Book | null)[]>(
@@ -170,6 +171,18 @@ export default function BookProfileSetup() {
     setSelectedBadges(prev => prev.includes(badge) ? prev.filter(b => b !== badge) : [...prev, badge]);
   };
 
+  // 저장 버튼 활성 여부 — 프로필과 달라진 게 있을 때만
+  const dirty = useMemo(() => {
+    const baseSlots = profile.favoriteBooks.length === 3 ? profile.favoriteBooks : [null, null, null];
+    return (
+      JSON.stringify(slots) !== JSON.stringify(baseSlots) ||
+      quote !== profile.quote ||
+      JSON.stringify(selectedAuthors) !== JSON.stringify(profile.favoriteAuthors) ||
+      JSON.stringify(selectedGenres) !== JSON.stringify(profile.genres) ||
+      JSON.stringify(selectedBadges) !== JSON.stringify(profile.readingBadges)
+    );
+  }, [slots, quote, selectedAuthors, selectedGenres, selectedBadges, profile]);
+
   const handleComplete = async () => {
     setSaving(true);
     const updatedProfile = {
@@ -188,31 +201,16 @@ export default function BookProfileSetup() {
     }
     setSaving(false);
     if (isEdit) {
-      setSubView(null);
-    } else {
-      setRoute('main');
+      showToast('저장했어요');
+      return true; // FullScreenSheet가 닫아줍니다
     }
+    setRoute('main');
+    return false;
   };
 
-  return (
-    <div className="flex flex-col min-h-dvh bg-surface animate-slide-up">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-        <div className="flex items-center justify-between">
-          {isEdit ? (
-            <button onClick={() => setSubView(null)} className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center">
-              <span className="text-[18px]">‹</span>
-            </button>
-          ) : <div />}
-          <h1 className="text-[20px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
-            {isEdit ? '책 프로필 수정' : '책 프로필 설정'}
-          </h1>
-          {isEdit ? <div className="w-[34px]" /> : <div />}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
+  // 본문 — 온보딩 페이지와 수정 오버레이가 함께 씁니다
+  const sections = (
+    <>
         {/* Favorite books */}
         <section className="mb-8">
           <h3 className="text-[15px] font-semibold text-ink mb-1">인생책 3권</h3>
@@ -394,15 +392,11 @@ export default function BookProfileSetup() {
             ))}
           </div>
         </section>
-      </div>
+    </>
+  );
 
-      {/* Fixed bottom button */}
-      <div className="fixed bottom-0 left-0 right-0 px-5 py-4 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
-        <Button onClick={handleComplete} disabled={saving}>
-          {saving ? '저장 중...' : isEdit ? '저장하기' : '완료'}
-        </Button>
-      </div>
-
+  const searchOverlay = (
+    <>
       {/* Book search modal */}
       {searchOpen && (
         <div className="fixed inset-0 z-50 bg-surface animate-slide-up">
@@ -466,6 +460,51 @@ export default function BookProfileSetup() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  // 수정 진입 — 화면 전체를 덮는 오버레이
+  if (isEdit) {
+    return (
+      <>
+        <FullScreenSheet
+          title="책 프로필 수정"
+          background="surface"
+          onClose={() => setSubView(null)}
+          dirty={dirty}
+          action={{
+            label: saving ? '저장 중' : '저장',
+            onTap: handleComplete,
+            enabled: dirty && !saving,
+          }}
+        >
+          <div className="px-5 pt-6 pb-10">{sections}</div>
+        </FullScreenSheet>
+        {searchOverlay}
+      </>
+    );
+  }
+
+  // 온보딩 진입 — 기존 전체 페이지 그대로
+  return (
+    <div className="flex flex-col min-h-dvh bg-surface animate-slide-up">
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
+        <h1 className="text-[20px] font-semibold text-ink text-center" style={{ letterSpacing: '-0.3px' }}>
+          책 프로필 설정
+        </h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
+        {sections}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 px-5 py-4 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
+        <Button onClick={handleComplete} disabled={saving}>
+          {saving ? '저장 중...' : '완료'}
+        </Button>
+      </div>
+
+      {searchOverlay}
     </div>
   );
 }

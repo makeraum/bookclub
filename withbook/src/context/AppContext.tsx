@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent, FeePayment, Expense, FeeReminder } from '../lib/types';
 import { needsReconsent, isConsentActive, type ConsentDraft, type ConsentRecord, type ConsentType } from '../lib/consent';
 import type { PaymentMethod } from '../lib/payment';
@@ -32,6 +32,8 @@ interface AppState {
   highlights: Highlight[];
   gates: UserGates;
   highlightStats: HighlightStats;
+  /** 내가 남긴 밑줄 — 마이 탭의 숫자와 목록이 같은 자료를 보게 하는 단일 출처 */
+  myHighlights: Highlight[];
   gateLevel: GateLevel;
   // 온보딩 답변 + 조개 지표
   onboardingAnswers: OnboardingAnswers | null;
@@ -66,6 +68,10 @@ interface AppContextType extends AppState {
   cancelEvent: (eventId: string) => Promise<void>;
   completeOnboarding: () => void;
   handleSignUp: (email: string, password: string, name: string, consents: ConsentDraft) => Promise<string | null>;
+  // 토스트 알림
+  toast: string | null;
+  showToast: (message: string) => void;
+
   // 회비 · 회계
   feePayments: FeePayment[];
   expenses: Expense[];
@@ -138,7 +144,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [viewedStoryUsers, setViewedStoryUsers] = useState<Set<string>>(new Set());
   const [highlights, setHighlights] = useState<Highlight[]>(MOCK_HIGHLIGHTS);
   const [gates, setGates] = useState<UserGates>(DEFAULT_GATES);
-  const [highlightStats, setHighlightStats] = useState<HighlightStats>(DEFAULT_STATS);
+  // 밑줄 통계는 상태로 따로 들고 있지 않고 내 밑줄 목록에서 계산합니다.
+  // 예전에는 수동으로 더하다 보니 "밑줄 1/30"인데 목록은 비어 있는 식으로 어긋났습니다.
+  const myHighlights = useMemo(
+    () => highlights.filter(h => h.userId === (authUserId || profile.id) || h.userId === 'me'),
+    [highlights, authUserId, profile.id],
+  );
+
+  const highlightStats: HighlightStats = useMemo(() => ({
+    totalCount: myHighlights.length,
+    bookCount: new Set(myHighlights.map(h => h.book.isbn)).size,
+  }), [myHighlights]);
 
   // 온보딩 답변 + 조개 지표
   const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers | null>(null);
@@ -180,6 +196,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 개인정보 동의 상태
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
+  // 토스트 — 저장·완료 알림
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = useCallback((message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(message);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2200);
+  }, []);
+
   // 회비 · 회계 상태 — 데모 모드에서는 이 상태가 진짜이고, DB 반영은 best-effort입니다
   const [feePayments, setFeePayments] = useState<FeePayment[]>(DEMO_FEE_PAYMENTS);
   const [expenses, setExpenses] = useState<Expense[]>(DEMO_EXPENSES);
@@ -252,8 +277,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // 게이트 상태 로드
           const userGates = await db.fetchUserGates(session.user.id);
           setGates(userGates);
-          const stats = await db.fetchHighlightStats(session.user.id);
-          setHighlightStats(stats);
 
           // 조개 지표 + 온보딩 답변 로드
           try {
@@ -383,8 +406,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // 게이트 상태 로드
         const userGates = await db.fetchUserGates(data.user.id);
         setGates(userGates);
-        const stats = await db.fetchHighlightStats(data.user.id);
-        setHighlightStats(stats);
 
         // 개인정보 동의 이력 — 방침이 개정됐으면 재동의 화면으로
         try {
@@ -439,7 +460,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPosts(MOCK_POSTS);
     setHighlights(MOCK_HIGHLIGHTS);
     setGates(DEFAULT_GATES);
-    setHighlightStats(DEFAULT_STATS);
     setConsents([]);
     setFeePayments(DEMO_FEE_PAYMENTS);
     setExpenses(DEMO_EXPENSES);
@@ -466,7 +486,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const applyDemoState = () => {
       setProfile(prev => ({ ...prev, name: prev.name || '체험 사용자' }));
       setGates({ gate0At: now, gate1At: now, gate2At: now });
-      setHighlightStats({ totalCount: 35, bookCount: 5 });
       // sj1을 체험 사용자 소유로 설정 (서재지기 콘솔 체험용)
       const demoSeojae = MOCK_SEOJAE.slice(0, 3).map(s => {
         if (s.id === 'sj1') {
@@ -652,17 +671,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setHighlights(prev => [newHighlight, ...prev]);
 
-    // 로컬 통계 업데이트
-    setHighlightStats(prev => {
-      const myHighlights = highlights.filter(h => h.userId === (authUserId || profile.id));
-      const existingBooks = new Set(myHighlights.map(h => h.book.isbn));
-      existingBooks.add(book.isbn);
-      return {
-        totalCount: prev.totalCount + 1,
-        bookCount: existingBooks.size,
-      };
-    });
-
     if (authUserId) {
       try {
         const created = await db.createHighlight(authUserId, book, sentence, reason, context);
@@ -703,7 +711,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createdAt: '방금 전',
     };
     setHighlights(prev => [newHighlight, ...prev]);
-    setHighlightStats({ totalCount: 1, bookCount: 1 });
 
     if (authUserId) {
       try {
@@ -1047,7 +1054,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isTestMode,
         viewedStoryUsers, markStoryViewed,
         highlights, addHighlight, toggleHighlightReaction,
-        gates, highlightStats, gateLevel,
+        gates, highlightStats, myHighlights, gateLevel,
         completeGate0,
         // 온보딩 답변 + 조개 지표
         onboardingAnswers, shellMetrics,
@@ -1060,6 +1067,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         myCoAttendances, selectedCoAttendeeId, coAttendanceVisible,
         selectCoAttendee, toggleCoAttendanceVisible,
         // 30초 회고
+        toast, showToast,
         feePayments, expenses, feeReminders, settlementPublicEvents,
         myFeePayment, reportFeeTransfer, confirmFeePayment,
         addExpense, removeExpense, sendFeeReminder, toggleSettlementPublic,

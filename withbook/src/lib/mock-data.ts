@@ -867,7 +867,55 @@ export const MOCK_CO_ATTENDANCE_DETAILS: Record<string, CoAttendanceDetail> = {
   },
 };
 
+/**
+ * 내가 남긴 밑줄 데모 3개.
+ * 마이 탭의 "밑줄 n/30"·활동 통계와 "독서 기록" 목록이 같은 자료를 보게 하려고 넣었습니다.
+ * (이게 없으면 위에는 숫자가 있는데 아래는 "기록이 없어요"가 되어 모순돼 보입니다)
+ */
+export const DEMO_MY_HIGHLIGHTS: Highlight[] = [
+  {
+    id: 'hme1',
+    userId: 'me',
+    userName: '나',
+    userAvatar: '/assets/avatar-me.png',
+    book: BOOKS[0],
+    sentence: '지혜는 전달할 수 없다. 현자가 전달하려 하면 언제나 어리석음처럼 들린다.',
+    reason: '누군가에게 조언을 하다가 말문이 막힌 날 읽었어요. 내가 아는 걸 그대로 건넬 수 있다고 믿었는데, 그게 왜 잘 안 됐는지 알 것 같았습니다.',
+    context: '후배와 저녁을 먹고 돌아오는 지하철에서.',
+    reactions: { felt_same: 3, want_to_read: 1, stays_long: 5, myReactions: new Set() },
+    createdAt: '3일 전',
+    sentiment: 'positive',
+  },
+  {
+    id: 'hme2',
+    userId: 'me',
+    userName: '나',
+    userAvatar: '/assets/avatar-me.png',
+    book: BOOKS[2],
+    sentence: '삶은 살아야 하는 것이지 이해해야 하는 것이 아니다.',
+    reason: '자꾸 설명을 붙이려던 시기였어요. 왜 이렇게 됐는지 납득하고 나서야 다음으로 갈 수 있다고 생각했는데, 그 순서가 틀렸을 수도 있겠다 싶었습니다.',
+    context: '주말 오후, 창가에 앉아서.',
+    reactions: { felt_same: 6, want_to_read: 2, stays_long: 4, myReactions: new Set() },
+    createdAt: '1주 전',
+    sentiment: 'positive',
+  },
+  {
+    id: 'hme3',
+    userId: 'me',
+    userName: '나',
+    userAvatar: '/assets/avatar-me.png',
+    book: BOOKS[7],
+    sentence: '태어나려는 자는 하나의 세계를 깨뜨려야 한다.',
+    reason: '깨뜨린다는 말이 파괴가 아니라 통과라는 걸 이 문장에서 처음 봤어요. 무언가를 그만두는 일이 늘 실패처럼 느껴졌는데, 그렇지 않을 수도 있겠다고.',
+    context: '이직을 고민하던 밤.',
+    reactions: { felt_same: 8, want_to_read: 3, stays_long: 9, myReactions: new Set() },
+    createdAt: '2주 전',
+    sentiment: 'positive',
+  },
+];
+
 export const MOCK_HIGHLIGHTS: Highlight[] = [
+  ...DEMO_MY_HIGHLIGHTS,
   {
     id: 'h1',
     userId: 'u1',
@@ -1103,6 +1151,7 @@ export const DEMO_REMAINING_CARDS: RemainingSentenceCard[] = [
     sharedToFeed: false,
   },
 ];
+
 
 // ── 비공개 테스트용 데모 상수 ──
 // 신규 계정에서도 기능이 보이도록 홈 피드가 이 데이터를 기본값으로 씁니다.

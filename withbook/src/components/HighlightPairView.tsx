@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_HIGHLIGHTS, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import { toKoreanCount } from '../lib/utils';
+import FullScreenSheet from './ui/Overlay';
 
 export default function HighlightPairView() {
   const { selectedPairId, selectPair, myHighlightPairs, setTab, profile, authUserId, myCoAttendances } = useApp();
@@ -36,31 +37,22 @@ export default function HighlightPairView() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => selectPair(null)}
-              className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">‹</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate flex-1">밑줄 짝</h1>
-            <button
-              onClick={handleChatOpen}
-              className="p-2 -mr-1 rounded-lg active:bg-muted/20"
-              aria-label="채팅"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pb-24">
+    <FullScreenSheet
+      title="밑줄 짝"
+      onClose={() => selectPair(null)}
+      headerRight={
+        <button
+          onClick={handleChatOpen}
+          className="p-1.5 rounded-lg press-scale focus-ring"
+          aria-label="채팅"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
+      }
+    >
+      <div className="pb-24">
           {/* 파트너 + 책 정보 */}
           <div className="bg-surface px-5 py-6 flex flex-col items-center border-b border-border">
             <div className="w-[64px] h-[64px] rounded-full overflow-hidden mb-3">
@@ -177,8 +169,7 @@ export default function HighlightPairView() {
               </div>
             )}
           </section>
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }

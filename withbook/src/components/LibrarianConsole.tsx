@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE, MOCK_HIGHLIGHTS, DEFAULT_PROMISES, DEMO_RETROSPECTIVES, MOCK_OFFLINE_EVENTS } from '../lib/mock-data';
 import { DISCUSSION_QUESTIONS } from '../lib/resource-data';
 import AccountingTab from './AccountingTab';
+import FullScreenSheet from './ui/Overlay';
 import { DEMO_ACCOUNTING_EVENT_ID } from '../lib/mock-data';
 import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType, Highlight, HighlightSentiment } from '../lib/types';
 
@@ -139,17 +140,17 @@ export default function LibrarianConsole() {
 
   if (!seojae) {
     return (
-      <div className="fixed inset-0 z-40 bg-canvas animate-slide-up flex items-center justify-center">
-        <div className="text-center px-8">
+      <FullScreenSheet title="서재지기 콘솔" onClose={() => setSubView(null)}>
+        <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
           <p className="text-[15px] text-sub">서재 정보를 찾을 수 없어요</p>
           <button
             onClick={() => setSubView(null)}
-            className="mt-4 px-6 py-2.5 rounded-full bg-action text-white text-[14px] font-semibold press-scale"
+            className="mt-4 px-6 py-2.5 rounded-full bg-action text-white text-[14px] font-semibold press-scale focus-ring"
           >
             돌아가기
           </button>
         </div>
-      </div>
+      </FullScreenSheet>
     );
   }
 
@@ -214,32 +215,18 @@ export default function LibrarianConsole() {
   const attendedCount = attendances.filter(a => a.attended).length;
 
   return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSubView(null)}
-              className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">‹</span>
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-[17px] font-semibold text-ink truncate">서재지기 콘솔</h1>
-              <p className="text-[12px] text-sub truncate">{seojae.name}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab bar */}
-        <div className="bg-surface border-b border-border px-2">
-          <div className="flex overflow-x-auto no-scrollbar">
+    <FullScreenSheet
+      title="서재지기 콘솔"
+      subtitle={seojae.name}
+      onClose={() => setSubView(null)}
+      headerExtra={
+        <div className="px-2">
+          <div className="flex overflow-x-auto hide-scrollbar">
             {TAB_LABELS.map(t => (
               <button
                 key={t.key}
                 onClick={() => setActiveTab(t.key)}
-                className={`flex-shrink-0 px-4 py-3 text-[13px] font-medium border-b-2 transition-colors ${
+                className={`flex-shrink-0 px-4 py-3 text-[13px] font-medium border-b-2 transition-colors focus-ring ${
                   activeTab === t.key
                     ? 'text-action border-action'
                     : 'text-sub border-transparent'
@@ -250,9 +237,9 @@ export default function LibrarianConsole() {
             ))}
           </div>
         </div>
-
-        {/* Tab content */}
-        <div className="flex-1 overflow-y-auto pb-24">
+      }
+    >
+      <div className="pb-24">
 
           {/* ── 1. 출석 체크 ── */}
           {activeTab === 'attendance' && (
@@ -604,9 +591,8 @@ export default function LibrarianConsole() {
               </div>
             </div>
           )}
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }
 

@@ -146,3 +146,48 @@
   outline: 2px solid var(--action);
   outline-offset: 2px;
 }
+
+/* 전체 화면 오버레이 — 아래에서 위로 열리고, 반대로 닫힘 */
+@keyframes wbSheetIn {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes wbSheetOut {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+.sheet-in {
+  animation: wbSheetIn 0.3s ease-out forwards;
+}
+.sheet-out {
+  animation: wbSheetOut 0.3s ease-out forwards;
+}
+
+/* 바텀 시트 — 배경 딤은 페이드, 패널은 아래에서 */
+@keyframes wbDimIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes wbDimOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.dim-in  { animation: wbDimIn 0.24s ease-out forwards; }
+.dim-out { animation: wbDimOut 0.24s ease-out forwards; }
+
+/* 토스트 */
+@keyframes wbToastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-toast {
+  animation: wbToastIn 0.24s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-in, .sheet-out, .dim-in, .dim-out, .animate-toast,
+  .animate-slide-up, .animate-fade, .animate-pop {
+    animation-duration: 0.01ms !important;
+  }
+}

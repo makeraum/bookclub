@@ -24,6 +24,7 @@ import BottomNav from '../components/BottomNav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FeedbackButton from '../components/FeedbackButton';
 import BetaNotice from '../components/BetaNotice';
+import Toast from '../components/ui/Toast';
 
 function AppShell() {
   const { route, tab, subView, authLoading, isTestMode } = useApp();
@@ -45,8 +46,7 @@ function AppShell() {
     );
   }
 
-  // Pre-main routes — 자료실은 어디서든 접근 가능
-  if (subView === 'resourceLibrary') return <ResourceLibrary />;
+  // Pre-main routes
   if (route === 'splash') return <Splash />;
   if (route === 'login') return <Login />;
   if (route === 'consent') return <ConsentGate />;
@@ -82,6 +82,7 @@ function AppShell() {
       {subView === 'coAttendeeProfile' && <CoAttendeeProfile />}
       {subView === 'meetingRetrospective' && <MeetingRetrospective />}
       {subView === 'privacySettings' && <PrivacySettings />}
+      {subView === 'resourceLibrary' && <ResourceLibrary />}
 
       {/* Feedback floating button */}
       <FeedbackButton />
@@ -91,6 +92,9 @@ function AppShell() {
 
       {/* Bottom navigation */}
       <BottomNav />
+
+      {/* 저장·완료 알림 */}
+      <Toast />
     </div>
   );
 }

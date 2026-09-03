@@ -12,6 +12,7 @@ import {
   type PaymentMethod,
 } from '../lib/payment';
 import type { OfflineEvent, FeeStatus, FeePayment } from '../lib/types';
+import { BottomSheet } from './ui/Overlay';
 
 /* ── 상태 문구 · 배지 ──
    미납자를 부정적으로 표시하지 않습니다. 빨강 대신 회색을 씁니다. */
@@ -215,9 +216,7 @@ function PaymentSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-[430px] bg-surface rounded-t-[20px] px-5 pt-6 pb-8 safe-bottom animate-slide-up max-h-[88dvh] overflow-y-auto">
+    <BottomSheet onClose={onClose} label="회비 납부">
         <h3 className="text-[17px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
           회비 납부
         </h3>
@@ -315,8 +314,7 @@ function PaymentSheet({
         >
           닫기
         </button>
-      </div>
-    </div>
+    </BottomSheet>
   );
 }
 
@@ -338,9 +336,7 @@ function ReceiptSheet({
     PAYMENT_METHODS.find(m => m.id === payment.method)?.label ?? '계좌 이체';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-[430px] bg-surface rounded-t-[20px] px-5 pt-6 pb-8 safe-bottom animate-slide-up">
+    <BottomSheet onClose={onClose} label="영수 카드">
         <h3 className="text-[17px] font-semibold text-ink mb-4" style={{ letterSpacing: '-0.3px' }}>
           영수 카드
         </h3>
@@ -374,8 +370,7 @@ function ReceiptSheet({
         >
           닫기
         </button>
-      </div>
-    </div>
+    </BottomSheet>
   );
 }
 

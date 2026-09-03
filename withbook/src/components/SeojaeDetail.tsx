@@ -3,6 +3,7 @@
 import { useApp } from '../context/AppContext';
 import { MOCK_SEOJAE } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
+import FullScreenSheet from './ui/Overlay';
 
 export default function SeojaeDetail() {
   const { selectedSeojaeId, selectSeojae, joinSeojae, leaveSeojae, joinedSeojaeIds, mySeojae, setTab, setSubView } = useApp();
@@ -30,42 +31,54 @@ export default function SeojaeDetail() {
     setTab('chat');
   };
 
-  return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => selectSeojae(null)}
-              className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">‹</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate flex-1">{seojae.name}</h1>
-            {isOwner && (
-              <button
-                onClick={() => setSubView('librarianConsole')}
-                className="px-3 py-1.5 rounded-full border border-action/30 text-[12px] font-semibold text-action press-scale"
-              >
-                운영
-              </button>
-            )}
-            {isJoined && (
-              <button
-                onClick={handleChatOpen}
-                className="p-2 -mr-1 rounded-lg active:bg-muted/20"
-                aria-label="채팅"
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
+  const bottomAction = isJoined ? (
+    <button
+      onClick={handleLeave}
+      disabled={isOwner}
+      className="w-full py-3.5 rounded-[14px] text-[15px] font-semibold border border-border text-ink disabled:opacity-40 press-scale focus-ring"
+    >
+      {isOwner ? '서재지기는 탈퇴할 수 없어요' : '탈퇴하기'}
+    </button>
+  ) : (
+    <button
+      onClick={handleJoin}
+      disabled={isFull}
+      className="w-full py-3.5 rounded-[14px] text-[15px] font-semibold bg-action text-white disabled:opacity-40 press-scale focus-ring"
+    >
+      {isFull ? '마감되었어요' : '참여하기'}
+    </button>
+  );
 
-        <div className="flex-1 overflow-y-auto pb-28">
+  return (
+    <FullScreenSheet
+      title={seojae.name}
+      onClose={() => selectSeojae(null)}
+      footer={bottomAction}
+      headerRight={
+        <>
+          {isOwner && (
+            <button
+              onClick={() => setSubView('librarianConsole')}
+              className="px-3 py-1.5 rounded-full border border-action/30 text-[12px] font-semibold text-action press-scale focus-ring"
+            >
+              운영
+            </button>
+          )}
+          {isJoined && (
+            <button
+              onClick={handleChatOpen}
+              className="p-1.5 rounded-lg press-scale focus-ring"
+              aria-label="채팅"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
+          )}
+        </>
+      }
+    >
+      <div className="pb-8">
           {/* Hero */}
           <div className="bg-surface px-5 py-6 flex flex-col items-center border-b border-border">
             <h2 className="text-[19px] font-semibold text-ink text-center" style={{ letterSpacing: '-0.3px' }}>
@@ -138,30 +151,6 @@ export default function SeojaeDetail() {
             </ul>
           </div>
         </div>
-
-        {/* Bottom action */}
-        <div className="fixed bottom-0 left-0 right-0 px-5 py-4 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
-          <div className="max-w-[430px] mx-auto">
-            {isJoined ? (
-              <button
-                onClick={handleLeave}
-                disabled={isOwner}
-                className="w-full py-3.5 rounded-[14px] text-[15px] font-semibold border border-border text-ink disabled:opacity-40 press-scale"
-              >
-                {isOwner ? '서재지기는 탈퇴할 수 없어요' : '탈퇴하기'}
-              </button>
-            ) : (
-              <button
-                onClick={handleJoin}
-                disabled={isFull}
-                className="w-full py-3.5 rounded-[14px] text-[15px] font-semibold bg-action text-white disabled:opacity-40 press-scale"
-              >
-                {isFull ? '마감되었어요' : '참여하기'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    </FullScreenSheet>
   );
 }

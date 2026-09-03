@@ -9,6 +9,7 @@ import {
   POLICY_VERSIONS,
   type ConsentType,
 } from '../lib/consent';
+import FullScreenSheet from './ui/Overlay';
 
 type View = 'main' | 'withdraw';
 
@@ -68,22 +69,8 @@ export default function PrivacySettings() {
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up overflow-y-auto">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSubView(null)}
-              className="press-scale focus-ring w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">&lsaquo;</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate flex-1">개인정보 관리</h1>
-          </div>
-        </div>
-
-        <div className="flex-1 pb-24">
+    <FullScreenSheet title="개인정보 관리" onClose={() => setSubView(null)}>
+      <div className="pb-24">
           {/* 동의 내역 */}
           <section className="bg-surface mt-3 px-5 py-5 border-b border-border">
             <h2 className="text-[15px] font-semibold text-ink mb-1" style={{ letterSpacing: '-0.3px' }}>
@@ -194,9 +181,8 @@ export default function PrivacySettings() {
               탈퇴 절차 보기
             </button>
           </section>
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }
 
@@ -241,21 +227,8 @@ function WithdrawView({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up overflow-y-auto">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="press-scale focus-ring w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">&lsaquo;</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate flex-1">회원 탈퇴</h1>
-          </div>
-        </div>
-
-        <div className="flex-1 px-5 py-6 pb-24">
+    <FullScreenSheet title="회원 탈퇴" onClose={onBack}>
+      <div className="px-5 py-6 pb-24">
           <h2 className="text-[19px] font-semibold text-ink mb-2" style={{ letterSpacing: '-0.3px' }}>
             무엇이 사라지는지 먼저 확인해주세요
           </h2>
@@ -344,8 +317,7 @@ function WithdrawView({
           >
             돌아가기
           </button>
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }

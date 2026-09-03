@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { submitFeedback } from '../lib/database';
+import { BottomSheet } from './ui/Overlay';
 
 const SCREEN_NAMES: Record<string, string> = {
   home: '홈',
@@ -67,18 +68,8 @@ export default function FeedbackButton() {
 
       {/* 피드백 모달 */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          {/* 배경 */}
-          <div className="absolute inset-0 bg-black/40" onClick={() => { if (!sending) setOpen(false); }} />
-
-          {/* 바텀시트 */}
-          <div className="relative w-full max-w-[430px] bg-surface rounded-t-[20px] animate-slide-up">
-            {/* 핸들 */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 rounded-full bg-muted/50" />
-            </div>
-
-            <div className="px-5 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
+        <BottomSheet onClose={() => { if (!sending) setOpen(false); }} label="의견 보내기">
+            <div>
               <h3 className="text-[16px] font-semibold text-ink mb-1">의견 보내기</h3>
               <p className="text-[12px] text-sub mb-4">
                 {screenName} 화면에서 보내는 피드백이에요
@@ -118,8 +109,7 @@ export default function FeedbackButton() {
                 </>
               )}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
     </>
   );

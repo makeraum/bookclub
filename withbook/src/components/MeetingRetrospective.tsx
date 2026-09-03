@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_OFFLINE_EVENTS, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import type { BookRating, OpinionDivergence, ReturnIntent } from '../lib/types';
+import FullScreenSheet from './ui/Overlay';
 
 type Step = 'questions' | 'card' | 'optIn';
 
@@ -34,17 +35,17 @@ export default function MeetingRetrospective() {
 
   if (!event) {
     return (
-      <div className="fixed inset-0 z-40 bg-canvas animate-slide-up flex items-center justify-center">
-        <div className="text-center px-8">
+      <FullScreenSheet title="30초 회고" onClose={() => setSubView(null)}>
+        <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
           <p className="text-[15px] text-sub">회고 대상 모임을 찾을 수 없어요</p>
           <button
             onClick={() => setSubView(null)}
-            className="mt-4 px-6 py-2.5 rounded-full bg-action text-white text-[14px] font-semibold press-scale"
+            className="mt-4 px-6 py-2.5 rounded-full bg-action text-white text-[14px] font-semibold press-scale focus-ring"
           >
             돌아가기
           </button>
         </div>
-      </div>
+      </FullScreenSheet>
     );
   }
 
@@ -69,23 +70,18 @@ export default function MeetingRetrospective() {
   // 방금 생성된 카드 찾기
   const latestCard = remainingCards.find(c => c.eventId === eventId);
 
-  return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleClose}
-              className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">&times;</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate">30초 회고</h1>
-          </div>
-        </div>
+  // 답을 고르기 시작했으면 그냥 닫히지 않게 합니다
+  const dirty = step === 'questions' && !!(bookRating || opinionDivergence || returnIntent || freeText.trim());
 
-        <div className="flex-1 overflow-y-auto pb-24">
+  return (
+    <FullScreenSheet
+      title="30초 회고"
+      onClose={handleClose}
+      dirty={dirty}
+      confirmTitle="회고를 남기지 않고 나갈까요?"
+      confirmBody="고른 답은 저장되지 않습니다."
+    >
+      <div className="pb-24">
           {/* ── Step 1: 3문항 ── */}
           {step === 'questions' && (
             <div className="px-5 py-6">
@@ -280,9 +276,8 @@ export default function MeetingRetrospective() {
               </button>
             </div>
           )}
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }
 

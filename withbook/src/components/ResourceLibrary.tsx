@@ -11,6 +11,7 @@ import {
   OPERATION_DASHBOARD,
   BOOK_SELECTION_CRITERIA,
 } from '../lib/resource-data';
+import FullScreenSheet from './ui/Overlay';
 
 const TABS = [
   '진행표',
@@ -28,33 +29,16 @@ export default function ResourceLibrary() {
   const [activeTab, setActiveTab] = useState<TabName>('진행표');
 
   return (
-    <div className="flex flex-col min-h-dvh bg-canvas animate-fade">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSubView(null)}
-            className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-          >
-            <span className="text-[18px]">‹</span>
-          </button>
-          <h1
-            className="text-[17px] font-semibold text-ink"
-            style={{ letterSpacing: '-0.3px' }}
-          >
-            자료실
-          </h1>
-        </div>
-      </div>
-
-      {/* Tab navigation */}
-      <div className="sticky top-[107px] z-10 bg-surface/95 backdrop-blur-sm border-b border-border">
-        <div className="flex gap-2 px-5 py-3 overflow-x-auto hide-scrollbar">
+    <FullScreenSheet
+      title="자료실"
+      onClose={() => setSubView(null)}
+      headerExtra={
+        <div className="flex gap-2 px-5 pb-3 overflow-x-auto hide-scrollbar">
           {TABS.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`press-scale px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 border whitespace-nowrap ${
+              className={`press-scale focus-ring px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 border whitespace-nowrap ${
                 activeTab === tab
                   ? 'bg-ink text-white border-transparent'
                   : 'bg-transparent text-ink border-chip-border'
@@ -64,10 +48,14 @@ export default function ResourceLibrary() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Tab content */}
-      <div className="flex-1 overflow-y-auto pb-20">
+      }
+      footer={
+        <p className="text-[11px] text-caption text-center leading-[1.5]">
+          위드북(WithBook) 서재 키트 · 크레딧 표기 시 상업적 이용 외 전부 허용
+        </p>
+      }
+    >
+      <div className="pb-8">
         {activeTab === '진행표' && <TimetableTab />}
         {activeTab === '발제 질문' && <DiscussionTab />}
         {activeTab === '이렇게 하면 망합니다' && <FailurePatternsTab />}
@@ -76,13 +64,7 @@ export default function ResourceLibrary() {
         {activeTab === '책 선정 기준' && <BookCriteriaTab />}
       </div>
 
-      {/* CC License footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border px-5 py-3 safe-bottom">
-        <p className="text-[11px] text-caption text-center leading-[1.5]">
-          위드북(WithBook) 서재 키트 · 크레딧 표기 시 상업적 이용 외 전부 허용
-        </p>
-      </div>
-    </div>
+    </FullScreenSheet>
   );
 }
 

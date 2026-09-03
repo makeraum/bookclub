@@ -14,6 +14,7 @@ import {
 } from '../lib/mock-data';
 import HostProfileCard from './HostProfileCard';
 import FeeSection from './FeeSection';
+import { BottomSheet } from './ui/Overlay';
 import RegionSelector from './ui/RegionSelector';
 import { ChipRow, FilterChip, FilterDivider, FilterLabel } from './ui/FilterChips';
 import { ALL_REGIONS, matchesRegion, regionSummaryParts, type RegionSelection } from '../lib/regions';
@@ -640,12 +641,10 @@ function EventDetail({
 
       {/* 약속 확인 바텀시트 */}
       {showPromiseModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => { setShowPromiseModal(false); setPromiseChecked(false); }}
-          />
-          <div className="relative w-full max-w-[430px] bg-surface rounded-t-[20px] px-5 pt-6 pb-8 safe-bottom animate-slide-up">
+        <BottomSheet
+          onClose={() => { setShowPromiseModal(false); setPromiseChecked(false); }}
+          label="이 모임의 약속"
+        >
             <h3
               className="text-[17px] font-semibold text-ink mb-4"
               style={{ letterSpacing: '-0.3px' }}
@@ -679,12 +678,11 @@ function EventDetail({
             <button
               onClick={handlePromiseConfirm}
               disabled={!promiseChecked}
-              className="w-full py-3.5 rounded-[12px] bg-action text-white text-[15px] font-semibold disabled:opacity-40 transition-opacity press-scale"
+              className="w-full py-3.5 rounded-[12px] bg-action text-white text-[15px] font-semibold disabled:opacity-40 transition-opacity press-scale focus-ring"
             >
               참가 확정
             </button>
-          </div>
-        </div>
+        </BottomSheet>
       )}
     </div>
   );

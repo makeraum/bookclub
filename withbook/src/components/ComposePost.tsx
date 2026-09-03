@@ -6,6 +6,7 @@ import Input from './ui/Input';
 import { useApp } from '../context/AppContext';
 import { PLACEHOLDER_COLORS } from '../lib/mock-data';
 import type { Book } from '../lib/types';
+import FullScreenSheet from './ui/Overlay';
 
 interface SearchBook extends Book {
   publisher?: string;
@@ -14,7 +15,7 @@ interface SearchBook extends Book {
 type Step = 'search' | 'sentence' | 'reason';
 
 export default function ComposePost() {
-  const { setSubView, addHighlight } = useApp();
+  const { setSubView, addHighlight, showToast } = useApp();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [sentence, setSentence] = useState('');
   const [reason, setReason] = useState('');
@@ -71,49 +72,65 @@ export default function ComposePost() {
     setPublishing(true);
     await addHighlight(selectedBook, sentence.trim(), reason.trim(), context.trim());
     setPublishing(false);
+    showToast('밑줄을 남겼어요');
     setSubView(null);
   };
 
-  const handleBack = () => {
-    if (step === 'reason') setStep('sentence');
-    else if (step === 'sentence') setStep('search');
-    else setSubView(null);
+  /** 단계가 남아 있으면 한 단계 뒤로, 첫 단계면 오버레이를 닫습니다 */
+  const handleBack = (): boolean => {
+    if (step === 'reason') { setStep('sentence'); return true; }
+    if (step === 'sentence') { setStep('search'); return true; }
+    return false;
   };
 
   const stepLabel = step === 'search' ? '책 선택' : step === 'sentence' ? '문장 입력' : '이유 기록';
   const stepNumber = step === 'search' ? 1 : step === 'sentence' ? 2 : 3;
 
+  // 입력을 시작했으면 그냥 닫히지 않게 합니다
+  const dirty = !!selectedBook || !!sentence.trim() || !!reason.trim() || !!context.trim();
+
+  const footer =
+    step === 'sentence' ? (
+      <Button onClick={handleSentenceNext} disabled={!sentence.trim()}>
+        다음
+      </Button>
+    ) : step === 'reason' ? (
+      <Button onClick={handlePublish} disabled={!reason.trim() || publishing}>
+        {publishing ? '저장 중...' : '밑줄 남기기'}
+      </Button>
+    ) : undefined;
+
   return (
-    <div className="fixed inset-0 z-40 bg-surface animate-slide-up flex flex-col">
-      {/* Header */}
-      <div className="px-5 pt-[58px] pb-3 border-b border-border">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleBack}
-            className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-          >
-            <span className="text-[18px]">‹</span>
-          </button>
-          <h1 className="text-[17px] font-semibold text-ink">밑줄 남기기</h1>
+    <FullScreenSheet
+      title="밑줄 남기기"
+      background="surface"
+      onClose={() => setSubView(null)}
+      onBack={handleBack}
+      dirty={dirty}
+      confirmTitle="밑줄을 남기지 않고 나갈까요?"
+      confirmBody="입력한 문장과 이유는 저장되지 않습니다."
+      footer={footer}
+      headerExtra={
+        <div className="px-5 pb-3">
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="flex items-center gap-2 flex-1">
+                <div className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
+                  n <= stepNumber ? 'bg-action' : 'bg-border'
+                }`} />
+              </div>
+            ))}
+          </div>
+          <p className="text-[11.5px] text-sub mt-1.5">
+            {stepNumber}/3 · {stepLabel}
+          </p>
         </div>
-        {/* Step indicator */}
-        <div className="flex items-center gap-2 mt-3">
-          {[1, 2, 3].map(n => (
-            <div key={n} className="flex items-center gap-2 flex-1">
-              <div className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
-                n <= stepNumber ? 'bg-action' : 'bg-border'
-              }`} />
-            </div>
-          ))}
-        </div>
-        <p className="text-[11.5px] text-sub mt-1.5">
-          {stepNumber}/3 · {stepLabel}
-        </p>
-      </div>
+      }
+    >
 
       {/* Step 1: Book search */}
       {step === 'search' && (
-        <div className="flex-1 overflow-y-auto">
+        <div>
           <div className="px-5 pt-4 pb-3">
             <Input type="search" value={searchQuery} onChange={setSearchQuery} placeholder="책 제목으로 검색" />
           </div>
@@ -177,7 +194,7 @@ export default function ComposePost() {
 
       {/* Step 2: Sentence input */}
       {step === 'sentence' && (
-        <div className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
+        <div className="px-5 pt-6 pb-24">
           {/* Selected book display */}
           {selectedBook && (
             <div className="flex items-center gap-3 mb-6 p-3 bg-canvas rounded-[11px]">
@@ -220,7 +237,7 @@ export default function ComposePost() {
 
       {/* Step 3: Reason + Context */}
       {step === 'reason' && (
-        <div className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
+        <div className="px-5 pt-6 pb-24">
           {/* Preview of the sentence */}
           <div className="mb-6 border-l-[3px] border-action/70 pl-4 py-1">
             <p className="text-[13px] text-ink leading-[1.65] font-medium italic">
@@ -265,23 +282,6 @@ export default function ComposePost() {
           </div>
         </div>
       )}
-
-      {/* Bottom action button */}
-      {step === 'sentence' && (
-        <div className="fixed bottom-0 left-0 right-0 px-5 py-4 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
-          <Button onClick={handleSentenceNext} disabled={!sentence.trim()}>
-            다음
-          </Button>
-        </div>
-      )}
-
-      {step === 'reason' && (
-        <div className="fixed bottom-0 left-0 right-0 px-5 py-4 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
-          <Button onClick={handlePublish} disabled={!reason.trim() || publishing}>
-            {publishing ? '저장 중...' : '밑줄 남기기'}
-          </Button>
-        </div>
-      )}
-    </div>
+    </FullScreenSheet>
   );
 }

@@ -9,8 +9,7 @@ import GateProgressCard from './GateProgressCard';
 const GATE_LEVEL_LABEL = { reader: '독자', recorder: '기록자', librarian: '서재지기' } as const;
 
 export default function MyLibrary() {
-  const { profile, posts, setSubView, authUserId, handleSignOut, gateLevel, mySeojae, myHighlightPairs, shellMetrics, myCoAttendances, coAttendanceVisible, toggleCoAttendanceVisible, selectCoAttendee } = useApp();
-  const myPosts = posts.filter(p => p.userId === (authUserId || profile.id));
+  const { profile, setSubView, handleSignOut, gateLevel, myHighlights, mySeojae, myHighlightPairs, shellMetrics, myCoAttendances, coAttendanceVisible, toggleCoAttendanceVisible, selectCoAttendee } = useApp();
 
   // 최초 안내 배너
   const [showCoAttendanceNotice, setShowCoAttendanceNotice] = useState(false);
@@ -295,26 +294,27 @@ export default function MyLibrary() {
           </button>
         </div>
 
-        {/* Reading timeline */}
+        {/* 독서 기록 — 위의 "밑줄 n/30"과 같은 자료(내 밑줄)를 봅니다 */}
         <div className="bg-surface mt-3 px-5 py-5">
-          <h3 className="text-[15px] font-semibold text-ink mb-3" style={{ letterSpacing: '-0.3px' }}>독서 기록</h3>
-          {myPosts.length > 0 ? (
+          <h3 className="text-[15px] font-semibold text-ink mb-1" style={{ letterSpacing: '-0.3px' }}>독서 기록</h3>
+          <p className="text-[12px] text-sub mb-3">내가 남긴 밑줄 {myHighlights.length}개</p>
+          {myHighlights.length > 0 ? (
             <div className="space-y-4">
-              {myPosts.map(post => (
-                <div key={post.id} className="flex gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
+              {myHighlights.map(h => (
+                <div key={h.id} className="flex gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
                   <div className="w-[42px] h-[58px] rounded-[6px] overflow-hidden flex-shrink-0">
-                    {post.book.coverUrl ? (
-                      <img src={post.book.coverUrl} alt={post.book.title} className="w-full h-full object-cover" />
+                    {h.book.coverUrl ? (
+                      <img src={h.book.coverUrl} alt={h.book.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: PLACEHOLDER_COLORS[parseInt(post.book.isbn) % PLACEHOLDER_COLORS.length] }}>
-                        <span className="text-white text-[8px]">{post.book.title[0]}</span>
+                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: PLACEHOLDER_COLORS[parseInt(h.book.isbn) % PLACEHOLDER_COLORS.length] }}>
+                        <span className="text-white text-[8px]">{h.book.title[0]}</span>
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-ink">《{post.book.title}》</p>
-                    <p className="text-[12.5px] text-sub mt-0.5 line-clamp-2">{post.quote}</p>
-                    <p className="text-[11px] text-caption mt-1">{post.createdAt} · 좋아요 {post.likes}개</p>
+                    <p className="text-[13px] font-semibold text-ink">《{h.book.title}》</p>
+                    <p className="text-[12.5px] text-sub mt-0.5 line-clamp-2">&ldquo;{h.sentence}&rdquo;</p>
+                    <p className="text-[11px] text-caption mt-1">{h.createdAt}</p>
                   </div>
                 </div>
               ))}
@@ -327,15 +327,19 @@ export default function MyLibrary() {
           )}
         </div>
 
-        {/* 방침 링크 */}
-        <div className="px-5 py-8 flex items-center justify-center gap-4">
-          <a href="/privacy" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
-            개인정보처리방침
-          </a>
-          <a href="/terms" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
-            이용약관
-          </a>
-        </div>
+        {/* 방침 링크 — 마이 탭 맨 아래 고정 */}
+        <footer className="mt-3 px-5 pt-6 pb-10 border-t border-border">
+          <div className="flex items-center justify-center gap-4">
+            <a href="/privacy" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
+              개인정보처리방침
+            </a>
+            <span className="text-[12px] text-inactive">·</span>
+            <a href="/terms" target="_blank" rel="noreferrer" className="text-[12px] text-sub underline">
+              이용약관
+            </a>
+          </div>
+          <p className="text-[11px] text-caption text-center mt-2">위드북 (WithBook)</p>
+        </footer>
       </div>
     </div>
   );

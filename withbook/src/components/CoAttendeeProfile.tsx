@@ -3,6 +3,7 @@
 import { useApp } from '../context/AppContext';
 import { MOCK_CO_ATTENDANCE_DETAILS, PLACEHOLDER_COLORS } from '../lib/mock-data';
 import { toKoreanCount } from '../lib/utils';
+import FullScreenSheet from './ui/Overlay';
 
 export default function CoAttendeeProfile() {
   const { selectedCoAttendeeId, selectCoAttendee } = useApp();
@@ -15,22 +16,8 @@ export default function CoAttendeeProfile() {
   const countText = `${toKoreanCount(detail.count)} 번 같은 자리에 있었어요`;
 
   return (
-    <div className="fixed inset-0 z-40 bg-canvas animate-slide-up">
-      <div className="flex flex-col min-h-dvh max-w-[430px] mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm px-5 pt-[58px] pb-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => selectCoAttendee(null)}
-              className="press-scale w-[34px] h-[34px] rounded-full bg-canvas flex items-center justify-center"
-            >
-              <span className="text-[18px]">&lsaquo;</span>
-            </button>
-            <h1 className="text-[17px] font-semibold text-ink truncate flex-1">함께 읽은 사람</h1>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pb-24">
+    <FullScreenSheet title="함께 읽은 사람" onClose={() => selectCoAttendee(null)}>
+      <div className="pb-24">
           {/* 프로필 영역 */}
           <div className="bg-surface px-5 py-6 flex flex-col items-center border-b border-border">
             <div className="w-[64px] h-[64px] rounded-full overflow-hidden mb-3">
@@ -107,8 +94,7 @@ export default function CoAttendeeProfile() {
               </div>
             </section>
           )}
-        </div>
       </div>
-    </div>
+    </FullScreenSheet>
   );
 }
