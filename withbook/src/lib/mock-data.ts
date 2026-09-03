@@ -1168,13 +1168,6 @@ export const DEMO_DIFFERENT_PERSPECTIVE_ISBN = BOOKS[0].isbn;
 
 // ── 회비 · 회계 데모 데이터 ──
 
-/** 데모 입금 계좌 — 실제 운영 시 서재지기가 직접 입력한 값으로 대체됩니다 */
-export const DEMO_BANK_ACCOUNT = {
-  bankName: '카카오뱅크',
-  bankAccount: '3333-01-1234567',
-  accountHolder: '위드북',
-};
-
 /** 모임 유형별 회비 포함 내역 */
 const FEE_INCLUDES_BY_TYPE: Record<EventType, string[]> = {
   rotation: ['공간 대여료', '음료 1잔', '진행 자료'],
@@ -1190,7 +1183,10 @@ function dueDateFor(eventDate: string): string {
   return d.toISOString().split('T')[0];
 }
 
-/** 모임의 회비 설정. 참가비가 없으면 null */
+/**
+ * 모임에서 파생되는 기본 회비 정보. 참가비가 없으면 null.
+ * 입금 계좌는 여기 없습니다 — 서재지기가 콘솔에서 직접 등록합니다.
+ */
 export function getEventFee(event: OfflineEvent): EventFee | null {
   if (event.fee <= 0) return null;
   return {
@@ -1198,9 +1194,6 @@ export function getEventFee(event: OfflineEvent): EventFee | null {
     amount: event.fee,
     includes: FEE_INCLUDES_BY_TYPE[event.type],
     dueDate: dueDateFor(event.date),
-    bankName: DEMO_BANK_ACCOUNT.bankName,
-    bankAccount: DEMO_BANK_ACCOUNT.bankAccount,
-    accountHolder: DEMO_BANK_ACCOUNT.accountHolder,
     targetAmount: event.fee * event.maxParticipants,
   };
 }

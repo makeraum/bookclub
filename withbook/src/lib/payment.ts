@@ -53,6 +53,47 @@ export function isMethodAvailable(method: PaymentMethod): boolean {
   return PAYMENT_METHODS.find(m => m.id === method)?.availableInDemo ?? false;
 }
 
+/** 계좌 등록에 쓰는 은행 목록 */
+export const BANKS = [
+  '국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행',
+  'SC제일은행', '한국씨티은행', '카카오뱅크', '토스뱅크', '케이뱅크',
+  '새마을금고', '신협', '우체국', '수협은행', '부산은행', '대구은행',
+  '경남은행', '광주은행', '전북은행', '제주은행',
+] as const;
+
+export type BankName = (typeof BANKS)[number];
+
+/**
+ * 계좌번호 마스킹 — 목록·요약에서는 가린 형태만 보여줍니다.
+ * 전체 번호는 결제 시트에서만 노출합니다.
+ *   3333-01-1234567 → 3333-01-****567
+ *   1002123456789   → 1002****789
+ */
+export function maskAccountNumber(accountNumber: string): string {
+  const value = accountNumber.trim();
+  if (!value) return '';
+
+  if (value.includes('-')) {
+    const parts = value.split('-');
+    const last = parts.pop() ?? '';
+    const tail = last.length > 3 ? `****${last.slice(-3)}` : '****';
+    return [...parts, tail].join('-');
+  }
+
+  if (value.length <= 7) return `****${value.slice(-3)}`;
+  return `${value.slice(0, 4)}****${value.slice(-3)}`;
+}
+
+/** 계좌가 다 채워졌는지 */
+export function isAccountReady(account: {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+} | null | undefined): boolean {
+  if (!account) return false;
+  return !!(account.bankName.trim() && account.accountNumber.trim() && account.accountHolder.trim());
+}
+
 /** 금액 표기 — 12,000원 */
 export function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`;

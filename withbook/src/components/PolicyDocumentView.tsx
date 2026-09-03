@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { PolicyDocument } from '../lib/policy-docs';
+import { OPERATOR_INFO, type PolicyDocument } from '../lib/policy-docs';
 
 /** /privacy, /terms 공용 렌더러 — 로그인 없이 볼 수 있는 정적 문서 */
 export default function PolicyDocumentView({ doc }: { doc: PolicyDocument }) {
@@ -75,14 +75,27 @@ export default function PolicyDocumentView({ doc }: { doc: PolicyDocument }) {
           ))}
         </div>
 
-        <div className="mt-14 pt-6 border-t border-border flex gap-4">
-          <Link href="/privacy" className="text-[13px] text-sub underline">
-            개인정보처리방침
-          </Link>
-          <Link href="/terms" className="text-[13px] text-sub underline">
-            서비스 이용약관
-          </Link>
-        </div>
+        <footer className="mt-14 pt-6 border-t border-border">
+          <div className="flex gap-4">
+            <Link href="/privacy" className="text-[13px] text-sub underline">
+              개인정보처리방침
+            </Link>
+            <Link href="/terms" className="text-[13px] text-sub underline">
+              서비스 이용약관
+            </Link>
+          </div>
+          <p className="text-[12.5px] text-sub mt-4 leading-[1.8]">
+            최종 개정일 {OPERATOR_INFO.lastUpdated}
+            <br />
+            문의{' '}
+            <a href={`mailto:${OPERATOR_INFO.contactEmail}`} className="underline">
+              {OPERATOR_INFO.contactEmail}
+            </a>
+          </p>
+          <p className="text-[11.5px] text-caption mt-2 leading-[1.7]">
+            {OPERATOR_INFO.operator} ({OPERATOR_INFO.operatorType} 운영) · {OPERATOR_INFO.address}
+          </p>
+        </footer>
       </div>
     </div>
   );

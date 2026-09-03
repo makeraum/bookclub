@@ -417,7 +417,7 @@ export interface RemainingSentenceCard {
 /** 납부 상태 3단계 */
 export type FeeStatus = 'unpaid' | 'pending' | 'paid';
 
-/** 모임별 회비 설정 */
+/** 모임에서 파생되는 기본 회비 정보 (서재지기가 설정하기 전의 기본값) */
 export interface EventFee {
   eventId: string;
   amount: number;
@@ -425,11 +425,24 @@ export interface EventFee {
   includes: string[];
   /** 납부 기한 (YYYY-MM-DD) */
   dueDate: string;
-  bankName: string;
-  bankAccount: string;
-  accountHolder: string;
   /** 목표 금액 = 회비 × 정원 */
   targetAmount: number;
+}
+
+/**
+ * 서재지기가 직접 등록하는 입금 계좌 · 회비 설정.
+ * 등록 전에는 참가자가 납부를 진행할 수 없습니다.
+ */
+export interface FeeAccount {
+  eventId: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  /** 회비 금액 — 기본값은 모임의 참가비 */
+  amount: number;
+  /** 납부 기한 (YYYY-MM-DD) */
+  dueDate: string;
+  updatedAt: string;
 }
 
 /** 참가자 한 명의 납부 기록 */

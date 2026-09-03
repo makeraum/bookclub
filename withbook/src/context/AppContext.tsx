@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent, FeePayment, Expense, FeeReminder } from '../lib/types';
+import type { Route, Tab, SubView, Post, UserProfile, Highlight, HighlightReactionType, Book, UserGates, GateLevel, HighlightStats, Seojae, HighlightPair, Region, OnboardingAnswers, ShellMetrics, CoAttendance, MeetingRetrospective, RemainingSentenceCard, BookRating, OpinionDivergence, ReturnIntent, FeePayment, Expense, FeeReminder, FeeAccount } from '../lib/types';
 import { needsReconsent, isConsentActive, type ConsentDraft, type ConsentRecord, type ConsentType } from '../lib/consent';
 import type { PaymentMethod } from '../lib/payment';
 import { MOCK_POSTS, MOCK_OFFLINE_EVENTS, MOCK_HIGHLIGHTS, MOCK_SEOJAE, MOCK_HIGHLIGHT_PAIRS, MOCK_SHELL_METRICS, MOCK_CO_ATTENDANCES, DEMO_REMAINING_CARDS, DEMO_RETROSPECTIVE_EVENT_ID, DEMO_FEE_PAYMENTS, DEMO_EXPENSES, FEE_REMINDER_MESSAGE } from '../lib/mock-data';
@@ -73,6 +73,9 @@ interface AppContextType extends AppState {
   showToast: (message: string) => void;
 
   // 회비 · 회계
+  feeAccounts: FeeAccount[];
+  getFeeAccount: (eventId: string) => FeeAccount | null;
+  saveFeeAccount: (account: Omit<FeeAccount, 'updatedAt'>) => void;
   feePayments: FeePayment[];
   expenses: Expense[];
   feeReminders: FeeReminder[];
@@ -206,6 +209,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 회비 · 회계 상태 — 데모 모드에서는 이 상태가 진짜이고, DB 반영은 best-effort입니다
+  // 입금 계좌는 서재지기가 직접 등록합니다 — 기본값(하드코딩된 데모 계좌)은 두지 않습니다
+  const [feeAccounts, setFeeAccounts] = useState<FeeAccount[]>([]);
   const [feePayments, setFeePayments] = useState<FeePayment[]>(DEMO_FEE_PAYMENTS);
   const [expenses, setExpenses] = useState<Expense[]>(DEMO_EXPENSES);
   const [feeReminders, setFeeReminders] = useState<FeeReminder[]>([]);
@@ -461,6 +466,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHighlights(MOCK_HIGHLIGHTS);
     setGates(DEFAULT_GATES);
     setConsents([]);
+    setFeeAccounts([]);
     setFeePayments(DEMO_FEE_PAYMENTS);
     setExpenses(DEMO_EXPENSES);
     setFeeReminders([]);
@@ -875,6 +881,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [highlights, remainingCards]);
 
   // ── 회비 · 회계 ──
+  const getFeeAccount = useCallback((eventId: string): FeeAccount | null => {
+    return feeAccounts.find(a => a.eventId === eventId) ?? null;
+  }, [feeAccounts]);
+
+  /** 서재지기가 입금 계좌·회비를 등록·수정 */
+  const saveFeeAccount = useCallback((account: Omit<FeeAccount, 'updatedAt'>) => {
+    const saved: FeeAccount = { ...account, updatedAt: new Date().toISOString() };
+    setFeeAccounts(prev => {
+      const exists = prev.some(a => a.eventId === account.eventId);
+      return exists ? prev.map(a => (a.eventId === account.eventId ? saved : a)) : [...prev, saved];
+    });
+    if (authUserId) {
+      db.upsertFeeAccount(authUserId, saved).catch(() => { /* 데모에서는 무시 */ });
+    }
+  }, [authUserId]);
+
   const myFeePayment = useCallback((eventId: string): FeePayment | null => {
     return feePayments.find(p => p.eventId === eventId && p.userId === 'me') ?? null;
   }, [feePayments]);
@@ -1068,6 +1090,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         selectCoAttendee, toggleCoAttendanceVisible,
         // 30초 회고
         toast, showToast,
+        feeAccounts, getFeeAccount, saveFeeAccount,
         feePayments, expenses, feeReminders, settlementPublicEvents,
         myFeePayment, reportFeeTransfer, confirmFeePayment,
         addExpense, removeExpense, sendFeeReminder, toggleSettlementPublic,

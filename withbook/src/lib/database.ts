@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import type { Book, Post, UserProfile, ChatMessage, ChatMember, Highlight, HighlightReactionType, UserGates, HighlightStats, Seojae, HighlightPair, CityCommunity, OnboardingAnswers, ShellMetrics, LibrarianInvitation } from './types';
 import { POLICY_VERSIONS, type ConsentDraft, type ConsentRecord, type ConsentType } from './consent';
 import type { PaymentMethod as PaymentMethodType } from './payment';
+import type { FeeAccount as FeeAccountRow } from './types';
 
 // ── Auth ──
 
@@ -968,6 +969,46 @@ export async function deleteMyAccount(): Promise<void> {
 // ── 회비 · 회계 ──
 // 데모 모드에서는 앱 상태가 진짜이고, 아래 함수들은 best-effort로 DB에 반영합니다.
 // 테이블이 아직 없거나 권한이 없으면 조용히 실패하고 화면은 그대로 동작합니다.
+
+/**
+ * 서재지기의 입금 계좌·회비 설정 저장.
+ * fees 테이블은 서재지기와 해당 모임 참가자만 읽을 수 있습니다 (supabase-fee-accounts.sql).
+ */
+export async function upsertFeeAccount(hostId: string, account: FeeAccountRow): Promise<void> {
+  const { error } = await supabase.from('fees').upsert(
+    {
+      event_id: account.eventId,
+      host_id: hostId,
+      amount: account.amount,
+      due_date: account.dueDate || null,
+      bank_name: account.bankName,
+      account_number: account.accountNumber,
+      account_holder: account.accountHolder,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'event_id' },
+  );
+  if (error) throw error;
+}
+
+export async function fetchFeeAccount(eventId: string) {
+  const { data, error } = await supabase
+    .from('fees')
+    .select('event_id, amount, due_date, bank_name, account_number, account_holder, updated_at')
+    .eq('event_id', eventId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    eventId: data.event_id as string,
+    amount: (data.amount as number) ?? 0,
+    dueDate: (data.due_date as string) ?? '',
+    bankName: (data.bank_name as string) ?? '',
+    accountNumber: (data.account_number as string) ?? '',
+    accountHolder: (data.account_holder as string) ?? '',
+    updatedAt: (data.updated_at as string) ?? '',
+  };
+}
 
 /** 참가자가 "이체 완료했어요"를 눌렀을 때 — status를 pending으로 */
 export async function reportFeeTransfer(

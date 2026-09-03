@@ -8,10 +8,11 @@ import {
   IS_DEMO_PAYMENT,
   DEMO_PAYMENT_NOTICE,
   isMethodAvailable,
+  isAccountReady,
   formatWon,
   type PaymentMethod,
 } from '../lib/payment';
-import type { OfflineEvent, FeeStatus, FeePayment } from '../lib/types';
+import type { OfflineEvent, FeeStatus, FeePayment, FeeAccount } from '../lib/types';
 import { BottomSheet } from './ui/Overlay';
 
 /* ── 상태 문구 · 배지 ──
@@ -55,12 +56,19 @@ export function formatDay(iso: string | null): string {
 
 /* ── 모임 상세의 회비 섹션 ── */
 export default function FeeSection({ event }: { event: OfflineEvent }) {
-  const { myFeePayment, reportFeeTransfer, feePayments, expenses, settlementPublicEvents } = useApp();
+  const { myFeePayment, reportFeeTransfer, feePayments, expenses, settlementPublicEvents, getFeeAccount } = useApp();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
 
   const fee = getEventFee(event);
   if (!fee) return null;
+
+  // 서재지기가 등록한 계좌. 없으면 납부를 진행할 수 없습니다.
+  const account = getFeeAccount(event.id);
+  const accountReady = isAccountReady(account);
+
+  const amount = account?.amount || fee.amount;
+  const dueDate = account?.dueDate || fee.dueDate;
 
   const payment = myFeePayment(event.id);
   const status: FeeStatus = payment?.status ?? 'unpaid';
@@ -87,13 +95,13 @@ export default function FeeSection({ event }: { event: OfflineEvent }) {
       {/* 금액 · 포함 내역 · 기한 */}
       <div className="bg-canvas rounded-[14px] p-4 mb-3">
         <p className="text-[20px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
-          {formatWon(fee.amount)}
+          {formatWon(amount)}
         </p>
         <p className="text-[12.5px] text-sub mt-1.5 leading-[1.6]">
           포함 내역 · {fee.includes.join(' · ')}
         </p>
         <p className="text-[12.5px] text-sub mt-0.5">
-          납부 기한 · {formatDay(fee.dueDate)}까지
+          납부 기한 · {formatDay(dueDate)}까지
         </p>
       </div>
 
@@ -114,13 +122,25 @@ export default function FeeSection({ event }: { event: OfflineEvent }) {
         <p className="text-[12.5px] text-sub leading-[1.7]">
           서재지기가 입금을 확인하면 완료로 바뀝니다. 보통 하루 안에 확인돼요.
         </p>
-      ) : (
+      ) : accountReady ? (
         <button
           onClick={() => setSheetOpen(true)}
           className="press-scale focus-ring px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full"
         >
           회비 납부
         </button>
+      ) : (
+        <div>
+          <button
+            disabled
+            className="px-5 py-2.5 bg-action text-white text-[13px] font-semibold rounded-full opacity-40"
+          >
+            회비 납부
+          </button>
+          <p className="text-[12.5px] text-sub leading-[1.7] mt-2">
+            서재지기가 계좌를 등록하면 납부할 수 있어요.
+          </p>
+        </div>
       )}
 
       {/* 정산 요약 — 서재지기가 공개했을 때만 */}
@@ -150,16 +170,14 @@ export default function FeeSection({ event }: { event: OfflineEvent }) {
         );
       })()}
 
-      {sheetOpen && (
+      {sheetOpen && account && (
         <PaymentSheet
           event={event}
-          amount={fee.amount}
-          bankName={fee.bankName}
-          bankAccount={fee.bankAccount}
-          accountHolder={fee.accountHolder}
+          amount={amount}
+          account={account}
           onClose={() => setSheetOpen(false)}
           onTransferReported={(method) => {
-            reportFeeTransfer(event.id, fee.amount, method);
+            reportFeeTransfer(event.id, amount, method);
             setSheetOpen(false);
           }}
         />
@@ -176,17 +194,14 @@ export default function FeeSection({ event }: { event: OfflineEvent }) {
 function PaymentSheet({
   event,
   amount,
-  bankName,
-  bankAccount,
-  accountHolder,
+  account,
   onClose,
   onTransferReported,
 }: {
   event: OfflineEvent;
   amount: number;
-  bankName: string;
-  bankAccount: string;
-  accountHolder: string;
+  /** 서재지기가 등록한 계좌 — 전체 번호는 이 시트에서만 보여줍니다 */
+  account: FeeAccount;
   onClose: () => void;
   onTransferReported: (method: PaymentMethod) => void;
 }) {
@@ -196,7 +211,7 @@ function PaymentSheet({
   const [blockedNote, setBlockedNote] = useState('');
 
   async function copyAccount() {
-    const text = `${bankName} ${bankAccount}`;
+    const text = `${account.bankName} ${account.accountNumber}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -280,7 +295,7 @@ function PaymentSheet({
             </p>
             <div className="flex items-center gap-2 mb-3">
               <p className="text-[15px] font-semibold text-ink flex-1 min-w-0">
-                {bankName} {bankAccount}
+                {account.bankName} {account.accountNumber}
               </p>
               <button
                 onClick={copyAccount}
@@ -290,7 +305,7 @@ function PaymentSheet({
               </button>
             </div>
             <p className="text-[12.5px] text-sub leading-[1.7]">
-              예금주 {accountHolder}
+              예금주 {account.accountHolder}
               <br />
               입금자명은 <span className="text-ink font-medium">{profile.name || '이름'}</span>으로
               남겨주세요. 이름이 다르면 확인이 늦어질 수 있어요.

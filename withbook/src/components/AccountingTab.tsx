@@ -3,9 +3,17 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_OFFLINE_EVENTS, getEventFee, FEE_REMINDER_MESSAGE } from '../lib/mock-data';
-import { formatWon, IS_DEMO_PAYMENT, DEMO_PAYMENT_NOTICE } from '../lib/payment';
+import {
+  formatWon,
+  IS_DEMO_PAYMENT,
+  DEMO_PAYMENT_NOTICE,
+  BANKS,
+  maskAccountNumber,
+  isAccountReady,
+} from '../lib/payment';
 import { FeeStatusBadge, formatDay } from './FeeSection';
-import type { FeeStatus } from '../lib/types';
+import { BottomSheet } from './ui/Overlay';
+import type { FeeStatus, FeeAccount } from '../lib/types';
 
 type StatusFilter = 'all' | FeeStatus;
 
@@ -18,6 +26,8 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 
 export default function AccountingTab({ eventId }: { eventId: string }) {
   const {
+    getFeeAccount,
+    saveFeeAccount,
     feePayments,
     expenses,
     feeReminders,
@@ -30,12 +40,15 @@ export default function AccountingTab({ eventId }: { eventId: string }) {
   } = useApp();
 
   const [filter, setFilter] = useState<StatusFilter>('all');
+  const [accountOpen, setAccountOpen] = useState(false);
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [reminderSent, setReminderSent] = useState(false);
 
   const event = MOCK_OFFLINE_EVENTS.find(e => e.id === eventId);
   const fee = event ? getEventFee(event) : null;
+  const account = getFeeAccount(eventId);
+  const accountReady = isAccountReady(account);
 
   const payments = useMemo(
     () => feePayments.filter(p => p.eventId === eventId),
@@ -51,7 +64,10 @@ export default function AccountingTab({ eventId }: { eventId: string }) {
   );
 
   const collected = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-  const targetAmount = fee?.targetAmount ?? payments.reduce((sum, p) => sum + p.amount, 0);
+  // 서재지기가 회비를 다시 정했으면 그 금액 × 정원을 목표로 잡습니다
+  const targetAmount = account?.amount
+    ? account.amount * (event?.maxParticipants ?? payments.length)
+    : fee?.targetAmount ?? payments.reduce((sum, p) => sum + p.amount, 0);
   const unpaidPayments = payments.filter(p => p.status === 'unpaid');
   const pendingCount = payments.filter(p => p.status === 'pending').length;
   const spent = eventExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -112,6 +128,45 @@ export default function AccountingTab({ eventId }: { eventId: string }) {
           </p>
         )}
       </div>
+
+      {/* ── 입금 계좌 설정 ── */}
+      <section className="bg-surface rounded-[16px] border border-border p-4 mb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[14px] font-semibold text-ink" style={{ letterSpacing: '-0.2px' }}>
+              입금 계좌 설정
+            </h3>
+            {accountReady && account ? (
+              <>
+                <p className="text-[13px] text-ink mt-1">
+                  {account.bankName} {maskAccountNumber(account.accountNumber)}
+                </p>
+                <p className="text-[12px] text-sub mt-0.5">
+                  예금주 {account.accountHolder} · {formatWon(account.amount)}
+                  {account.dueDate && ` · ${formatDay(account.dueDate)}까지`}
+                </p>
+                <p className="text-[11.5px] text-caption mt-1.5 leading-[1.6]">
+                  전체 계좌번호는 참가자의 결제 시트에서만 보입니다.
+                </p>
+              </>
+            ) : (
+              <p className="text-[12px] text-sub mt-1 leading-[1.6]">
+                계좌를 등록하면 참가자가 회비를 납부할 수 있어요. 등록 전에는 납부 버튼이 잠깁니다.
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setAccountOpen(true)}
+            className={`press-scale focus-ring flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold ${
+              accountReady
+                ? 'border border-border text-ink'
+                : 'bg-action text-white'
+            }`}
+          >
+            {accountReady ? '수정' : '등록'}
+          </button>
+        </div>
+      </section>
 
       {/* ── 상태 필터 ── */}
       <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-3">
@@ -269,6 +324,20 @@ export default function AccountingTab({ eventId }: { eventId: string }) {
         </div>
       </section>
 
+      {accountOpen && (
+        <FeeAccountSheet
+          eventId={eventId}
+          initial={account}
+          defaultAmount={fee?.amount ?? 0}
+          defaultDueDate={fee?.dueDate ?? ''}
+          onClose={() => setAccountOpen(false)}
+          onSave={(next) => {
+            saveFeeAccount(next);
+            setAccountOpen(false);
+          }}
+        />
+      )}
+
       {/* ── 정산 요약 공개 ── */}
       <section className="bg-surface rounded-[16px] border border-border p-4">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -349,5 +418,150 @@ function SettlementRow({
       <span className={`text-[13px] ${strong ? 'text-ink font-medium' : 'text-sub'}`}>{label}</span>
       <span className={`text-[13.5px] text-ink ${strong ? 'font-semibold' : ''}`}>{value}</span>
     </div>
+  );
+}
+
+/* ── 입금 계좌 · 회비 설정 시트 ── */
+function FeeAccountSheet({
+  eventId,
+  initial,
+  defaultAmount,
+  defaultDueDate,
+  onClose,
+  onSave,
+}: {
+  eventId: string;
+  initial: FeeAccount | null;
+  defaultAmount: number;
+  defaultDueDate: string;
+  onClose: () => void;
+  onSave: (account: Omit<FeeAccount, 'updatedAt'>) => void;
+}) {
+  const [bankName, setBankName] = useState(initial?.bankName ?? '');
+  const [accountNumber, setAccountNumber] = useState(initial?.accountNumber ?? '');
+  const [accountHolder, setAccountHolder] = useState(initial?.accountHolder ?? '');
+  const [amount, setAmount] = useState(String(initial?.amount ?? defaultAmount ?? ''));
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? defaultDueDate ?? '');
+
+  const parsedAmount = parseInt(amount.replace(/[^0-9]/g, ''), 10);
+  const ready =
+    !!bankName &&
+    accountNumber.trim().length >= 8 &&
+    !!accountHolder.trim() &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0;
+
+  function handleSave() {
+    if (!ready) return;
+    onSave({
+      eventId,
+      bankName,
+      accountNumber: accountNumber.trim(),
+      accountHolder: accountHolder.trim(),
+      amount: parsedAmount,
+      dueDate,
+    });
+  }
+
+  return (
+    <BottomSheet onClose={onClose} label="입금 계좌 설정">
+      <h3 className="text-[17px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+        입금 계좌 설정
+      </h3>
+      <p className="text-[12.5px] text-sub mt-1 mb-5 leading-[1.7]">
+        참가자에게 보일 계좌입니다. 전체 계좌번호는 결제 시트에서만 노출되고, 목록과 요약에서는
+        가려서 표시됩니다.
+      </p>
+
+      <div className="space-y-4">
+        {/* 은행 */}
+        <div>
+          <label className="text-[12px] font-semibold block mb-1.5" style={{ color: '#86868b' }}>
+            은행
+          </label>
+          <select
+            value={bankName}
+            onChange={e => setBankName(e.target.value)}
+            className="w-full px-4 py-3 bg-surface border border-border rounded-[11px] text-[14px] text-ink outline-none focus:border-action transition-colors appearance-none"
+          >
+            <option value="">은행을 선택하세요</option>
+            {BANKS.map(b => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 계좌번호 */}
+        <div>
+          <label className="text-[12px] font-semibold block mb-1.5" style={{ color: '#86868b' }}>
+            계좌번호
+          </label>
+          <input
+            value={accountNumber}
+            onChange={e => setAccountNumber(e.target.value)}
+            inputMode="numeric"
+            placeholder="3333-01-1234567"
+            className="w-full px-4 py-3 bg-surface border border-border rounded-[11px] text-[14px] text-ink placeholder:text-inactive outline-none focus:border-action transition-colors"
+          />
+        </div>
+
+        {/* 예금주 */}
+        <div>
+          <label className="text-[12px] font-semibold block mb-1.5" style={{ color: '#86868b' }}>
+            예금주
+          </label>
+          <input
+            value={accountHolder}
+            onChange={e => setAccountHolder(e.target.value)}
+            placeholder="예금주 이름"
+            className="w-full px-4 py-3 bg-surface border border-border rounded-[11px] text-[14px] text-ink placeholder:text-inactive outline-none focus:border-action transition-colors"
+          />
+        </div>
+
+        {/* 회비 금액 */}
+        <div>
+          <label className="text-[12px] font-semibold block mb-1.5" style={{ color: '#86868b' }}>
+            회비 금액
+          </label>
+          <input
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            inputMode="numeric"
+            placeholder="15000"
+            className="w-full px-4 py-3 bg-surface border border-border rounded-[11px] text-[14px] text-ink placeholder:text-inactive outline-none focus:border-action transition-colors"
+          />
+          {Number.isFinite(parsedAmount) && parsedAmount > 0 && (
+            <p className="text-[12px] text-sub mt-1.5">{formatWon(parsedAmount)}</p>
+          )}
+        </div>
+
+        {/* 납부 기한 */}
+        <div>
+          <label className="text-[12px] font-semibold block mb-1.5" style={{ color: '#86868b' }}>
+            납부 기한
+          </label>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={e => setDueDate(e.target.value)}
+            className="w-full px-4 py-3 bg-surface border border-border rounded-[11px] text-[14px] text-ink outline-none focus:border-action transition-colors"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={!ready}
+        className="press-scale focus-ring w-full py-3.5 mt-6 rounded-[12px] bg-action text-white text-[15px] font-semibold disabled:opacity-40 transition-opacity"
+      >
+        저장하기
+      </button>
+      <button
+        onClick={onClose}
+        className="press-scale focus-ring w-full py-3 mt-1 text-[14px] text-sub"
+      >
+        닫기
+      </button>
+    </BottomSheet>
   );
 }

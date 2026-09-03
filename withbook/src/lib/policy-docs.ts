@@ -2,18 +2,26 @@
  * 개인정보처리방침 · 이용약관 본문.
  * /privacy, /terms 페이지와 회원가입 동의 화면이 이 파일을 공유합니다.
  *
- * ⚠️ OPERATOR_INFO의 값은 실제 사업자 정보로 반드시 교체해야 합니다.
- *    개인정보처리방침에는 개인정보 보호책임자의 성명·연락처를 적는 것이 법정 기재사항입니다.
+ * 현재 비공개 베타 단계라 개인 운영자 기준으로 적혀 있습니다.
+ * 사업자등록을 마치면 operatorType과 businessNumber를 갱신하세요.
  */
 
 export const OPERATOR_INFO = {
   serviceName: '위드북 (WithBook)',
-  operator: '(사업자명을 입력하세요)',
-  address: '(사업장 주소를 입력하세요)',
-  privacyOfficer: '(개인정보 보호책임자 성명을 입력하세요)',
-  contactEmail: 'privacy@withbook.kr',
+  operator: '위드북',
+  /** '개인' | '사업자' — 사업자등록 후 갱신 */
+  operatorType: '개인',
+  address: '충남 천안시 서북구',
+  privacyOfficer: '위드북',
+  contactEmail: 'withbook.official@gmail.com',
   effectiveDate: '2026년 9월 4일',
+  /** 최종 개정일 — 방침·약관을 고칠 때 함께 갱신 */
+  lastUpdated: '2026년 9월 4일',
 };
+
+/** 베타 단계 고지 — 방침과 약관 앞머리에 함께 노출합니다 */
+export const BETA_NOTICE =
+  '위드북은 현재 비공개 베타로 운영 중이며, 사업자등록 후 정보를 갱신합니다.';
 
 export interface PolicySection {
   heading: string;
@@ -36,7 +44,7 @@ export const PRIVACY_POLICY: PolicyDocument = {
   version: '1.0',
   effectiveDate: OPERATOR_INFO.effectiveDate,
   intro:
-    '위드북은 이용자의 개인정보를 소중히 다룹니다. 이 방침은 위드북이 어떤 정보를 수집하고, 무엇에 쓰고, 언제 지우는지를 담고 있습니다.',
+    `위드북은 이용자의 개인정보를 소중히 다룹니다. 이 방침은 위드북이 어떤 정보를 수집하고, 무엇에 쓰고, 언제 지우는지를 담고 있습니다. ${BETA_NOTICE}`,
   sections: [
     {
       heading: '1. 수집하는 개인정보 항목',
@@ -73,8 +81,11 @@ export const PRIVACY_POLICY: PolicyDocument = {
       paragraphs: [
         '원칙적으로 회원 탈퇴 시 지체 없이 파기합니다.',
         '다만 관계 법령이 보존을 요구하는 기록은 해당 기간 동안 분리 보관한 뒤 파기합니다.',
+        '회비 결제 기능은 준비 중이며, 실제 결제 개시 시 전자상거래법에 따라 계약·대금결제 기록을 5년 보존합니다.',
       ],
       bullets: [
+        '계약 또는 청약철회에 관한 기록: 5년 (결제 기능 개시 후 적용)',
+        '대금결제 및 재화 공급에 관한 기록: 5년 (결제 기능 개시 후 적용)',
         '소비자 불만 또는 분쟁 처리에 관한 기록: 3년 (전자상거래 등에서의 소비자보호에 관한 법률)',
         '접속 기록: 3개월 (통신비밀보호법)',
       ],
@@ -147,9 +158,10 @@ export const PRIVACY_POLICY: PolicyDocument = {
     },
     {
       heading: '9. 개인정보 보호책임자',
+      paragraphs: [BETA_NOTICE],
       bullets: [
         `서비스명: ${OPERATOR_INFO.serviceName}`,
-        `운영자: ${OPERATOR_INFO.operator}`,
+        `운영자: ${OPERATOR_INFO.operator} (${OPERATOR_INFO.operatorType} 운영)`,
         `주소: ${OPERATOR_INFO.address}`,
         `개인정보 보호책임자: ${OPERATOR_INFO.privacyOfficer}`,
         `문의: ${OPERATOR_INFO.contactEmail}`,
@@ -171,7 +183,7 @@ export const PRIVACY_POLICY: PolicyDocument = {
       heading: '11. 방침의 변경',
       paragraphs: [
         '이 방침이 바뀌면 시행 7일 전부터 앱 안에서 알립니다. 수집 항목이나 이용 목적처럼 이용자에게 중요한 변경은 30일 전에 알리고, 필요한 경우 다시 동의를 받습니다.',
-        `현재 버전: 1.0 · 시행일: ${OPERATOR_INFO.effectiveDate}`,
+        `현재 버전: 1.0 · 시행일: ${OPERATOR_INFO.effectiveDate} · 최종 개정일: ${OPERATOR_INFO.lastUpdated}`,
       ],
     },
   ],
@@ -182,7 +194,7 @@ export const TERMS_OF_SERVICE: PolicyDocument = {
   version: '1.0',
   effectiveDate: OPERATOR_INFO.effectiveDate,
   intro:
-    '이 약관은 위드북을 이용할 때 지켜야 할 것과, 위드북이 이용자에게 약속하는 것을 정합니다.',
+    `이 약관은 위드북을 이용할 때 지켜야 할 것과, 위드북이 이용자에게 약속하는 것을 정합니다. ${BETA_NOTICE}`,
   sections: [
     {
       heading: '제1조 (목적)',
@@ -242,10 +254,12 @@ export const TERMS_OF_SERVICE: PolicyDocument = {
       ],
     },
     {
-      heading: '제8조 (모임 참가)',
+      heading: '제8조 (모임 참가와 회비)',
       bullets: [
         '모임의 일정, 장소, 참가비는 각 모임을 여는 사람이 정합니다.',
+        '회비 입금 계좌는 모임을 여는 사람이 직접 등록하며, 위드북은 계좌를 대신 보관하거나 대금을 수령하지 않습니다.',
         '참가비 정산과 환불은 모임을 여는 사람과 참가자 사이에서 이루어집니다.',
+        '앱 안의 결제 기능은 준비 중이며, 현재는 계좌 이체로만 회비를 주고받습니다.',
         '위드북은 모임을 연결하는 자리를 제공하며, 모임 현장에서 생긴 일에 대해서는 관여할 수 있는 범위에서 책임을 집니다.',
       ],
     },
@@ -266,12 +280,15 @@ export const TERMS_OF_SERVICE: PolicyDocument = {
       heading: '제11조 (약관의 변경)',
       paragraphs: [
         '약관이 바뀌면 시행 7일 전부터 앱 안에서 알립니다. 이용자에게 불리한 변경은 30일 전에 알리고, 다시 동의를 받습니다.',
-        `현재 버전: 1.0 · 시행일: ${OPERATOR_INFO.effectiveDate}`,
+        `현재 버전: 1.0 · 시행일: ${OPERATOR_INFO.effectiveDate} · 최종 개정일: ${OPERATOR_INFO.lastUpdated}`,
       ],
     },
     {
       heading: '제12조 (문의)',
-      paragraphs: [`서비스에 관한 문의는 ${OPERATOR_INFO.contactEmail}로 보내주세요.`],
+      paragraphs: [
+        `서비스에 관한 문의는 ${OPERATOR_INFO.contactEmail}로 보내주세요.`,
+        `운영: ${OPERATOR_INFO.operator} (${OPERATOR_INFO.operatorType} 운영) · ${OPERATOR_INFO.address}`,
+      ],
     },
   ],
 };
