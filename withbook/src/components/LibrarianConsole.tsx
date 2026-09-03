@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOCK_SEOJAE, DEFAULT_PROMISES } from '../lib/mock-data';
+import { MOCK_SEOJAE, MOCK_HIGHLIGHTS, DEFAULT_PROMISES } from '../lib/mock-data';
 import { DISCUSSION_QUESTIONS } from '../lib/resource-data';
-import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType } from '../lib/types';
+import type { AttendanceRecord, DiscussionQuestion, QuietMember, NoShowMember, EventType, Highlight, HighlightSentiment } from '../lib/types';
 
 type ConsoleTab = 'attendance' | 'questions' | 'noshow' | 'quiet' | 'memo' | 'promises';
 
@@ -346,6 +346,9 @@ export default function LibrarianConsole() {
                   </li>
                 ))}
               </ul>
+
+              {/* ── 의견이 갈린 지점 ── */}
+              <DivergentOpinionsSection />
             </div>
           )}
 
@@ -577,6 +580,108 @@ export default function LibrarianConsole() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── 의견이 갈린 지점 ── */
+
+interface OpinionPair {
+  book: { title: string; author: string };
+  a: { userName: string; reason: string; sentiment: HighlightSentiment };
+  b: { userName: string; reason: string; sentiment: HighlightSentiment };
+}
+
+function findDivergentPairs(): OpinionPair[] {
+  const pairs: OpinionPair[] = [];
+  const grouped = new Map<string, Highlight[]>();
+
+  // 같은 책 ISBN으로 그룹
+  for (const h of MOCK_HIGHLIGHTS) {
+    if (!h.sentiment) continue;
+    const list = grouped.get(h.book.isbn) || [];
+    list.push(h);
+    grouped.set(h.book.isbn, list);
+  }
+
+  for (const [, list] of grouped) {
+    const positives = list.filter(h => h.sentiment === 'positive');
+    const contraries = list.filter(h => h.sentiment === 'contrary');
+    const reserveds = list.filter(h => h.sentiment === 'reserved');
+
+    // positive ↔ contrary 쌍
+    if (positives.length > 0 && contraries.length > 0) {
+      const a = positives[0];
+      const b = contraries[0];
+      pairs.push({
+        book: { title: a.book.title, author: a.book.author },
+        a: { userName: a.userName, reason: a.reason, sentiment: a.sentiment! },
+        b: { userName: b.userName, reason: b.reason, sentiment: b.sentiment! },
+      });
+    }
+    // positive ↔ reserved 쌍 (contrary 없을 때)
+    else if (positives.length > 0 && reserveds.length > 0) {
+      const a = positives[0];
+      const b = reserveds[0];
+      pairs.push({
+        book: { title: a.book.title, author: a.book.author },
+        a: { userName: a.userName, reason: a.reason, sentiment: a.sentiment! },
+        b: { userName: b.userName, reason: b.reason, sentiment: b.sentiment! },
+      });
+    }
+  }
+
+  return pairs;
+}
+
+function DivergentOpinionsSection() {
+  const pairs = useMemo(() => findDivergentPairs(), []);
+
+  if (pairs.length === 0) return null;
+
+  return (
+    <div className="mt-8">
+      <div className="mb-4">
+        <h3 className="text-[15px] font-semibold text-ink" style={{ letterSpacing: '-0.3px' }}>
+          의견이 갈린 지점
+        </h3>
+        <p className="text-[12px] text-sub mt-0.5">
+          같은 책을 읽고 다른 생각을 남긴 멤버들
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {pairs.map((pair, idx) => (
+          <div key={idx} className="bg-surface border border-border rounded-[14px] p-4">
+            <p className="text-[12px] text-sub font-medium mb-3">
+              《{pair.book.title}》 · {pair.book.author}
+            </p>
+
+            {/* 의견 A */}
+            <div className="mb-3">
+              <span className="text-[12px] font-semibold text-ink">{pair.a.userName}</span>
+              <p className="text-[12.5px] text-ink/80 leading-[1.65] mt-1 line-clamp-2">
+                {pair.a.reason}
+              </p>
+            </div>
+
+            {/* 구분선 */}
+            <div className="border-t border-border my-2" />
+
+            {/* 의견 B */}
+            <div>
+              <span className="text-[12px] font-semibold text-ink">{pair.b.userName}</span>
+              <p className="text-[12.5px] text-ink/80 leading-[1.65] mt-1 line-clamp-2">
+                {pair.b.reason}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[12px] text-sub text-center mt-4">
+        이 지점에서 대화를 시작해보세요
+      </p>
     </div>
   );
 }

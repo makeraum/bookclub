@@ -1,4 +1,4 @@
-import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise } from './types';
+import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, Region, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment } from './types';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -866,6 +866,7 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     context: '이직 준비를 하면서 퇴근 후 카페에서 읽던 중이었어요. 앞이 안 보이던 시기.',
     reactions: { felt_same: 12, want_to_read: 5, stays_long: 18, myReactions: new Set() },
     createdAt: '2시간 전',
+    sentiment: 'positive',
   },
   {
     id: 'h2',
@@ -878,6 +879,7 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     context: '주말 아침, 침대에 누워서 읽고 있었어요. 밖에 나가기 싫은 날.',
     reactions: { felt_same: 8, want_to_read: 3, stays_long: 11, myReactions: new Set() },
     createdAt: '5시간 전',
+    sentiment: 'positive',
   },
   {
     id: 'h3',
@@ -890,6 +892,7 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     context: '회사를 다니면서 글쓰기 수업을 듣기 시작한 직후. 출근길 버스에서.',
     reactions: { felt_same: 21, want_to_read: 7, stays_long: 15, myReactions: new Set() },
     createdAt: '어제',
+    sentiment: 'positive',
   },
   {
     id: 'h4',
@@ -902,6 +905,7 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     context: '연애가 끝난 직후에 서점에서 집어든 책. 혼자 술 마시다가 새벽에 읽었어요.',
     reactions: { felt_same: 6, want_to_read: 9, stays_long: 13, myReactions: new Set() },
     createdAt: '2일 전',
+    sentiment: 'reserved',
   },
   {
     id: 'h5',
@@ -914,6 +918,86 @@ export const MOCK_HIGHLIGHTS: Highlight[] = [
     context: '사직서를 쓸까 말까 고민하던 금요일 밤, 이불 속에서.',
     reactions: { felt_same: 15, want_to_read: 4, stays_long: 22, myReactions: new Set() },
     createdAt: '3일 전',
+    sentiment: 'positive',
+  },
+  // ── 다른 시선 감상 6개 ──
+  {
+    id: 'h6',
+    userId: 'u-diff1',
+    userName: '윤채린',
+    userAvatar: '/assets/avatar-soyul.png',
+    book: BOOKS[0], // 싯다르타
+    sentence: '강물은 어디서나 동시에 존재한다. 발원지에서도, 하구에서도, 폭포에서도, 여울에서도, 바다에서도, 산에서도.',
+    reason: '강물 비유가 아름답다고들 하는데, 저는 현실 도피처럼 느껴졌어요. 고통 한복판에 있는 사람에게 "현재만 존재한다"는 말은 위로가 아니라 외면인 것 같아요.',
+    context: '가족이 아플 때 읽었어요. 현재에 집중하라는 말이 오히려 잔인하게 느껴지던 시기.',
+    reactions: { felt_same: 4, want_to_read: 1, stays_long: 7, myReactions: new Set() },
+    createdAt: '1일 전',
+    sentiment: 'contrary',
+  },
+  {
+    id: 'h7',
+    userId: 'u-diff2',
+    userName: '임하준',
+    userAvatar: '/assets/avatar-doyoon.png',
+    book: BOOKS[0], // 싯다르타
+    sentence: '강물은 어디서나 동시에 존재한다. 발원지에서도, 하구에서도, 폭포에서도, 여울에서도, 바다에서도, 산에서도.',
+    reason: '깨달음을 얻는 과정이 너무 순탄하게 느껴졌어요. 반은 공감하고, 반은 이건 특권적 고민이라는 생각이 들었습니다.',
+    context: '생활비 걱정하면서 읽었는데, 싯다르타의 방랑이 부럽기도 하고 비현실적이기도 했어요.',
+    reactions: { felt_same: 3, want_to_read: 2, stays_long: 5, myReactions: new Set() },
+    createdAt: '1일 전',
+    sentiment: 'reserved',
+  },
+  {
+    id: 'h8',
+    userId: 'u-diff3',
+    userName: '강예은',
+    userAvatar: '/assets/avatar-seoyeon.png',
+    book: BOOKS[2], // 모순
+    sentence: '모순이 없는 삶은 없다. 다만 그 모순을 어떻게 껴안느냐가 삶의 질을 결정한다.',
+    reason: '모순을 껴안으라는 메시지가 결국 현실에 순응하라는 말로 들렸어요. 모순이 아니라 부조리를 직시해야 하는 거 아닐까요.',
+    context: '부당한 상황을 참고 있던 시기. "껴안으라"는 말이 체념처럼 들렸어요.',
+    reactions: { felt_same: 5, want_to_read: 1, stays_long: 6, myReactions: new Set() },
+    createdAt: '2일 전',
+    sentiment: 'contrary',
+  },
+  {
+    id: 'h9',
+    userId: 'u-diff4',
+    userName: '조민규',
+    userAvatar: '/assets/avatar-jihwan.png',
+    book: BOOKS[2], // 모순
+    sentence: '모순이 없는 삶은 없다. 다만 그 모순을 어떻게 껴안느냐가 삶의 질을 결정한다.',
+    reason: '이 문장이 좋다는 건 알겠는데, 제 상황에 대입하면 "둘 다 맞다"는 게 오히려 결정을 미루는 핑계가 될까 봐 두렵습니다.',
+    context: '이직할지 말지 6개월째 고민 중이었어요. 모순을 인정하면 결정을 안 해도 될 것 같아서.',
+    reactions: { felt_same: 7, want_to_read: 0, stays_long: 9, myReactions: new Set() },
+    createdAt: '3일 전',
+    sentiment: 'reserved',
+  },
+  {
+    id: 'h10',
+    userId: 'u-diff5',
+    userName: '서지우',
+    userAvatar: '/assets/avatar-soyul.png',
+    book: BOOKS[3], // 이기적 유전자
+    sentence: '우리는 생존 기계다. 유전자라는 이기적인 분자를 보존하기 위해 눈멀게 프로그램된 로봇 운반자다.',
+    reason: '유전자가 이기적이라는 결론 자체가 인간의 이타적 행동을 너무 쉽게 환원시키는 것 같아요. 과학이 설명하지 못하는 선택도 분명 있습니다.',
+    context: '봉사활동 후 읽었는데, 내 행동이 유전자의 계산이라는 설명이 납득이 안 됐어요.',
+    reactions: { felt_same: 3, want_to_read: 2, stays_long: 4, myReactions: new Set() },
+    createdAt: '4일 전',
+    sentiment: 'contrary',
+  },
+  {
+    id: 'h11',
+    userId: 'u-diff6',
+    userName: '백승민',
+    userAvatar: '/assets/avatar-doyoon.png',
+    book: BOOKS[3], // 이기적 유전자
+    sentence: '우리는 생존 기계다. 유전자라는 이기적인 분자를 보존하기 위해 눈멀게 프로그램된 로봇 운반자다.',
+    reason: '이 문장을 읽고 오히려 인간이 대단하다고 느꼈어요. 유전자의 명령을 거스르고 이타적인 선택을 할 수 있다는 게 인간만의 능력이니까요.',
+    context: '뇌과학 수업을 듣고 나서 읽었더니 오히려 인간의 자유의지가 더 소중하게 느껴졌어요.',
+    reactions: { felt_same: 9, want_to_read: 3, stays_long: 11, myReactions: new Set() },
+    createdAt: '4일 전',
+    sentiment: 'positive',
   },
 ];
 

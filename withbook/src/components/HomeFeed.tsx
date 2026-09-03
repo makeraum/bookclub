@@ -1,15 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { STORY_USERS, SAME_BOOK_GROUPS, MOCK_STORIES, PLACEHOLDER_COLORS, REACTION_LABELS } from '../lib/mock-data';
+import { STORY_USERS, SAME_BOOK_GROUPS, MOCK_STORIES, PLACEHOLDER_COLORS, REACTION_LABELS, MOCK_HIGHLIGHTS } from '../lib/mock-data';
 import StoryViewer from './StoryViewer';
-import type { Highlight, HighlightReactionType, GateLevel } from '../lib/types';
+import type { Highlight, HighlightReactionType, GateLevel, HighlightSentiment } from '../lib/types';
+
+/** 피드용 하이라이트와 "다른 시선" 후보를 분리 */
+function splitHighlights(allHighlights: Highlight[]) {
+  // 피드에 표시할 메인 하이라이트 (기존 5인 u1~u4)
+  const mainUserIds = new Set(['u1', 'u2', 'u3', 'u4', 'me']);
+  const feed = allHighlights.filter(h => mainUserIds.has(h.userId));
+  const others = allHighlights.filter(h => !mainUserIds.has(h.userId));
+  return { feed, others };
+}
+
+/** 현재 유저의 하이라이트와 같은 책이면서 다른 sentiment를 가진 감상을 찾음 */
+function getDifferentPerspective(
+  feedHighlights: Highlight[],
+  otherHighlights: Highlight[],
+): Highlight | null {
+  // 피드에 있는 positive 하이라이트의 책 목록
+  const feedBooks = feedHighlights
+    .filter(h => h.sentiment === 'positive')
+    .map(h => h.book.isbn);
+
+  // contrary 우선 매칭
+  for (const isbn of feedBooks) {
+    const contrary = otherHighlights.find(
+      h => h.book.isbn === isbn && h.sentiment === 'contrary'
+    );
+    if (contrary) return contrary;
+  }
+
+  // reserved 차선 매칭
+  for (const isbn of feedBooks) {
+    const reserved = otherHighlights.find(
+      h => h.book.isbn === isbn && h.sentiment === 'reserved'
+    );
+    if (reserved) return reserved;
+  }
+
+  return null;
+}
 
 export default function HomeFeed() {
   const { highlights, toggleHighlightReaction, setSubView, setTab, viewedStoryUsers, markStoryViewed, highlightStats, gateLevel, gates } = useApp();
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
+
+  const { feed: feedHighlights, others: otherHighlights } = useMemo(
+    () => splitHighlights(highlights),
+    [highlights]
+  );
+  const differentPerspective = useMemo(
+    () => getDifferentPerspective(feedHighlights, otherHighlights),
+    [feedHighlights, otherHighlights]
+  );
+  // 삽입 위치: 인덱스 4 (5번째) 또는 피드가 짧으면 마지막
+  const insertIndex = Math.min(4, feedHighlights.length);
 
   const storyUserIds = new Set(MOCK_STORIES.map(s => s.userId));
 
@@ -129,14 +178,27 @@ export default function HomeFeed() {
 
         {/* Highlight cards */}
         <div className="space-y-3 px-5">
-          {highlights.length > 0 ? (
-            highlights.map(highlight => (
-              <HighlightCard
-                key={highlight.id}
-                highlight={highlight}
-                onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
-              />
-            ))
+          {feedHighlights.length > 0 ? (
+            <>
+              {feedHighlights.map((highlight, idx) => (
+                <div key={highlight.id}>
+                  {/* "다른 시선" 카드 삽입 */}
+                  {idx === insertIndex && differentPerspective && (
+                    <div className="mb-3">
+                      <DifferentPerspectiveCard highlight={differentPerspective} />
+                    </div>
+                  )}
+                  <HighlightCard
+                    highlight={highlight}
+                    onReaction={(type) => toggleHighlightReaction(highlight.id, type)}
+                  />
+                </div>
+              ))}
+              {/* 피드 길이가 insertIndex 이하이면 마지막에 삽입 */}
+              {feedHighlights.length <= insertIndex && differentPerspective && (
+                <DifferentPerspectiveCard highlight={differentPerspective} />
+              )}
+            </>
           ) : (
             <div className="bg-surface rounded-[18px] border border-border p-6 text-center">
               <p className="text-[32px] mb-2">📖</p>
@@ -397,6 +459,74 @@ function HighlightCard({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/* ── Different Perspective Card ── */
+
+function DifferentPerspectiveCard({ highlight }: { highlight: Highlight }) {
+  const reasonTruncated = highlight.reason.length > 80
+    ? highlight.reason.slice(0, 80) + '…'
+    : highlight.reason;
+
+  return (
+    <div className="bg-surface rounded-[18px] border border-border overflow-hidden p-4">
+      {/* Label */}
+      <div className="mb-3">
+        <span className="text-[11px] text-sub font-medium">다른 시선</span>
+        <p className="text-[12.5px] text-sub/70 mt-0.5">이 책을 이렇게 읽은 사람도 있어요</p>
+      </div>
+
+      {/* Profile */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-[34px] h-[34px] rounded-full overflow-hidden flex-shrink-0">
+          <img src={highlight.userAvatar} alt={highlight.userName} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-semibold text-ink">{highlight.userName}</span>
+          <span className="text-[12px] text-sub ml-1.5">{highlight.createdAt}</span>
+        </div>
+      </div>
+
+      {/* Book info */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-[38px] h-[52px] rounded-[6px] overflow-hidden flex-shrink-0">
+          {highlight.book.coverUrl ? (
+            <img src={highlight.book.coverUrl} alt={highlight.book.title} className="w-full h-full object-cover" />
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ backgroundColor: PLACEHOLDER_COLORS[parseInt(highlight.book.isbn) % PLACEHOLDER_COLORS.length] }}
+            >
+              <span className="text-white text-[8px] text-center px-0.5">{highlight.book.title}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-ink truncate">《{highlight.book.title}》</p>
+          <p className="text-[11.5px] text-sub">{highlight.book.author}</p>
+        </div>
+      </div>
+
+      {/* Sentence */}
+      <div className="mb-3">
+        <div className="border-l-[3px] border-sub/30 pl-4 py-2">
+          <p className="text-[14px] text-ink leading-[1.75] font-medium" style={{ letterSpacing: '-0.2px' }}>
+            &ldquo;{highlight.sentence}&rdquo;
+          </p>
+        </div>
+      </div>
+
+      {/* Reason (truncated) */}
+      <p className="text-[13px] text-ink/80 leading-[1.7]" style={{ letterSpacing: '-0.1px' }}>
+        {reasonTruncated}
+      </p>
+
+      {/* Profile link */}
+      <button className="mt-3 text-[12.5px] text-action font-medium press-scale">
+        프로필 보기
+      </button>
     </div>
   );
 }

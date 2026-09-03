@@ -147,6 +147,8 @@ export interface HighlightStats {
 
 // ── 밑줄 시스템 ──
 
+export type HighlightSentiment = 'positive' | 'reserved' | 'contrary';
+
 export type HighlightReactionType = 'felt_same' | 'want_to_read' | 'stays_long';
 
 export interface ReactionCounts {
@@ -167,6 +169,7 @@ export interface Highlight {
   context: string;
   reactions: ReactionCounts;
   createdAt: string;
+  sentiment?: HighlightSentiment;
 }
 
 // ── 던바 구조 (L1~L4) ──
