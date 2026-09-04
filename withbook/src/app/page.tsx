@@ -34,12 +34,8 @@ function AppShell() {
     return (
       <div className="flex items-center justify-center min-h-dvh bg-surface">
         <div className="flex flex-col items-center gap-3 animate-fade">
-          <div className="w-12 h-12 rounded-[14px] bg-ink flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-              <path d="M6 6h8v20H6V6zm12 0h8v20h-8V6z" fill="white" opacity="0.9" />
-              <path d="M14 8v16" stroke="#0066cc" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/withbook-icon-192.png" alt="위드북" width={48} height={48} className="w-12 h-12" />
           <span className="text-[14px] text-sub">불러오는 중...</span>
         </div>
       </div>

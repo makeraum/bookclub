@@ -37,13 +37,14 @@ export default function BetaNotice() {
       {/* 카드 */}
       <div className="relative mx-6 max-w-[340px] w-full bg-surface rounded-[20px] p-6 animate-fade">
         <div className="flex flex-col items-center text-center">
-          {/* 로고 */}
-          <div className="w-14 h-14 rounded-[14px] bg-ink flex items-center justify-center mb-4">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <path d="M6 6h8v20H6V6zm12 0h8v20h-8V6z" fill="white" opacity="0.9" />
-              <path d="M14 8v16" stroke="#0066cc" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
+          {/* 로고 — 파비콘·앱 아이콘과 같은 마크 */}
+          <img
+            src="/logo/withbook-icon-192.png"
+            alt="위드북"
+            width={56}
+            height={56}
+            className="w-14 h-14 mb-4"
+          />
 
           <h2
             className="text-[17px] font-semibold text-ink mb-2"

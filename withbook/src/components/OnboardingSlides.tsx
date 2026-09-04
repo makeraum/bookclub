@@ -182,10 +182,14 @@ export default function OnboardingSlides() {
       {step === 'welcome' && (
         <div className="flex-1 flex flex-col items-center justify-center px-8">
           <div className="w-[80px] h-[80px] rounded-[18px] bg-canvas flex items-center justify-center mb-8 animate-pop">
-            <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
-              <path d="M6 6h8v20H6V6zm12 0h8v20h-8V6z" fill="#1d1d1f" opacity="0.9" />
-              <path d="M14 8v16" stroke="#0066cc" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
+            {/* 밝은 박스 안이라 배경 없는 컬러 마크를 씁니다 */}
+            <img
+              src="/logo/withbook-mark-color-512.png"
+              alt="위드북"
+              width={38}
+              height={38}
+              className="w-[38px] h-[38px]"
+            />
           </div>
 
           <h1
