@@ -20,6 +20,7 @@ import CoAttendeeProfile from '../components/CoAttendeeProfile';
 import MeetingRetrospective from '../components/MeetingRetrospective';
 import ConsentGate from '../components/ConsentGate';
 import PrivacySettings from '../components/PrivacySettings';
+import PrinciplesView from '../components/PrinciplesView';
 import BottomNav from '../components/BottomNav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FeedbackButton from '../components/FeedbackButton';
@@ -79,6 +80,7 @@ function AppShell() {
       {subView === 'meetingRetrospective' && <MeetingRetrospective />}
       {subView === 'privacySettings' && <PrivacySettings />}
       {subView === 'resourceLibrary' && <ResourceLibrary />}
+      {subView === 'principles' && <PrinciplesView />}
 
       {/* Feedback floating button */}
       <FeedbackButton />

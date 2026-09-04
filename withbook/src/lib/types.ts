@@ -3,7 +3,7 @@ import type { PaymentMethod } from './payment';
 
 export type Route = 'splash' | 'login' | 'consent' | 'onboarding' | 'booksetup' | 'main';
 export type Tab = 'home' | 'seojae' | 'participate' | 'chat' | 'my';
-export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | 'meetingRetrospective' | 'privacySettings' | null;
+export type SubView = 'compose' | 'bookEdit' | 'clubDetail' | 'gate1Celebration' | 'seojaeDetail' | 'highlightPairView' | 'resourceLibrary' | 'librarianConsole' | 'coAttendeeProfile' | 'meetingRetrospective' | 'privacySettings' | 'principles' | null;
 
 export type DunbarLayer = 'L1' | 'L2' | 'L3' | 'L4';
 
