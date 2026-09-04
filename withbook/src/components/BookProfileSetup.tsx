@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Button from './ui/Button';
 import Chip from './ui/Chip';
 import Input from './ui/Input';
@@ -29,16 +29,16 @@ export default function BookProfileSetup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [saving, setSaving] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchBook[]>([]);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 검색 상태는 "입력된 검색어"와 "결과가 도착한 검색어"의 차이에서 파생합니다.
+  // (이펙트 안에서 동기 setState를 하면 렌더가 연쇄됩니다 — react-hooks/set-state-in-effect)
+  const [bookResults, setBookResults] = useState<SearchBook[]>([]);
+  const [resolvedBookQuery, setResolvedBookQuery] = useState('');
 
   // 작가 직접 추가
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
   const [authorQuery, setAuthorQuery] = useState('');
-  const [authorSuggestions, setAuthorSuggestions] = useState<string[]>([]);
-  const [authorSearching, setAuthorSearching] = useState(false);
-  const authorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [authorResults, setAuthorResults] = useState<string[]>([]);
+  const [resolvedAuthorQuery, setResolvedAuthorQuery] = useState('');
 
   // 장르 기타 입력
   const [genreInputOpen, setGenreInputOpen] = useState(false);
@@ -52,64 +52,50 @@ export default function BookProfileSetup() {
   const customGenres = selectedGenres.filter(g => !presetGenres.includes(g));
 
   // 책 검색 debounce
+  const trimmedQuery = searchQuery.trim();
+  const searching = trimmedQuery !== '' && trimmedQuery !== resolvedBookQuery;
+  const searchResults = searching || !trimmedQuery ? [] : bookResults;
+
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!trimmedQuery) return;
 
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
-
-    setSearching(true);
-    debounceRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
+      let next: SearchBook[] = [];
       try {
-        const res = await fetch(`/api/books/search?query=${encodeURIComponent(searchQuery.trim())}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
-        }
+        const res = await fetch(`/api/books/search?query=${encodeURIComponent(trimmedQuery)}`);
+        if (res.ok) next = await res.json();
       } catch {
         // ignore fetch errors
-      } finally {
-        setSearching(false);
       }
+      setBookResults(next);
+      setResolvedBookQuery(trimmedQuery);
     }, 300);
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [searchQuery]);
+    return () => clearTimeout(timer);
+  }, [trimmedQuery]);
 
-  // 작가 검색 debounce
+  // 작가 검색 debounce — 책 검색과 같은 방식
+  const trimmedAuthorQuery = authorQuery.trim();
+  const authorSearching = trimmedAuthorQuery !== '' && trimmedAuthorQuery !== resolvedAuthorQuery;
+  const authorSuggestions = authorSearching || !trimmedAuthorQuery ? [] : authorResults;
+
   useEffect(() => {
-    if (authorDebounceRef.current) clearTimeout(authorDebounceRef.current);
+    if (!trimmedAuthorQuery) return;
 
-    if (!authorQuery.trim()) {
-      setAuthorSuggestions([]);
-      setAuthorSearching(false);
-      return;
-    }
-
-    setAuthorSearching(true);
-    authorDebounceRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
+      let next: string[] = [];
       try {
-        const res = await fetch(`/api/books/search?type=author&query=${encodeURIComponent(authorQuery.trim())}`);
-        if (res.ok) {
-          const data: string[] = await res.json();
-          setAuthorSuggestions(data);
-        }
+        const res = await fetch(`/api/books/search?type=author&query=${encodeURIComponent(trimmedAuthorQuery)}`);
+        if (res.ok) next = await res.json();
       } catch {
         // ignore
-      } finally {
-        setAuthorSearching(false);
       }
+      setAuthorResults(next);
+      setResolvedAuthorQuery(trimmedAuthorQuery);
     }, 300);
 
-    return () => {
-      if (authorDebounceRef.current) clearTimeout(authorDebounceRef.current);
-    };
-  }, [authorQuery]);
+    return () => clearTimeout(timer);
+  }, [trimmedAuthorQuery]);
 
   const handleSlotClick = (index: number) => {
     if (slots[index]) {
@@ -119,7 +105,6 @@ export default function BookProfileSetup() {
     } else {
       setActiveSlot(index);
       setSearchQuery('');
-      setSearchResults([]);
       setSearchOpen(true);
     }
   };
@@ -143,7 +128,6 @@ export default function BookProfileSetup() {
     if (!trimmed || selectedAuthors.includes(trimmed) || selectedAuthors.length >= 5) return;
     setSelectedAuthors(prev => [...prev, trimmed]);
     setAuthorQuery('');
-    setAuthorSuggestions([]);
     setAuthorSearchOpen(false);
   };
 
@@ -268,7 +252,7 @@ export default function BookProfileSetup() {
             {/* 직접 추가 버튼 */}
             {selectedAuthors.length < 5 && (
               <button
-                onClick={() => { setAuthorSearchOpen(true); setAuthorQuery(''); setAuthorSuggestions([]); }}
+                onClick={() => { setAuthorSearchOpen(true); setAuthorQuery(''); }}
                 className="press-scale flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-medium border border-dashed border-chip-border text-sub"
               >
                 + 직접 추가

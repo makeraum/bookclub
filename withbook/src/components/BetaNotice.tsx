@@ -1,33 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useDismissed } from '../lib/use-dismissed';
 
 const STORAGE_KEY = 'withbook_beta_notice_dismissed';
 
 export default function BetaNotice() {
-  const [visible, setVisible] = useState(false);
+  const [dismissed, handleDismiss] = useDismissed(STORAGE_KEY);
 
-  useEffect(() => {
-    try {
-      const dismissed = localStorage.getItem(STORAGE_KEY);
-      if (!dismissed) {
-        setVisible(true);
-      }
-    } catch {
-      // localStorage 접근 불가 시 무시
-    }
-  }, []);
-
-  function handleDismiss() {
-    setVisible(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, 'true');
-    } catch {
-      // 무시
-    }
-  }
-
-  if (!visible) return null;
+  if (dismissed) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">

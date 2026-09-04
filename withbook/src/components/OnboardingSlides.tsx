@@ -22,56 +22,52 @@ export default function OnboardingSlides() {
   const [reason, setReason] = useState('');
   const [context, setContext] = useState('');
   const [saving, setSaving] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchBook[]>([]);
-  const [searching, setSearching] = useState(false);
+  // 검색 상태는 "입력된 검색어"와 "결과가 도착한 검색어"의 차이에서 파생합니다.
+  // (이펙트 안에서 동기 setState를 하면 렌더가 연쇄됩니다 — react-hooks/set-state-in-effect)
+  const [results, setResults] = useState<SearchBook[]>([]);
+  const [resolvedQuery, setResolvedQuery] = useState('');
   const [bestsellers, setBestsellers] = useState<SearchBook[]>([]);
-  const [bestsellersLoading, setBestsellersLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 베스트셀러는 book 단계에 들어가면 곧바로 불러오므로 "불러오는 중"에서 시작합니다
+  const [bestsellersLoading, setBestsellersLoading] = useState(true);
+  const bestsellersRequestedRef = useRef(false);
 
   // 온보딩 질문 답변
   const [answers, setAnswers] = useState<OnboardingAnswers>({ q1: 0, q2: 0, q3: 0 });
 
-  // 베스트셀러 로드 (book 단계 진입 시)
+  // 베스트셀러 로드 (book 단계 진입 시 한 번)
   useEffect(() => {
-    if (step === 'book' && bestsellers.length === 0 && !bestsellersLoading) {
-      setBestsellersLoading(true);
-      fetch('/api/books/search?type=bestseller')
-        .then(res => res.ok ? res.json() : [])
-        .then(data => setBestsellers(data))
-        .catch(() => {})
-        .finally(() => setBestsellersLoading(false));
-    }
-  }, [step, bestsellers.length, bestsellersLoading]);
+    if (step !== 'book' || bestsellersRequestedRef.current) return;
+    bestsellersRequestedRef.current = true;
+
+    fetch('/api/books/search?type=bestseller')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setBestsellers(data))
+      .catch(() => {})
+      .finally(() => setBestsellersLoading(false));
+  }, [step]);
 
   // 검색 debounce
+  const trimmedQuery = searchQuery.trim();
+  const searching = trimmedQuery !== '' && trimmedQuery !== resolvedQuery;
+  const searchResults = searching || !trimmedQuery ? [] : results;
+
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!trimmedQuery) return;
 
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
-
-    setSearching(true);
-    debounceRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
+      let next: SearchBook[] = [];
       try {
-        const res = await fetch(`/api/books/search?query=${encodeURIComponent(searchQuery.trim())}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
-        }
+        const res = await fetch(`/api/books/search?query=${encodeURIComponent(trimmedQuery)}`);
+        if (res.ok) next = await res.json();
       } catch {
         // ignore fetch errors
-      } finally {
-        setSearching(false);
       }
+      setResults(next);
+      setResolvedQuery(trimmedQuery);
     }, 300);
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [searchQuery]);
+    return () => clearTimeout(timer);
+  }, [trimmedQuery]);
 
   const displayBooks = searchQuery.trim() ? searchResults : bestsellers;
 

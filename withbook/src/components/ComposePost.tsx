@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import { useApp } from '../context/AppContext';
@@ -23,38 +23,32 @@ export default function ComposePost() {
   const [searchQuery, setSearchQuery] = useState('');
   const [step, setStep] = useState<Step>('search');
   const [publishing, setPublishing] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchBook[]>([]);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 검색 상태는 "입력된 검색어"와 "결과가 도착한 검색어"의 차이에서 파생합니다.
+  // (이펙트 안에서 동기 setState를 하면 렌더가 연쇄됩니다 — react-hooks/set-state-in-effect)
+  const [results, setResults] = useState<SearchBook[]>([]);
+  const [resolvedQuery, setResolvedQuery] = useState('');
+
+  const trimmedQuery = searchQuery.trim();
+  const searching = trimmedQuery !== '' && trimmedQuery !== resolvedQuery;
+  const searchResults = searching || !trimmedQuery ? [] : results;
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!trimmedQuery) return;
 
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
-
-    setSearching(true);
-    debounceRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
+      let next: SearchBook[] = [];
       try {
-        const res = await fetch(`/api/books/search?query=${encodeURIComponent(searchQuery.trim())}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
-        }
+        const res = await fetch(`/api/books/search?query=${encodeURIComponent(trimmedQuery)}`);
+        if (res.ok) next = await res.json();
       } catch {
         // ignore fetch errors
-      } finally {
-        setSearching(false);
       }
+      setResults(next);
+      setResolvedQuery(trimmedQuery);
     }, 300);
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [searchQuery]);
+    return () => clearTimeout(timer);
+  }, [trimmedQuery]);
 
   const handleSelectBook = (book: SearchBook) => {
     const { publisher: _, ...bookData } = book;

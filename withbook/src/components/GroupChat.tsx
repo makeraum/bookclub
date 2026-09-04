@@ -21,7 +21,7 @@ export default function GroupChat() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   if (activeRoomId) {
-    return <ChatRoomView roomId={activeRoomId} onBack={() => setActiveRoomId(null)} />;
+    return <ChatRoomView key={activeRoomId} roomId={activeRoomId} onBack={() => setActiveRoomId(null)} />;
   }
   return <ChatList onSelectRoom={setActiveRoomId} />;
 }
@@ -264,29 +264,29 @@ function DemoRoomIcon({ room }: { room: DemoChatRoom }) {
 /* ── 채팅방 뷰 ── */
 function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }) {
   const { profile, authUserId } = useApp();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [memberCount, setMemberCount] = useState(0);
-  const [showMembers, setShowMembers] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 데모 방인지 확인
   const isDemo = roomId.startsWith('demo-');
   const demoRoom = DEMO_CHAT_ROOMS.find(r => r.id === roomId);
+
+  // 데모 방의 메시지는 고정값이라 첫 렌더에서 바로 채웁니다.
+  // (이펙트에서 setState하면 렌더가 한 번 더 돌고, 그 사이 빈 방이 보입니다)
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    () => (isDemo ? DEMO_CHAT_MESSAGES[roomId] || [] : [])
+  );
+  const [input, setInput] = useState('');
+  const [memberCount, setMemberCount] = useState(() => (isDemo ? demoRoom?.memberCount || 2 : 0));
+  const [showMembers, setShowMembers] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const seojae = MOCK_SEOJAE.find(s => s.chatRoomId === roomId);
   const event = MOCK_OFFLINE_EVENTS.find(e => e.id === roomId);
   const roomName = demoRoom?.name || seojae?.name || event?.title || '채팅';
   const topic = DEMO_BOOK_TOPICS[roomId] || MOCK_BOOK_TOPICS[roomId];
 
-  // 메시지 로드 + Realtime 구독
+  // 메시지 로드 + Realtime 구독 (데모 방은 위 초기값이 전부라 구독하지 않습니다)
   useEffect(() => {
-    // 데모 방이면 데모 메시지 로드
-    if (isDemo) {
-      setMessages(DEMO_CHAT_MESSAGES[roomId] || []);
-      setMemberCount(demoRoom?.memberCount || 2);
-      return;
-    }
+    if (isDemo) return;
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -376,7 +376,7 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
         supabase.removeChannel(channel);
       }
     };
-  }, [roomId, authUserId, isDemo, demoRoom?.memberCount]);
+  }, [roomId, authUserId, isDemo]);
 
   // 메시지가 추가되면 스크롤
   useEffect(() => {

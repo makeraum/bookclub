@@ -20,9 +20,11 @@ export default function StoryViewer({ stories, startIndex, onClose, onViewed }: 
   const [paused, setPaused] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(0);
   const elapsedRef = useRef(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  // 타이머 안에서 최신 goNext를 부르기 위한 통로 (goNext가 startTimer보다 아래에 선언됩니다)
+  const goNextRef = useRef<(() => void) | null>(null);
 
   const story = stories[userIdx];
   const card = story?.cards[cardIdx];
@@ -38,88 +40,76 @@ export default function StoryViewer({ stories, startIndex, onClose, onViewed }: 
       setProgress(pct);
       if (pct >= 1) {
         if (timerRef.current) clearInterval(timerRef.current);
-        goNext();
+        goNextRef.current?.();
       }
     }, 30);
-  }, []);// eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const pauseTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     elapsedRef.current += Date.now() - startTimeRef.current;
   }, []);
 
-  const resetAndStart = useCallback(() => {
+  /** 진행도를 0으로 되돌립니다. 카드를 넘기는 쪽(이벤트 핸들러)에서 부릅니다 */
+  const resetProgress = useCallback(() => {
     elapsedRef.current = 0;
     setProgress(0);
-    startTimer();
-  }, [startTimer]);
+  }, []);
 
-  // 다음 카드 / 다음 유저
+  // 다음 카드 / 다음 유저 — 다음 상태를 그대로 계산합니다.
+  // 예전에는 setState 업데이터 안에서 onViewed·onClose·타이머를 함께 호출했는데,
+  // 업데이터는 순수해야 하고 (StrictMode에서는 두 번 실행됩니다) 컴파일러 최적화도 막혔습니다.
   const goNext = useCallback(() => {
-    setCardIdx(prev => {
-      const nextCard = prev + 1;
-      if (nextCard < (stories[userIdx]?.cards.length ?? 0)) {
-        elapsedRef.current = 0;
-        setProgress(0);
-        startTimer();
-        return nextCard;
-      }
-      // 현재 유저 다 봄 → 조회 완료
-      onViewed(stories[userIdx].userId);
-      // 다음 유저
-      setUserIdx(prevUser => {
-        const nextUser = prevUser + 1;
-        if (nextUser >= stories.length) {
-          onClose();
-          return prevUser;
-        }
-        elapsedRef.current = 0;
-        setProgress(0);
-        startTimer();
-        return nextUser;
-      });
-      return 0;
-    });
-  }, [userIdx, stories, onViewed, onClose, startTimer]);
+    const current = stories[userIdx];
+    if (!current) return;
+
+    resetProgress();
+
+    // 같은 사람의 다음 카드
+    if (cardIdx + 1 < current.cards.length) {
+      setCardIdx(cardIdx + 1);
+      return;
+    }
+
+    // 현재 유저 다 봄 → 조회 완료
+    onViewed(current.userId);
+
+    if (userIdx + 1 >= stories.length) {
+      onClose();
+      return;
+    }
+    setUserIdx(userIdx + 1);
+    setCardIdx(0);
+  }, [userIdx, cardIdx, stories, onViewed, onClose, resetProgress]);
+
+  // 타이머가 항상 최신 goNext를 보도록 렌더 후에 갱신합니다
+  useEffect(() => {
+    goNextRef.current = goNext;
+  });
 
   // 이전 카드
   const goPrev = useCallback(() => {
-    setCardIdx(prev => {
-      if (prev > 0) {
-        elapsedRef.current = 0;
-        setProgress(0);
-        startTimer();
-        return prev - 1;
-      }
-      // 이전 유저
-      setUserIdx(prevUser => {
-        if (prevUser > 0) {
-          const prevUserStory = stories[prevUser - 1];
-          setCardIdx(prevUserStory.cards.length - 1);
-          elapsedRef.current = 0;
-          setProgress(0);
-          startTimer();
-          return prevUser - 1;
-        }
-        elapsedRef.current = 0;
-        setProgress(0);
-        startTimer();
-        return prevUser;
-      });
-      return prev;
-    });
-  }, [stories, startTimer]);
+    resetProgress();
 
-  // 시작 시 타이머 킴
+    if (cardIdx > 0) {
+      setCardIdx(cardIdx - 1);
+      return;
+    }
+    if (userIdx > 0) {
+      // 이전 사람의 마지막 카드
+      setUserIdx(userIdx - 1);
+      setCardIdx(stories[userIdx - 1].cards.length - 1);
+      return;
+    }
+    // 첫 카드에서 이전 → 상태가 그대로라 타이머만 다시 돌립니다
+    startTimer();
+  }, [userIdx, cardIdx, stories, resetProgress, startTimer]);
+
+  // 열릴 때, 그리고 카드가 바뀔 때마다 타이머를 다시 시작합니다
   useEffect(() => {
-    resetAndStart();
+    startTimer();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);// eslint-disable-line react-hooks/exhaustive-deps
-
-  // userIdx, cardIdx 바뀔 때 타이머 리셋
-  useEffect(() => {
-    resetAndStart();
-  }, [userIdx, cardIdx]);// eslint-disable-line react-hooks/exhaustive-deps
+  }, [userIdx, cardIdx, startTimer]);
 
   // 터치 처리
   const handleTouchStart = (e: React.TouchEvent) => {

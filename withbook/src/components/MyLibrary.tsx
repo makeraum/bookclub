@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useApp } from '../context/AppContext';
+import { useDismissed } from '../lib/use-dismissed';
 import { PLACEHOLDER_COLORS, SHELL_METRIC_LABELS } from '../lib/mock-data';
 import { toKoreanCount } from '../lib/utils';
 import GateProgressLine from './GateProgressCard';
@@ -23,22 +24,10 @@ export default function MyLibrary() {
   } = useApp();
 
   // 함께 읽은 사람들 — 최초 1회 안내 배너 (닫으면 다시 뜨지 않습니다)
-  const [showCoAttendanceNotice, setShowCoAttendanceNotice] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined' && myCoAttendances.length > 0) {
-      const shown = localStorage.getItem('withbook-coattendance-notice-shown');
-      if (!shown) {
-        setShowCoAttendanceNotice(true);
-      }
-    }
-  }, [myCoAttendances.length]);
-
-  const dismissCoAttendanceNotice = () => {
-    setShowCoAttendanceNotice(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('withbook-coattendance-notice-shown', 'true');
-    }
-  };
+  const [coAttendanceNoticeDismissed, dismissCoAttendanceNotice] = useDismissed(
+    'withbook-coattendance-notice-shown'
+  );
+  const showCoAttendanceNotice = !coAttendanceNoticeDismissed && myCoAttendances.length > 0;
 
   const isHost = mySeojae.some(s => s.members.some(m => m.role === 'owner'));
   const hasFavoriteBook = profile.favoriteBooks.some(Boolean);
