@@ -104,7 +104,7 @@ create policy "본인 데이터만 생성" on discussion_credits
 create index if not exists idx_discussion_credits_author
   on discussion_credits(author_id);
 
--- 5. 붙듦 (mentor links)
+-- 5. 곁 (mentor links) — 표시명: 곁. 테이블·컬럼명은 mentor_links 그대로 둡니다
 create table if not exists mentor_links (
   id uuid primary key default gen_random_uuid(),
   mentor_id uuid not null references auth.users(id) on delete cascade,

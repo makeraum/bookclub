@@ -1,4 +1,5 @@
 import { Book, Post, StoryUser, SameBookGroup, UserStory, BookClub, EventType, OfflineEvent, ChatMessage, BookTopic, Highlight, HighlightReactionType, CityCommunity, Seojae, HighlightPair, Chaekbang, ShellMetrics, CoAttendance, CoAttendanceDetail, MeetingPromise, HighlightSentiment, MeetingRetrospective, RemainingSentenceCard, EventFee, FeePayment, Expense } from './types';
+import { toKoreanCount } from './utils';
 
 export const BOOKS: Book[] = [
   { isbn: '1', title: '싯다르타', author: '헤르만 헤세', coverUrl: '/assets/cover-siddhartha.png' },
@@ -757,11 +758,25 @@ export const MOCK_SHELL_METRICS: ShellMetrics = {
   seasonBadges: 1,
 };
 
-export const SHELL_METRIC_LABELS: { key: keyof ShellMetrics; label: string; icon: string; description: string }[] = [
+export const SHELL_METRIC_LABELS: {
+  key: keyof ShellMetrics;
+  label: string;
+  icon: string;
+  description: string;
+  /** 값을 숫자 대신 문장으로 말하는 지표 (숫자 배지·순위·퍼센트를 쓰지 않습니다) */
+  sentence?: (n: number) => string;
+}[] = [
   { key: 'readingFollows', label: '이어읽기', icon: '📎', description: '다른 사람의 밑줄에서 시작된 읽기' },
   { key: 'togetherDays', label: '함께 읽은 날', icon: '📅', description: '밑줄 짝과 같은 날 밑줄을 남긴 횟수' },
   { key: 'discussionCredits', label: '발제 크레딧', icon: '💬', description: '서재에서 대화를 시작한 질문 수' },
-  { key: 'mentorSticks', label: '붙듦', icon: '🌱', description: '새 멤버의 첫 기록자 달성을 함께한 횟수' },
+  // 표시명: 곁 (DB·변수명은 mentorSticks 그대로 — 마이그레이션 없음)
+  {
+    key: 'mentorSticks',
+    label: '곁',
+    icon: '🌱',
+    description: '새 멤버가 첫 기록을 남기도록 곁에 있어 준 횟수',
+    sentence: n => `${toKoreanCount(n)} 번 곁에 있었어요`,
+  },
   { key: 'seasonBadges', label: '계절 배지', icon: '🍂', description: '한 서재에서 한 계절을 함께 보낸 기록' },
 ];
 

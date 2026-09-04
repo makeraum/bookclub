@@ -249,11 +249,12 @@ export default function MyLibrary() {
 
         {/* 조개 지표 — 접이식. 0인 항목은 "전체 보기"로만 */}
         <ShellMetricsSection
-          values={SHELL_METRIC_LABELS.map(({ key, label, icon, description }) => ({
+          values={SHELL_METRIC_LABELS.map(({ key, label, icon, description, sentence }) => ({
             key,
             label,
             icon,
             description,
+            sentence,
             value: key === 'togetherDays'
               ? (myHighlightPairs.reduce((sum, p) => sum + p.streakCount, 0) || shellMetrics.togetherDays)
               : shellMetrics[key],
@@ -362,7 +363,15 @@ function MenuRow({
 
 /* ── 조개 지표 — 접이식 + 0인 항목 숨김 ── */
 
-type ShellMetricRow = { key: string; label: string; icon: string; description: string; value: number };
+type ShellMetricRow = {
+  key: string;
+  label: string;
+  icon: string;
+  description: string;
+  value: number;
+  /** 값을 숫자 대신 문장으로 말하는 지표 (곁) */
+  sentence?: (n: number) => string;
+};
 
 function ShellMetricsSection({ values }: { values: ShellMetricRow[] }) {
   const [open, setOpen] = useState(false);
@@ -400,18 +409,24 @@ function ShellMetricsSection({ values }: { values: ShellMetricRow[] }) {
         <div className="px-5 pb-4">
           {rows.length > 0 ? (
             <div className="space-y-3">
-              {rows.map(m => (
-                <div key={m.key} className="flex items-center gap-3">
-                  <span className="text-[16px] w-[24px] text-center flex-shrink-0">{m.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] font-medium text-ink">{m.label}</p>
-                    <p className="text-[11.5px] text-sub">{m.description}</p>
+              {rows.map(m => {
+                // 문장으로 말하는 지표(곁)는 숫자를 따로 세워두지 않습니다
+                const spoken = m.sentence && m.value > 0 ? m.sentence(m.value) : null;
+                return (
+                  <div key={m.key} className="flex items-center gap-3">
+                    <span className="text-[16px] w-[24px] text-center flex-shrink-0">{m.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13.5px] font-medium text-ink">{m.label}</p>
+                      <p className="text-[11.5px] text-sub">{spoken ?? m.description}</p>
+                    </div>
+                    {!spoken && (
+                      <span className={`text-[17px] font-bold flex-shrink-0 ${m.value > 0 ? 'text-ink' : 'text-inactive'}`}>
+                        {m.value}
+                      </span>
+                    )}
                   </div>
-                  <span className={`text-[17px] font-bold flex-shrink-0 ${m.value > 0 ? 'text-ink' : 'text-inactive'}`}>
-                    {m.value}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-[12.5px] text-sub">아직 쌓인 지표가 없어요. 함께 읽으면 하나씩 늘어납니다.</p>

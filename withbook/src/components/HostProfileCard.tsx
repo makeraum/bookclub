@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Book } from '../lib/types';
 import { MOCK_HOST_PROFILES, generateHostIntro, getBookConnection } from '../lib/host-profiles';
+import { toKoreanCount } from '../lib/utils';
 
 interface HostProfileCardProps {
   hostId?: string;
@@ -119,12 +120,19 @@ export default function HostProfileCard({ hostId, hostName, hostAvatar, sectionT
 
       {/* 검증 지표 (조개 기반, 숫자만 사실 그대로) */}
       {profile.hasEnoughRecords && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          <MetricPill label="밑줄" value={metrics.highlightCount} unit="개" />
-          <MetricPill label="완독" value={metrics.completedBooks} unit="권" />
-          <MetricPill label="모임" value={metrics.hostedMeetings} unit="회" />
-          <MetricPill label="발제" value={metrics.discussionCredits} />
-          <MetricPill label="붙듦" value={metrics.mentorSticks} />
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-1.5">
+            <MetricPill label="밑줄" value={metrics.highlightCount} unit="개" />
+            <MetricPill label="완독" value={metrics.completedBooks} unit="권" />
+            <MetricPill label="모임" value={metrics.hostedMeetings} unit="회" />
+            <MetricPill label="발제" value={metrics.discussionCredits} />
+          </div>
+          {/* 곁(mentorSticks)은 숫자 배지 대신 문장으로 말합니다 */}
+          {metrics.mentorSticks > 0 && (
+            <p className="text-[12px] text-sub mt-2 leading-[1.6]">
+              새 멤버가 첫 기록을 남기도록 {toKoreanCount(metrics.mentorSticks)} 번 곁에 있었어요
+            </p>
+          )}
         </div>
       )}
 

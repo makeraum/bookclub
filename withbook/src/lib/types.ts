@@ -243,7 +243,7 @@ export interface ShellMetrics {
   readingFollows: number;      // 이어읽기
   togetherDays: number;        // 함께 읽은 날
   discussionCredits: number;   // 발제 크레딧
-  mentorSticks: number;        // 붙듦
+  mentorSticks: number;        // 표시명: 곁 (컬럼·변수명은 mentorSticks 유지)
   seasonBadges: number;        // 계절 배지
 }
 
@@ -271,7 +271,7 @@ export interface HostProfile {
     completedBooks: number;
     hostedMeetings: number;
     discussionCredits: number;
-    mentorSticks: number;
+    mentorSticks: number;      // 표시명: 곁
   };
   bookHighlights: Record<string, HostBookData>;
   hasEnoughRecords: boolean;
