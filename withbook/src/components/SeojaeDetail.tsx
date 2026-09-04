@@ -130,8 +130,8 @@ export default function SeojaeDetail() {
               멤버 ({seojae.memberCount}명)
             </h3>
             <ul className="space-y-3">
-              {seojae.members.map(m => (
-                <li key={m.userId} className="flex items-center gap-3">
+              {seojae.members.map((m, i) => (
+                <li key={m.userId || `member-${i}`} className="flex items-center gap-3">
                   <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0">
                     <img src={m.userAvatar} alt={m.userName} className="w-full h-full object-cover" />
                   </div>

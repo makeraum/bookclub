@@ -108,8 +108,8 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
                       <h3 className="text-[13px] font-semibold text-sub">밑줄 짝</h3>
                     </div>
                     <ul className="divide-y divide-border">
-                      {pairRooms.map(room => (
-                        <DemoChatItem key={room.id} room={room} onSelect={onSelectRoom} />
+                      {pairRooms.map((room, i) => (
+                        <DemoChatItem key={room.id || `pair-${i}`} room={room} onSelect={onSelectRoom} />
                       ))}
                     </ul>
                   </>
@@ -120,8 +120,8 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
                       <h3 className="text-[13px] font-semibold text-sub">단톡방</h3>
                     </div>
                     <ul className="divide-y divide-border">
-                      {groupRooms.map(room => (
-                        <DemoChatItem key={room.id} room={room} onSelect={onSelectRoom} />
+                      {groupRooms.map((room, i) => (
+                        <DemoChatItem key={room.id || `group-${i}`} room={room} onSelect={onSelectRoom} />
                       ))}
                     </ul>
                   </>
@@ -143,8 +143,8 @@ function ChatList({ onSelectRoom }: { onSelectRoom: (id: string) => void }) {
       ) : (
         /* ── 실제 채팅 목록 ── */
         <ul className="divide-y divide-border">
-          {realRooms.map(room => (
-            <li key={room.id}>
+          {realRooms.map((room, i) => (
+            <li key={room.id || `room-${i}`}>
               <button
                 className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-muted/20 transition-colors"
                 onClick={() => onSelectRoom(room.id)}
@@ -288,93 +288,118 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
   useEffect(() => {
     if (isDemo) return;
 
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    // 채널은 이펙트 본문에서 곧바로 만듭니다.
+    // 예전에는 async init() 안에서 await 뒤에 만들었는데, 그러면 StrictMode의 두 번째 실행이
+    // 첫 번째 채널이 만들어지기 전에 클린업을 돌아 채널이 남고,
+    // supabase.channel()이 같은 topic의 그 채널을 그대로 돌려줍니다.
+    // 이미 subscribe()된 채널에 .on('postgres_changes')를 붙이면 다음 에러가 납니다:
+    //   cannot add `postgres_changes` callbacks for realtime:chat:<room> after `subscribe()`
+    const channelName = `chat:${roomId}`;
+    for (const stale of supabase.getChannels()) {
+      if (stale.topic === `realtime:${channelName}`) {
+        supabase.removeChannel(stale);
+      }
+    }
 
-    async function init() {
+    const channel = supabase.channel(channelName);
+
+    // .on()을 모두 붙인 다음에 마지막으로 subscribe()
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `room_id=eq.${roomId}`,
+      },
+      async (payload) => {
+        const row = payload.new as {
+          id: string;
+          room_id: string;
+          sender_id: string | null;
+          type: string;
+          text: string;
+          created_at: string;
+        };
+
+        setMessages(prev => {
+          if (prev.some(m => m.id === row.id)) return prev;
+          const isMe = row.sender_id === authUserId && row.type === 'message';
+          const newMsg: ChatMessage = {
+            id: row.id,
+            roomId: row.room_id,
+            senderId: row.sender_id || '',
+            senderName: '',
+            senderAvatar: '/assets/avatar-me.png',
+            type: row.type as 'message' | 'system',
+            text: row.text,
+            createdAt: db.formatChatTime(row.created_at),
+            isMe,
+          };
+          // 내가 보낸 메시지가 낙관적 항목으로 이미 있으면 그 자리를 대신합니다
+          if (isMe) {
+            const optimistic = prev.findIndex(m => m.id.startsWith('opt-') && m.text === row.text);
+            if (optimistic !== -1) {
+              const next = [...prev];
+              next[optimistic] = { ...newMsg, senderName: prev[optimistic].senderName, senderAvatar: prev[optimistic].senderAvatar };
+              return next;
+            }
+          }
+          return [...prev, newMsg];
+        });
+
+        if (row.sender_id) {
+          try {
+            const { data: user } = await supabase
+              .from('users')
+              .select('name, avatar_url')
+              .eq('id', row.sender_id)
+              .single();
+            if (user) {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === row.id
+                    ? { ...m, senderName: user.name || '알 수 없음', senderAvatar: user.avatar_url || '/assets/avatar-me.png' }
+                    : m
+                )
+              );
+            }
+          } catch { /* ignore */ }
+        }
+
+        if (row.type === 'system') {
+          try {
+            const count = await db.fetchRoomMemberCount(roomId);
+            setMemberCount(count);
+          } catch { /* ignore */ }
+        }
+      }
+    );
+
+    channel.subscribe();
+
+    // 최초 로드는 구독과 별개로 진행합니다.
+    // 구독을 먼저 걸어두었으므로, 불러오는 동안 도착한 메시지도 잃지 않도록 덮어쓰지 않고 합칩니다.
+    let cancelled = false;
+    (async () => {
       try {
         const msgs = await db.fetchChatMessages(roomId);
-        setMessages(msgs);
+        if (cancelled) return;
+        setMessages(prev => {
+          const loaded = new Set(msgs.map(m => m.id));
+          return [...msgs, ...prev.filter(m => !loaded.has(m.id))];
+        });
       } catch { /* ignore */ }
 
       try {
         const count = await db.fetchRoomMemberCount(roomId);
-        setMemberCount(count);
+        if (!cancelled) setMemberCount(count);
       } catch { /* ignore */ }
-
-      // Realtime 구독
-      channel = supabase
-        .channel(`chat:${roomId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chat_messages',
-            filter: `room_id=eq.${roomId}`,
-          },
-          async (payload) => {
-            const row = payload.new as {
-              id: string;
-              room_id: string;
-              sender_id: string | null;
-              type: string;
-              text: string;
-              created_at: string;
-            };
-
-            setMessages(prev => {
-              if (prev.some(m => m.id === row.id)) return prev;
-              const isMe = row.sender_id === authUserId && row.type === 'message';
-              const newMsg: ChatMessage = {
-                id: row.id,
-                roomId: row.room_id,
-                senderId: row.sender_id || '',
-                senderName: '',
-                senderAvatar: '/assets/avatar-me.png',
-                type: row.type as 'message' | 'system',
-                text: row.text,
-                createdAt: db.formatChatTime(row.created_at),
-                isMe,
-              };
-              return [...prev, newMsg];
-            });
-
-            if (row.sender_id) {
-              try {
-                const { data: user } = await supabase
-                  .from('users')
-                  .select('name, avatar_url')
-                  .eq('id', row.sender_id)
-                  .single();
-                if (user) {
-                  setMessages(prev =>
-                    prev.map(m =>
-                      m.id === row.id
-                        ? { ...m, senderName: user.name || '알 수 없음', senderAvatar: user.avatar_url || '/assets/avatar-me.png' }
-                        : m
-                    )
-                  );
-                }
-              } catch { /* ignore */ }
-            }
-
-            if (row.type === 'system') {
-              try {
-                const count = await db.fetchRoomMemberCount(roomId);
-                setMemberCount(count);
-              } catch { /* ignore */ }
-            }
-          }
-        )
-        .subscribe();
-    }
-
-    init();
+    })();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      cancelled = true;
+      supabase.removeChannel(channel);
     };
   }, [roomId, authUserId, isDemo]);
 
@@ -474,16 +499,17 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
           </div>
         )}
 
-        {/* 메시지 목록 */}
-        {messages.map(msg =>
-          msg.type === 'system' ? (
-            <SystemMessage key={msg.id} text={msg.text} />
+        {/* 메시지 목록 — id가 비어 있는 행이 섞여도 키가 겹치지 않게 순번을 폴백으로 둡니다 */}
+        {messages.map((msg, i) => {
+          const key = msg.id || `msg-${i}`;
+          return msg.type === 'system' ? (
+            <SystemMessage key={key} text={msg.text} />
           ) : msg.isMe ? (
-            <MyMessage key={msg.id} message={msg} />
+            <MyMessage key={key} message={msg} />
           ) : (
-            <OtherMessage key={msg.id} message={msg} />
-          )
-        )}
+            <OtherMessage key={key} message={msg} />
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
@@ -604,8 +630,8 @@ function MemberListOverlay({ roomId, onClose }: { roomId: string; onClose: () =>
             <p className="text-[14px] text-sub text-center py-8">참여자가 없습니다</p>
           ) : (
             <ul className="space-y-3">
-              {members.map(m => (
-                <li key={m.userId} className="flex items-center gap-3">
+              {members.map((m, i) => (
+                <li key={m.userId || `member-${i}`} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-muted/30 overflow-hidden flex-shrink-0">
                     <img src={m.userAvatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>

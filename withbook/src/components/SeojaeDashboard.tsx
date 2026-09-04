@@ -219,8 +219,8 @@ function SeojaeCard({
       {visibleMembers.length > 0 && (
         <div className="flex items-center mt-3">
           <div className="flex -space-x-2">
-            {visibleMembers.map(m => (
-              <div key={m.userId} className="w-[26px] h-[26px] rounded-full overflow-hidden border-2 border-surface">
+            {visibleMembers.map((m, i) => (
+              <div key={m.userId || `member-${i}`} className="w-[26px] h-[26px] rounded-full overflow-hidden border-2 border-surface">
                 <img src={m.userAvatar} alt={m.userName} className="w-full h-full object-cover" />
               </div>
             ))}
