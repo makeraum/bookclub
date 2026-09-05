@@ -281,8 +281,30 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
 
   const seojae = MOCK_SEOJAE.find(s => s.chatRoomId === roomId);
   const event = MOCK_OFFLINE_EVENTS.find(e => e.id === roomId);
-  const roomName = demoRoom?.name || seojae?.name || event?.title || '채팅';
   const topic = DEMO_BOOK_TOPICS[roomId] || MOCK_BOOK_TOPICS[roomId];
+
+  // 방 이름은 DB의 chat_rooms.name이 우선입니다.
+  // 목록(ChatList)은 fetchMyChatRooms로 DB 이름을 쓰는데 방 안에서만 목업을 보고 있어
+  // 헤더에 '채팅'이 뜨던 자리입니다. 목업은 DB에 방이 없거나 아직 못 불러왔을 때만 씁니다.
+  const [dbRoom, setDbRoom] = useState<{ name: string | null; loading: boolean }>(
+    () => ({ name: null, loading: !isDemo })
+  );
+
+  useEffect(() => {
+    if (isDemo) return;
+    let cancelled = false;
+    db.fetchChatRoom(roomId)
+      .then(room => {
+        if (!cancelled) setDbRoom({ name: room?.name?.trim() || null, loading: false });
+      })
+      .catch(() => {
+        if (!cancelled) setDbRoom({ name: null, loading: false });
+      });
+    return () => { cancelled = true; };
+  }, [roomId, isDemo]);
+
+  const mockRoomName = demoRoom?.name || seojae?.name || event?.title || '';
+  const roomName = dbRoom.name || mockRoomName;
 
   // 메시지 로드 + Realtime 구독 (데모 방은 위 초기값이 전부라 구독하지 않습니다)
   useEffect(() => {
@@ -325,12 +347,18 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
         setMessages(prev => {
           if (prev.some(m => m.id === row.id)) return prev;
           const isMe = row.sender_id === authUserId && row.type === 'message';
+          // 같은 사람이 앞서 보낸 메시지에 이름이 이미 있으면 그 값을 그대로 이어씁니다.
+          // 아무것도 모르면 빈 문자열로 두고 OtherMessage가 이름 자리에 스켈레톤을 그립니다.
+          // 여기서 '알 수 없음'을 넣으면 아래 users 조회가 끝날 때까지 그 문구가 스칩니다.
+          const known = row.sender_id
+            ? prev.find(m => m.senderId === row.sender_id && m.senderName)
+            : undefined;
           const newMsg: ChatMessage = {
             id: row.id,
             roomId: row.room_id,
             senderId: row.sender_id || '',
-            senderName: '',
-            senderAvatar: '/assets/avatar-me.png',
+            senderName: known?.senderName || '',
+            senderAvatar: known?.senderAvatar || '/assets/avatar-me.png',
             type: row.type as 'message' | 'system',
             text: row.text,
             createdAt: db.formatChatTime(row.created_at),
@@ -349,22 +377,34 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
         });
 
         if (row.sender_id) {
+          let resolvedName = '';
+          let resolvedAvatar = '';
           try {
             const { data: user } = await supabase
               .from('users')
               .select('name, avatar_url')
               .eq('id', row.sender_id)
               .single();
-            if (user) {
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === row.id
-                    ? { ...m, senderName: user.name || '알 수 없음', senderAvatar: user.avatar_url || '/assets/avatar-me.png' }
-                    : m
-                )
-              );
-            }
-          } catch { /* ignore */ }
+            resolvedName = user?.name?.trim() || '';
+            resolvedAvatar = user?.avatar_url || '';
+          } catch { /* 조회 실패 — 아래 폴백으로 마무리합니다 */ }
+
+          // 이름 우선순위: 방금 조회한 이름 → 이미 갖고 있던 이름 → 프로필 이름이 없는 계정 표시.
+          // 마지막 폴백까지 두는 이유는, 조회가 실패하거나 users.name이 비어 있을 때
+          // 스켈레톤이 영원히 남는 것을 막기 위해서입니다.
+          // 같은 보낸 사람의 다른 메시지가 아직 이름을 못 채웠으면 함께 채웁니다.
+          setMessages(prev =>
+            prev.map(m => {
+              const isTarget =
+                m.id === row.id || (m.senderId === row.sender_id && !m.senderName);
+              if (!isTarget) return m;
+              return {
+                ...m,
+                senderName: resolvedName || m.senderName || db.UNNAMED_READER,
+                senderAvatar: resolvedAvatar || m.senderAvatar,
+              };
+            })
+          );
         }
 
         if (row.type === 'system') {
@@ -467,7 +507,13 @@ function ChatRoomView({ roomId, onBack }: { roomId: string; onBack: () => void }
           </svg>
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[16px] font-semibold text-ink truncate">{roomName}</h2>
+          {roomName ? (
+            <h2 className="text-[16px] font-semibold text-ink truncate">{roomName}</h2>
+          ) : dbRoom.loading ? (
+            <div className="h-[20px] w-32 rounded bg-muted/30 animate-pulse" aria-hidden />
+          ) : (
+            <h2 className="text-[16px] font-semibold text-ink truncate">채팅</h2>
+          )}
           {memberCount > 0 && (
             <p className="text-[12px] text-sub">참여자 {memberCount}명</p>
           )}
@@ -565,7 +611,12 @@ function OtherMessage({ message }: { message: ChatMessage }) {
         <img src={message.senderAvatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
       </div>
       <div className="max-w-[75%]">
-        <p className="text-[12px] text-sub mb-0.5">{message.senderName}</p>
+        {/* 이름이 아직 안 채워진 동안은 스켈레톤 — 자리를 잡아두어 말풍선이 밀리지 않습니다 */}
+        {message.senderName ? (
+          <p className="text-[12px] text-sub mb-0.5">{message.senderName}</p>
+        ) : (
+          <div className="h-[16px] w-14 rounded bg-muted/30 animate-pulse mb-0.5" aria-hidden />
+        )}
         <div className="bg-surface border border-border rounded-[18px] px-3.5 py-2.5">
           <p className="text-[14px] text-ink leading-snug">{message.text}</p>
         </div>

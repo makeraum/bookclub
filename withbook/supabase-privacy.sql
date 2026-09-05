@@ -118,7 +118,9 @@ begin
     delete from public.reading_follows where follower_id = uid or highlight_owner_id = uid;
   end if;
   if to_regclass('public.pair_daily_reactions') is not null then
-    delete from public.pair_daily_reactions where user_id = uid;
+    -- 이 테이블의 소유자 컬럼은 user_id가 아니라 reactor_id입니다 (supabase-dunbar.sql 참고).
+    -- 잘못된 컬럼명 때문에 delete_my_account() 전체가 여기서 중단되어 탈퇴가 되지 않았습니다.
+    delete from public.pair_daily_reactions where reactor_id = uid;
   end if;
   -- highlight_sentiments는 highlights를 참조하며 cascade로 함께 지워집니다
   if to_regclass('public.highlights') is not null then

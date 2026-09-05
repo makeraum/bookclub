@@ -229,6 +229,24 @@ export async function getWaitlistCount(): Promise<number> {
 
 // ── Chat Rooms ──
 
+// 프로필 이름이 아직 없는 계정을 가리키는 표시.
+// '알 수 없음'은 오류처럼 읽혀서 채팅 경로에서는 쓰지 않습니다.
+export const UNNAMED_READER = '독자';
+
+// 방 이름의 출처는 DB가 우선입니다. 멤버가 아니면 RLS로 0행이 오므로 maybeSingle을 씁니다.
+export async function fetchChatRoom(
+  roomId: string
+): Promise<{ id: string; name: string; type: string } | null> {
+  const { data, error } = await supabase
+    .from('chat_rooms')
+    .select('id, name, type')
+    .eq('id', roomId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ?? null;
+}
+
 export async function ensureChatRoom(roomId: string, name: string, type: 'club' | 'event' | 'seojae' | 'highlight_pair') {
   const { error } = await supabase
     .from('chat_rooms')
@@ -305,7 +323,7 @@ export async function fetchChatMessages(roomId: string, limit = 100): Promise<Ch
       id: m.id as string,
       roomId: m.room_id as string,
       senderId: (m.sender_id as string) || '',
-      senderName: user?.name || '알 수 없음',
+      senderName: user?.name?.trim() || UNNAMED_READER,
       senderAvatar: user?.avatar_url || '/assets/avatar-me.png',
       type: m.type as 'message' | 'system',
       text: m.text as string,
@@ -345,7 +363,7 @@ export async function fetchChatMembers(roomId: string): Promise<ChatMember[]> {
     return {
       roomId: row.room_id as string,
       userId: row.user_id as string,
-      userName: user?.name || '알 수 없음',
+      userName: user?.name?.trim() || UNNAMED_READER,
       userAvatar: user?.avatar_url || '/assets/avatar-me.png',
       joinedAt: row.joined_at as string,
     };
